@@ -1,0 +1,302 @@
+using Microsoft.EntityFrameworkCore;
+using RugbyEngine.Api.Data.Entities;
+using System.Reflection;
+
+namespace RugbyEngine.Api.Data
+{
+    public class ApiDbContext : DbContext
+    {
+        public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
+        {
+
+        }
+
+        public DbSet<Persona> Personas { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Perfil> Perfiles { get; set; }
+        public DbSet<Permiso> Permisos { get; set; }
+        public DbSet<Menu> Menus { get; set; }
+        public DbSet<Cuenta> Cuentas { get; set; }
+        public DbSet<PersonaCuenta> PersonaCuentas { get; set; }
+        public DbSet<TipoMovimiento> TiposMovimiento { get; set; }
+        public DbSet<Movimiento> Movimientos { get; set; }
+        public DbSet<MovimientoItem> MovimientoItems { get; set; }
+        public DbSet<TipoEvento> TiposEvento { get; set; }
+        public DbSet<Evento> Eventos { get; set; }
+        public DbSet<EventoMovimientos> EventoMovimientos { get; set; }
+        public DbSet<EventoCuenta> EventoCuentas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            ConfigureAuditoryEntities(modelBuilder);
+
+            modelBuilder.Entity<Persona>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombres).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Apellidos).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Documento).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+                entity.HasIndex(e => e.Documento).IsUnique();
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(30);
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+                entity.HasIndex(e => e.Username).IsUnique();
+            });
+
+            modelBuilder.Entity<Perfil>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Descripcion).HasMaxLength(200);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+
+                entity.HasMany(p => p.Usuarios)
+                    .WithMany(u => u.Perfiles)
+                    .UsingEntity<Dictionary<string, object>>(
+                        "UsuarioPerfil",
+                        j => j.HasOne<Usuario>().WithMany().HasForeignKey("UsuarioId").OnDelete(DeleteBehavior.Cascade),
+                        j => j.HasOne<Perfil>().WithMany().HasForeignKey("PerfilId").OnDelete(DeleteBehavior.Cascade),
+                        j =>
+                        {
+                            j.HasKey("UsuarioId", "PerfilId");
+                            j.ToTable("UsuarioPerfil");
+                        });
+            });
+
+            modelBuilder.Entity<Permiso>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Descripcion).HasMaxLength(200);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+                entity.HasIndex(e => e.Codigo).IsUnique();
+
+                entity.HasMany(p => p.Perfiles)
+                    .WithMany(u => u.Permisos)
+                    .UsingEntity<Dictionary<string, object>>(
+                        "UsuarioPermiso",
+                        j => j.HasOne<Perfil>().WithMany().HasForeignKey("PerfilId").OnDelete(DeleteBehavior.Cascade),
+                        j => j.HasOne<Permiso>().WithMany().HasForeignKey("PermisoId").OnDelete(DeleteBehavior.Cascade),
+                        j =>
+                        {
+                            j.HasKey("PerfilId", "PermisoId");
+                            j.ToTable("PerfilPermiso");
+                        });
+            });
+
+            modelBuilder.Entity<Menu>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Titulo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── Cuenta ────────────────────────────────────────────────────────────
+            modelBuilder.Entity<Cuenta>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.DType).IsRequired();
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── PersonaCuenta (join Persona ↔ Cuenta, M:N) ───────────────────────
+            modelBuilder.Entity<PersonaCuenta>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+
+                entity.HasOne(pc => pc.Persona)
+                    .WithMany(p => p.PersonaCuentas)
+                    .HasForeignKey(pc => pc.PersonaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(pc => pc.Cuenta)
+                    .WithMany(c => c.PersonaCuentas)
+                    .HasForeignKey(pc => pc.CuentaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasIndex(pc => new { pc.PersonaId, pc.CuentaId }).IsUnique();
+            });
+
+            // ── TipoMovimiento ────────────────────────────────────────────────────
+            modelBuilder.Entity<TipoMovimiento>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── Movimiento ────────────────────────────────────────────────────────
+            modelBuilder.Entity<Movimiento>(entity =>
+            {
+                entity.HasOne(m => m.Envia)
+                    .WithMany()
+                    .HasForeignKey(m => m.EnviaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(m => m.Recibe)
+                    .WithMany()
+                    .HasForeignKey(m => m.RecibeId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(m => m.TipoMovimiento)
+                    .WithMany()
+                    .HasForeignKey(m => m.TipoMovimientoId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+            });
+
+            // ── MovimientoItem ────────────────────────────────────────────────────
+            modelBuilder.Entity<MovimientoItem>(entity =>
+            {
+                entity.Property(e => e.Producto).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Monto).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+
+                entity.HasOne(mi => mi.Movimiento)
+                    .WithMany(m => m.Items)
+                    .HasForeignKey(mi => mi.MovimientoId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
+
+            // ── TipoEvento ────────────────────────────────────────────────────────
+            modelBuilder.Entity<TipoEvento>(entity =>
+            {
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Descripcion).HasMaxLength(300);
+                entity.HasIndex(e => e.Codigo).IsUnique();
+            });
+
+            // ── Evento ────────────────────────────────────────────────────────────
+            modelBuilder.Entity<Evento>(entity =>
+            {
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+
+                entity.HasOne(e => e.TipoEvento)
+                    .WithMany()
+                    .HasForeignKey(e => e.TipoEventoId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+            });
+
+            // ── EventoMovimientos (join Evento ↔ Movimiento) ──────────────────────
+            modelBuilder.Entity<EventoMovimientos>(entity =>
+            {
+                entity.HasOne(em => em.Evento)
+                    .WithMany()
+                    .HasForeignKey(em => em.EventoId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                entity.HasOne(em => em.Movimiento)
+                    .WithMany()
+                    .HasForeignKey(em => em.MovimientoId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasIndex(em => new { em.EventoId, em.MovimientoId }).IsUnique();
+            });
+
+            // ── EventoCuenta (join Evento ↔ Cuenta) ───────────────────────────────
+            modelBuilder.Entity<EventoCuenta>(entity =>
+            {
+                entity.Property(e => e.Concepto).HasMaxLength(200);
+
+                entity.HasOne(ec => ec.Evento)
+                    .WithMany()
+                    .HasForeignKey(ec => ec.EventoId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                entity.HasOne(ec => ec.Cuenta)
+                    .WithMany()
+                    .HasForeignKey(ec => ec.CuentaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasIndex(ec => new { ec.EventoId, ec.CuentaId }).IsUnique();
+            });
+
+        }
+
+        /// <summary>
+        /// Configura automáticamente las relaciones de auditoría para todas las entidades que implementan IAudithory
+        /// </summary>
+        private void ConfigureAuditoryEntities(ModelBuilder modelBuilder)
+        {
+            var auditoryEntityTypes = Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => t.IsClass
+                         && !t.IsAbstract
+                         && typeof(IAudithory).IsAssignableFrom(t)
+                         && typeof(GenericEntity).IsAssignableFrom(t))
+                .ToList();
+
+            foreach (var entityType in auditoryEntityTypes)
+            {
+                var entity = modelBuilder.Model.FindEntityType(entityType);
+
+                if (entity == null)
+                {
+                    modelBuilder.Entity(entityType);
+                    entity = modelBuilder.Model.FindEntityType(entityType);
+                }
+
+                if (entity != null)
+                {
+                    modelBuilder.Entity(entityType)
+                        .HasOne(typeof(Usuario), "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                    modelBuilder.Entity(entityType)
+                        .HasOne(typeof(Usuario), "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired(false);
+                    modelBuilder.Entity(entityType)
+                        .HasOne(typeof(Usuario), "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired(false);
+
+                    modelBuilder.Entity(entityType)
+                        .Property("BorradoLogico")
+                        .HasDefaultValue(false);
+
+                    modelBuilder.Entity(entityType)
+                        .Property("CreatedAt")
+                        .IsRequired();
+
+                    modelBuilder.Entity(entityType)
+                        .Property("UpdatedAt")
+                        .IsRequired(false);
+
+                    modelBuilder.Entity(entityType)
+                        .Property("DeletedAt")
+                        .IsRequired(false);
+                }
+            }
+        }
+    }
+}

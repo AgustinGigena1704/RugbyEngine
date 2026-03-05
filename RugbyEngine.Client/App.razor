@@ -1,0 +1,17 @@
+﻿@using RugbyEngine.Client.Pages.Auth
+@inject NavigationManager NavManager
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    @{
+                        var returnUrl = Uri.EscapeDataString(NavManager.Uri);
+                        NavManager.NavigateTo($"/Auth/Login?returnUrl={returnUrl}");
+                    }
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+    </Router>
+</CascadingAuthenticationState>

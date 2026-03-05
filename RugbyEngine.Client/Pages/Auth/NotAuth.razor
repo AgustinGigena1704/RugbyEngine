@@ -1,0 +1,20 @@
+﻿@page "/not-auth"
+@attribute [AllowAnonymous]
+
+@inject NavigationManager NavigationManager
+
+<PageTitle>No autorizado</PageTitle>
+
+<div class="alert alert-warning" role="alert">
+    Debes iniciar sesión para acceder a este contenido.
+</div>
+
+<button class="btn btn-link" @onclick="RedirectToLogin">Ir al inicio de sesión</button>
+
+@code {
+    private void RedirectToLogin()
+    {
+        var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+        NavigationManager.NavigateTo($"/Auth/Login?returnUrl={returnUrl}");
+    }
+}

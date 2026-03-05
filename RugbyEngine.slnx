@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="RugbyEngine.Client/RugbyEngine.Client.csproj" />
+  <Project Path="RugbyEngine.Shared/RugbyEngine.Shared.csproj" Id="dbc17b95-daf4-4022-aec6-27fe43578dc1" />
+  <Project Path="RugbyEngine.Api/RugbyEngine.Api.csproj" />
+</Solution>

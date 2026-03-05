@@ -1,0 +1,37 @@
+services:
+
+  rugbyengine:
+    image: ${RUGBYENGINE_IMAGE:-rugbyengine:latest}   # local: rugbyengine:latest | VPS: ghcr.io/.../rugbyengine:latest
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DB_HOST:               ${DB_HOST}
+      DB_PORT:               ${DB_PORT}
+      DB_NAME:               ${DB_NAME}
+      DB_USER:               ${DB_USER}
+      DB_PASS:               ${DB_PASS}
+      DB_CERTIFICATE_PATH:   /app/Secrets/db.pem
+      JWT_ISSUER:            ${JWT_ISSUER}
+      JWT_AUDIENCE:          ${JWT_AUDIENCE}
+      JWT_SECRET_KEY:        ${JWT_SECRET_KEY}
+    volumes:
+      - ./Secrets/db.pem:/app/Secrets/db.pem:ro
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - rugbyengine
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
