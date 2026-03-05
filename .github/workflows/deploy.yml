@@ -72,6 +72,8 @@ jobs:
             RUGBYENGINE_IMAGE="${IMAGE}:latest" docker compose pull rugbyengine
             RUGBYENGINE_IMAGE="${IMAGE}:latest" docker compose up -d --remove-orphans
             docker image prune -f
+            sudo cp ~/rugbyengine/Caddyfile /etc/caddy/Caddyfile
+            sudo systemctl reload caddy
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
