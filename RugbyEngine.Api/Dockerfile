@@ -14,6 +14,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build-client
 WORKDIR /src
 
+RUN apt-get update && apt-get install -y --no-install-recommends python3 && rm -rf /var/lib/apt/lists/*
+
 RUN dotnet workload install wasm-tools
 
 COPY ["RugbyEngine.Shared/RugbyEngine.Shared.csproj",  "RugbyEngine.Shared/"]
