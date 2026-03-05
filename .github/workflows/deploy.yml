@@ -76,10 +76,3 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
           IMAGE: ${{ env.IMAGE }}
-
-            RUGBYENGINE_IMAGE="$IMAGE:latest" docker compose up -d --remove-orphans
-            docker image prune -f
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          IMAGE: ${{ env.IMAGE }}
