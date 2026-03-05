@@ -170,8 +170,14 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Servir Blazor WASM desde wwwroot (copiado por el Dockerfile)
+var mimeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+mimeProvider.Mappings[".dat"]    = "application/octet-stream";
+mimeProvider.Mappings[".wasm"]   = "application/wasm";
+mimeProvider.Mappings[".blat"]   = "application/octet-stream";
+mimeProvider.Mappings[".webcil"] = "application/octet-stream";
+
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = mimeProvider });
 
 app.UseSwagger();
 
@@ -185,10 +191,7 @@ app.MapScalarApiReference("/docs", options =>
 });
 
 
-app.MapGet("/", () => Results.Redirect("/docs", permanent: false))
-   .ExcludeFromDescription();
-
-// Leer headers de Caddy/nginx (X-Forwarded-For, X-Forwarded-Proto)
+// Leer headers de Caddy/nginx
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
