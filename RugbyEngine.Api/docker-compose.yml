@@ -1,9 +1,9 @@
 services:
 
   rugbyengine:
-    image: ${RUGBYENGINE_IMAGE:-rugbyengine:latest}   # local: rugbyengine:latest | VPS: ghcr.io/.../rugbyengine:latest
-    expose:
-      - "8080"
+    image: ${RUGBYENGINE_IMAGE:-rugbyengine:latest}
+    ports:
+      - "127.0.0.1:8080:8080"   # solo accesible desde localhost → Caddy hace el proxy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       DB_HOST:               ${DB_HOST}
@@ -18,20 +18,3 @@ services:
     volumes:
       - ./Secrets/db.pem:/app/Secrets/db.pem:ro
     restart: unless-stopped
-
-  caddy:
-    image: caddy:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - rugbyengine
-    restart: unless-stopped
-
-volumes:
-  caddy_data:
-  caddy_config:
