@@ -1,0 +1,350 @@
+﻿@page "/Admin/Registro/Personas"
+@attribute [Authorize]
+
+@inject IPersonaService PersonaService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Personas</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Gestión de Personas</MudText>
+
+<MudPaper Elevation="2" Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+        <MudTextField T="string"
+                      @bind-Value="_searchText"
+                      Placeholder="Buscar por nombre o documento..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined"
+                      Clearable="true"
+                      Immediate="true"
+                      Class="flex-grow-1" />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="OpenCreateDialogAsync">
+            Nueva Persona
+        </MudButton>
+    </MudStack>
+
+    <MudTable Items="@FilteredPersonas"
+              Dense="true"
+              Hover="true"
+              Striped="true"
+              Loading="@_isLoading"
+              LoadingProgressColor="Color.Primary"
+              SortLabel="Ordenar por">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.Apellidos)">Apellidos</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.Nombres)">Nombres</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.Documento)">Documento</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.FechaNacimiento)">Fecha Nac.</MudTableSortLabel></MudTh>
+            <MudTh>Teléfono</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh Style="text-align:right">Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Apellidos">@context.Apellidos</MudTd>
+            <MudTd DataLabel="Nombres">@context.Nombres</MudTd>
+            <MudTd DataLabel="Documento">@context.Documento</MudTd>
+            <MudTd DataLabel="Fecha Nac.">@context.FechaNacimiento.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd DataLabel="Teléfono">@(context.Telefono ?? "-")</MudTd>
+            <MudTd DataLabel="Email">@(context.Email ?? "-")</MudTd>
+            <MudTd Style="text-align:right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Title="Editar"
+                               OnClick="() => OpenEditDialogAsync(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               Title="Eliminar"
+                               OnClick="() => ConfirmDeleteAsync(context)" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-4">No se encontraron personas.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+<!-- Dialog: Alta / Modificación -->
+<MudDialog @bind-Visible="_dialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(_editingId.HasValue ? Icons.Material.Filled.Edit : Icons.Material.Filled.PersonAdd)" Class="mr-2" />
+            @(_editingId.HasValue ? "Editar Persona" : "Nueva Persona")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="_formModel">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Nombres"
+                                  @bind-Value="_formModel.Nombres"
+                                  Required="true"
+                                  RequiredError="El nombre es requerido"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Apellidos"
+                                  @bind-Value="_formModel.Apellidos"
+                                  Required="true"
+                                  RequiredError="El apellido es requerido"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Documento"
+                                  @bind-Value="_formModel.Documento"
+                                  Required="true"
+                                  RequiredError="El documento es requerido"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Fecha de Nacimiento"
+                                   @bind-Date="_fechaNacimientoDate"
+                                   Required="true"
+                                   RequiredError="La fecha de nacimiento es requerida"
+                                   Variant="Variant.Outlined"
+                                   DateFormat="dd/MM/yyyy"
+                                   MaxDate="DateTime.Today" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Cobertura médica"
+                                  @bind-Value="_formModel.Cobertura"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Nro. Afiliado"
+                                  @bind-Value="_formModel.NroAfiliado"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Teléfono"
+                                  @bind-Value="_formModel.Telefono"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Email"
+                                  @bind-Value="_formModel.Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string"
+                                  Label="Domicilio"
+                                  @bind-Value="_formModel.Domicilio"
+                                  Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Disabled="@_isSaving">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="SaveAsync"
+                   Disabled="@_isSaving">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Guardar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Dialog: Confirmación de baja -->
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.ExtraSmall })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Class="mr-2" />
+            Confirmar eliminación
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>¿Está seguro que desea eliminar a <strong>@_deletingPersona?.Apellidos, @_deletingPersona?.Nombres</strong>?</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Esta acción no se puede deshacer.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false" Disabled="@_isDeleting">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   OnClick="ExecuteDeleteAsync"
+                   Disabled="@_isDeleting">
+            @if (_isDeleting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Eliminar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // --- Lista ---
+    private List<PersonaResponse> _personas = [];
+    private bool _isLoading = true;
+    private string _searchText = string.Empty;
+
+    private IEnumerable<PersonaResponse> FilteredPersonas => string.IsNullOrWhiteSpace(_searchText)
+        ? _personas
+        : _personas.Where(p =>
+            p.Nombres.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            p.Apellidos.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            p.Documento.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+    // --- Dialog Alta/Modificación ---
+    private bool _dialogVisible;
+    private bool _isSaving;
+    private int? _editingId;
+    private readonly PersonaRequest _formModel = new();
+    private DateTime? _fechaNacimientoDate;
+    private MudForm _form = null!;
+
+    private readonly DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    // --- Dialog Baja ---
+    private bool _deleteDialogVisible;
+    private bool _isDeleting;
+    private PersonaResponse? _deletingPersona;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPersonasAsync();
+    }
+
+    private async Task LoadPersonasAsync()
+    {
+        _isLoading = true;
+        _personas = await PersonaService.GetAllAsync();
+        _isLoading = false;
+    }
+
+    // --- Alta ---
+    private void OpenCreateDialogAsync()
+    {
+        _editingId = null;
+        ResetForm();
+        _dialogVisible = true;
+    }
+
+    // --- Modificación ---
+    private void OpenEditDialogAsync(PersonaResponse persona)
+    {
+        _editingId = persona.Id;
+        _formModel.Nombres = persona.Nombres;
+        _formModel.Apellidos = persona.Apellidos;
+        _formModel.Documento = persona.Documento;
+        _formModel.FechaNacimiento = persona.FechaNacimiento;
+        _fechaNacimientoDate = persona.FechaNacimiento.ToDateTime(TimeOnly.MinValue);
+        _formModel.Cobertura = persona.Cobertura;
+        _formModel.NroAfiliado = persona.NroAfiliado;
+        _formModel.Telefono = persona.Telefono;
+        _formModel.Email = persona.Email;
+        _formModel.Domicilio = persona.Domicilio;
+        _dialogVisible = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        await _form.Validate();
+        if (!_form.IsValid)
+            return;
+
+        if (_fechaNacimientoDate.HasValue)
+            _formModel.FechaNacimiento = DateOnly.FromDateTime(_fechaNacimientoDate.Value);
+
+        _isSaving = true;
+
+        PersonaResponse? result;
+        if (_editingId.HasValue)
+        {
+            result = await PersonaService.UpdateAsync(_editingId.Value, _formModel);
+        }
+        else
+        {
+            result = await PersonaService.CreateAsync(_formModel);
+        }
+
+        _isSaving = false;
+
+        if (result is not null)
+        {
+            Snackbar.Add(_editingId.HasValue ? "Persona actualizada correctamente." : "Persona creada correctamente.", Severity.Success);
+            CloseDialog();
+            await LoadPersonasAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo guardar. Verifique los datos o intente más tarde.", Severity.Error);
+        }
+    }
+
+    private void CloseDialog()
+    {
+        _dialogVisible = false;
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _formModel.Nombres = string.Empty;
+        _formModel.Apellidos = string.Empty;
+        _formModel.Documento = string.Empty;
+        _formModel.FechaNacimiento = default;
+        _fechaNacimientoDate = null;
+        _formModel.Cobertura = null;
+        _formModel.NroAfiliado = null;
+        _formModel.Telefono = null;
+        _formModel.Email = null;
+        _formModel.Domicilio = null;
+    }
+
+    // --- Baja ---
+    private void ConfirmDeleteAsync(PersonaResponse persona)
+    {
+        _deletingPersona = persona;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task ExecuteDeleteAsync()
+    {
+        if (_deletingPersona is null)
+            return;
+
+        _isDeleting = true;
+        var success = await PersonaService.DeleteAsync(_deletingPersona.Id);
+        _isDeleting = false;
+
+        if (success)
+        {
+            Snackbar.Add("Persona eliminada correctamente.", Severity.Success);
+            _deleteDialogVisible = false;
+            _deletingPersona = null;
+            await LoadPersonasAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo eliminar la persona. Intente más tarde.", Severity.Error);
+        }
+    }
+}

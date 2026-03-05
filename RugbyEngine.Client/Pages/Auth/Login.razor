@@ -1,0 +1,129 @@
+﻿@page "/Auth/Login"
+@attribute [AllowAnonymous]
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<MudGrid Justify="Justify.Center" Class="mt-8">
+    <MudItem xs="12" sm="8" md="6" lg="4">
+        <MudPaper Elevation="4" Class="pa-6">
+            <MudStack Spacing="4">
+                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary">
+                    RugbyEngine
+                </MudText>
+                <MudText Typo="Typo.h6" Align="Align.Center">
+                    Inicia sesión para continuar
+                </MudText>
+
+                @if (!string.IsNullOrWhiteSpace(_statusMessage))
+                {
+                    <MudAlert Severity="@_statusSeverity" Dense="true">
+                        @_statusMessage
+                    </MudAlert>
+                }
+
+                <MudTextField T="string" 
+                              Label="Usuario" 
+                              @bind-Value="_model.Username" 
+                              Required="true" 
+                              RequiredError="El usuario es requerido"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                <MudTextField T="string" 
+                              Label="Contraseña" 
+                              @bind-Value="_model.Password" 
+                              Required="true" 
+                              RequiredError="La contraseña es requerida"
+                              InputType="InputType.Password" 
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           Disabled="@_isSubmitting" 
+                           FullWidth="true"
+                           Size="Size.Large"
+                           OnClick="HandleLoginAsync">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    @_buttonText
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private readonly LoginDTO _model = new();
+    private bool _isSubmitting;
+    private string? _statusMessage;
+    private Severity _statusSeverity = Severity.Error;
+    private string? _returnUrl;
+
+    private string _buttonText => _isSubmitting ? "Ingresando..." : "Ingresar";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _returnUrl = ExtractReturnUrl();
+
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            NavigationManager.NavigateTo(_returnUrl ?? "/", true);
+        }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        if (_isSubmitting)
+        {
+            return;
+        }
+
+        _isSubmitting = true;
+        _statusMessage = null;
+        StateHasChanged();
+
+        var response = await AuthService.LoginAsync(_model);
+
+        if (response.Success)
+        {
+            _isSubmitting = false;
+            NavigationManager.NavigateTo(_returnUrl ?? "/", true);
+            return;
+        }
+
+        _statusSeverity = Severity.Error;
+        _statusMessage = string.IsNullOrWhiteSpace(response.Message)
+            ? "No se pudo iniciar sesión."
+            : response.Message;
+        _isSubmitting = false;
+    }
+
+    private string? ExtractReturnUrl()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (string.IsNullOrEmpty(uri.Query))
+        {
+            return null;
+        }
+
+        var query = uri.Query.TrimStart('?');
+        foreach (var parameter in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = parameter.Split('=', 2);
+            if (parts.Length == 2 && parts[0].Equals("returnUrl", StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.UnescapeDataString(parts[1]);
+            }
+        }
+
+        return null;
+    }
+}

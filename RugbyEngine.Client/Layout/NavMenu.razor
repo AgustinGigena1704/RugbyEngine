@@ -1,0 +1,204 @@
+﻿@using MudBlazor
+@using RugbyEngine.Shared
+@using RugbyEngine.Client.Services
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject MainMenuService MenuService
+@implements IDisposable
+
+<MudText Typo="Typo.h6" Class="mr-4" Style="color: white;">RugbyEngine</MudText>
+
+<AuthorizeView>
+    <Authorized>
+        @if (_menus != null && _menus.Any())
+        {
+            @foreach (var menu in _menus)
+            {
+                @RenderMenu(menu)
+            }
+        }
+        else
+        {
+            @for (int i = 0; i < 4; i++)
+            {
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="36px" Class="mr-2" />
+            }
+        }
+
+        <MudSpacer /> 
+
+        <MudText Style="color: white; margin-right: 8px;">@GetUserDisplayName(_authState?.User)</MudText>
+
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" 
+                 Color="Color.Inherit"
+                 AnchorOrigin="Origin.BottomRight" 
+                 TransformOrigin="Origin.TopRight"
+                 AriaLabel="Menú de usuario">
+            <MudMenuItem Href="/account/profile" Icon="@Icons.Material.Filled.Person">Perfil</MudMenuItem>
+            <MudMenuItem Href="/account/settings" Icon="@Icons.Material.Filled.Settings">Configuración</MudMenuItem>
+            <MudDivider />
+            <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.ExitToApp" Disabled="@_isLoggingOut">
+                Salir
+            </MudMenuItem>
+        </MudMenu>
+    </Authorized>
+    <NotAuthorized>
+        <MudSpacer />
+        
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool _isLoggingOut;
+    private List<MenuDTO>? _menus;
+    private AuthenticationState? _authState;
+    private bool _isLoading = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private static string GetUserDisplayName(ClaimsPrincipal? user)
+    {
+        return user?.FindFirst("username")?.Value ?? user?.Identity?.Name ?? "Usuario";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask != null)
+        {
+            _authState = await AuthenticationStateTask;
+            if (_authState?.User?.Identity?.IsAuthenticated == true)
+            {
+                await LoadMenuAsync();
+            }
+        }
+
+        AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        MenuService.ActiveMenuChanged += OnActiveMenuChanged;
+    }
+
+    private async Task LoadMenuAsync()
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            _menus = await MenuService.GetMenuTreeAsync();
+
+            _isLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando menú: {ex.Message}");
+            _menus = new List<MenuDTO>();
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void OnAuthenticationStateChanged()
+    {
+        try
+        {
+            if (AuthenticationStateTask != null)
+            {
+                _authState = await AuthenticationStateTask;
+                if (_authState?.User?.Identity?.IsAuthenticated == true)
+                {
+                    await MenuService.InvalidateAsync();
+                    _menus = await MenuService.GetMenuTreeAsync();
+                    StateHasChanged();
+                }
+                else
+                {
+                    _menus = null;
+                    MenuService.ClearCache();
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en OnAuthenticationStateChanged: {ex.Message}");
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        if (_isLoggingOut)
+        {
+            return;
+        }
+
+        _isLoggingOut = true;
+        _menus = null;
+        MenuService.ClearCache();
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/Auth/Login", true);
+        _isLoggingOut = false;
+    }
+
+    private void NavigateTo(string uri)
+    {
+        NavigationManager.NavigateTo(uri, forceLoad: false);
+    }
+
+    public void Dispose()
+    {
+        AuthService.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        MenuService.ActiveMenuChanged -= OnActiveMenuChanged;
+    }
+
+    private void OnActiveMenuChanged()
+    {
+        StateHasChanged();
+    }
+
+    private RenderFragment RenderMenu(MenuDTO menu) => __builder =>
+    {
+        var iconToUse = !string.IsNullOrEmpty(menu.Icon) ? menu.Icon : Icons.Material.Filled.Circle;
+        var isActive = MenuService.ActiveLevel0 == menu;
+        var activatorClass = isActive ? "nav-menu-active" : "";
+
+        if (menu.Items != null && menu.Items.Any())
+        {
+            <MudMenu Color="Color.Inherit"
+                     AnchorOrigin="Origin.BottomLeft"
+                     Label="@menu.Title"
+                     StartIcon="@iconToUse"
+                     EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                     ActivatorClassname="@activatorClass">
+                @foreach (var subMenu in menu.Items)
+                {
+                    var subIcon = !string.IsNullOrEmpty(subMenu.Icon) ? subMenu.Icon : Icons.Material.Filled.Circle;
+
+                    if (!string.IsNullOrEmpty(subMenu.Route))
+                    {
+                        <MudMenuItem Href="@subMenu.Route" Icon="@subIcon">
+                            @subMenu.Title
+                        </MudMenuItem>
+                    }
+                    else
+                    {
+                        var firstChildRoute = subMenu.Items
+                            .FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route
+                            ?? string.Empty;
+                        <MudMenuItem OnClick="@(() => NavigateTo(firstChildRoute))"
+                                     Icon="@subIcon"
+                                     Disabled="@(string.IsNullOrEmpty(firstChildRoute))">
+                            @subMenu.Title
+                        </MudMenuItem>
+                    }
+                }
+            </MudMenu>
+        }
+        else
+        {
+            <MudButton Href="@menu.Route" StartIcon="@iconToUse" Color="Color.Inherit" Class="@activatorClass">
+                @menu.Title
+            </MudButton>
+        }
+    };
+}
