@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
+using RugbyEngine.Shared.Menus;
 
 namespace RugbyEngine.Api.Data.Repositories
 {
@@ -11,8 +12,6 @@ namespace RugbyEngine.Api.Data.Repositories
 
         public async Task<List<Menu>> GetMenusByUser(Usuario usuario, CancellationToken cancellationToken = default)
         {
-            // Cargar los IDs de permisos desde la BD para evitar depender de
-            // propiedades de navegación que pueden no estar cargadas (Perfiles ? Permisos).
             var permisosIds = await _context.Set<Usuario>()
                 .Where(u => u.Id == usuario.Id)
                 .SelectMany(u => u.Perfiles!)
@@ -21,11 +20,24 @@ namespace RugbyEngine.Api.Data.Repositories
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            // Traer menús sin permiso (generales) o con permisos que el usuario tiene
             return await _dbSet
                 .Where(m => m.DeletedAt == null &&
                            (m.PermisoId == null || permisosIds.Contains(m.PermisoId.Value)))
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<RouteRoleDTO>> GetAllRouteRolesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Where(m => m.DeletedAt == null && !string.IsNullOrEmpty(m.Ruta) && m.PermisoId != null)
+                .Select(m => new RouteRoleDTO
+                {
+                    Route = m.Ruta!,
+                    Role = m.Permiso!.Codigo
+                })
+                .ToListAsync(cancellationToken);
+        }
     }
 }
+
+

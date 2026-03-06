@@ -1,0 +1,66 @@
+@inject MainMenuService MenuService
+@inject NavigationManager NavManager
+@implements IDisposable
+
+@if (!string.IsNullOrEmpty(_requiredRole) && !_hasRole)
+{
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mt-4">
+        No tienes permisos para acceder a esta sección.
+    </MudAlert>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private string? _requiredRole;
+    private bool _hasRole = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        MenuService.ActiveMenuChanged += OnMenuChanged;
+        NavManager.LocationChanged += OnLocationChanged;
+        await EvaluateAsync(NavManager.Uri);
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await EvaluateAsync(e.Location);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnMenuChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            await EvaluateAsync(NavManager.Uri);
+            StateHasChanged();
+        });
+    }
+
+    private async Task EvaluateAsync(string uri)
+    {
+        var path = new Uri(uri).AbsolutePath;
+        _requiredRole = MenuService.GetRequiredRoleForRoute(path);
+
+        if (!string.IsNullOrEmpty(_requiredRole) && AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            _hasRole = authState.User.IsInRole(_requiredRole);
+        }
+        else
+        {
+            _hasRole = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        MenuService.ActiveMenuChanged -= OnMenuChanged;
+        NavManager.LocationChanged -= OnLocationChanged;
+    }
+}

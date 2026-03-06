@@ -1,0 +1,47 @@
+@using MudBlazor
+@using RugbyEngine.Client.Services
+@using System.Security.Claims
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <MudDrawerHeader>
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="py-2" Style="width:100%">
+                <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle1" Align="Align.Center">@GetUserDisplayName(context.User)</MudText>
+            </MudStack>
+        </MudDrawerHeader>
+        <MudDivider Style="max-height:1px" />
+        <div style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+            <MudNavMenu>
+                <MudNavLink Icon="@Icons.Material.Filled.Person" Href="/account/profile">Perfil</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Settings" Href="/account/settings">Configuración</MudNavLink>
+            </MudNavMenu>
+            <div style="margin-top:auto;">
+                <MudDivider />
+                <MudNavMenu>
+                    <MudNavLink Icon="@Icons.Material.Filled.ExitToApp" OnClick="LogoutAsync" Disabled="@_isLoggingOut">
+                        Salir
+                    </MudNavLink>
+                </MudNavMenu>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private bool _isLoggingOut;
+
+    private static string GetUserDisplayName(ClaimsPrincipal? user)
+        => user?.FindFirst("username")?.Value ?? user?.Identity?.Name ?? "Usuario";
+
+    private async Task LogoutAsync()
+    {
+        if (_isLoggingOut) return;
+        _isLoggingOut = true;
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/Auth/Login", true);
+        _isLoggingOut = false;
+    }
+}

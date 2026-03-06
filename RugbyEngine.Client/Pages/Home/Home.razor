@@ -6,20 +6,6 @@
 <AuthorizeView>
     <Authorized Context="authContext">
         <h1>Bienvenido!</h1>
-        <p>Tu identificador es <strong>@(authContext.User.FindFirst("id")?.Value ?? "N/D")</strong>.</p>
-
-        @if (HasRoles(authContext.User))
-        {
-            <div class="mt-3">
-                <p>Roles asignados:</p>
-                <ul>
-                    @foreach (var role in GetRoles(authContext.User))
-                    {
-                        <li>@role</li>
-                    }
-                </ul>
-            </div>
-        }
     </Authorized>
     <NotAuthorized>
         <p>Validando sesión...</p>

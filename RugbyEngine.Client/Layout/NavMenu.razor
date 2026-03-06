@@ -10,37 +10,25 @@
 
 <AuthorizeView>
     <Authorized>
-        @if (_menus != null && _menus.Any())
-        {
-            @foreach (var menu in _menus)
+        <MudHidden Breakpoint="Breakpoint.Xs">
+            @if (_menus != null && _menus.Any())
             {
-                @RenderMenu(menu)
+                @foreach (var menu in _menus)
+                {
+                    @RenderMenu(menu)
+                }
             }
-        }
-        else
-        {
-            @for (int i = 0; i < 4; i++)
+            else
             {
-                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="36px" Class="mr-2" />
+                @for (int i = 0; i < 4; i++)
+                {
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="36px" Class="mr-2" />
+                }
             }
-        }
+        </MudHidden>
 
         <MudSpacer /> 
 
-        <MudText Style="color: white; margin-right: 8px;">@GetUserDisplayName(_authState?.User)</MudText>
-
-        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" 
-                 Color="Color.Inherit"
-                 AnchorOrigin="Origin.BottomRight" 
-                 TransformOrigin="Origin.TopRight"
-                 AriaLabel="Menú de usuario">
-            <MudMenuItem Href="/account/profile" Icon="@Icons.Material.Filled.Person">Perfil</MudMenuItem>
-            <MudMenuItem Href="/account/settings" Icon="@Icons.Material.Filled.Settings">Configuración</MudMenuItem>
-            <MudDivider />
-            <MudMenuItem OnClick="LogoutAsync" Icon="@Icons.Material.Filled.ExitToApp" Disabled="@_isLoggingOut">
-                Salir
-            </MudMenuItem>
-        </MudMenu>
     </Authorized>
     <NotAuthorized>
         <MudSpacer />
