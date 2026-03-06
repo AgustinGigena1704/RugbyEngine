@@ -1,0 +1,186 @@
+@page "/account/profile"
+@attribute [Authorize]
+@using RugbyEngine.Shared.Perfiles
+@using System.Security.Claims
+@inject IPerfilService PerfilService
+@inject ISnackbar Snackbar
+
+<PageTitle>Mi Perfil</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Mi Perfil</MudText>
+
+<AuthorizeView>
+    <Authorized Context="authContext">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountCircle"
+                                 Size="Size.Large"
+                                 Color="Color.Primary"
+                                 Style="font-size: 4rem;" />
+                        <MudText Typo="Typo.h6">@GetDisplayName(authContext.User)</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+            <AuthorizeView Roles="admin" Context="adminContext">
+                <Authorized>
+                    <MudItem xs="12" md="8">
+                        <MudPaper Elevation="2" Class="pa-4" Style="height:100%;">
+                            @if (_loading)
+                            {
+                                <MudSkeleton Width="60%" Height="28px" Class="mb-4" />
+                                @for (int i = 0; i < 3; i++)
+                                {
+                                    <MudSkeleton Width="100%" Height="44px" Class="mb-2" />
+                                }
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h6" Class="mb-2">Perfiles asignados</MudText>
+
+                                @if (_mine.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                                        Sin perfiles asignados.
+                                    </MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="PerfilDTO" Dense="true" Class="mb-2">
+                                        @foreach (var p in _mine)
+                                        {
+                                            <MudListItem>
+                                                <div class="d-flex align-center justify-space-between">
+                                                    <div>
+                                                        <MudText Typo="Typo.body1">@p.Nombre</MudText>
+                                                        @if (!string.IsNullOrEmpty(p.Descripcion))
+                                                        {
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                                        }
+                                                    </div>
+                                                    <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
+                                                                   Color="Color.Error"
+                                                                   Size="Size.Small"
+                                                                   Disabled="@_busy"
+                                                                   OnClick="@(() => RemoveAsync(p))"
+                                                                   Title="Retirar perfil" />
+                                                </div>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                }
+
+                                <MudDivider Class="my-3" />
+
+                                <MudText Typo="Typo.h6" Class="mb-2">Perfiles disponibles</MudText>
+
+                                @if (_available.Count == 0)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        No hay perfiles disponibles para agregar.
+                                    </MudText>
+                                }
+                                else
+                                {
+                                    <MudList T="PerfilDTO" Dense="true">
+                                        @foreach (var p in _available)
+                                        {
+                                            <MudListItem>
+                                                <div class="d-flex align-center justify-space-between">
+                                                    <div>
+                                                        <MudText Typo="Typo.body1">@p.Nombre</MudText>
+                                                        @if (!string.IsNullOrEmpty(p.Descripcion))
+                                                        {
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                                        }
+                                                    </div>
+                                                    <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                                   Color="Color.Success"
+                                                                   Size="Size.Small"
+                                                                   Disabled="@_busy"
+                                                                   OnClick="@(() => AssignAsync(p))"
+                                                                   Title="Agregar perfil" />
+                                                </div>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                }
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </Authorized>
+                <NotAuthorized>
+                    <MudItem xs="12" md="8">
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                            No tienes permiso para gestionar perfiles.
+                        </MudAlert>
+                    </MudItem>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudGrid>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private List<PerfilDTO> _all = [];
+    private List<PerfilDTO> _mine = [];
+    private List<PerfilDTO> _available = [];
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var allTask = PerfilService.GetAllAsync();
+        var mineTask = PerfilService.GetMineAsync();
+        await Task.WhenAll(allTask, mineTask);
+        _all = allTask.Result;
+        _mine = mineTask.Result;
+        _available = _all.Where(p => _mine.All(m => m.Id != p.Id)).ToList();
+        _loading = false;
+    }
+
+    private async Task AssignAsync(PerfilDTO perfil)
+    {
+        _busy = true;
+        var ok = await PerfilService.AssignAsync(perfil.Id);
+        if (ok)
+        {
+            _mine.Add(perfil);
+            _available.Remove(perfil);
+            Snackbar.Add($"Perfil \"{perfil.Nombre}\" agregado.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"No se pudo agregar el perfil \"{perfil.Nombre}\".", Severity.Error);
+        }
+        _busy = false;
+    }
+
+    private async Task RemoveAsync(PerfilDTO perfil)
+    {
+        _busy = true;
+        var ok = await PerfilService.UnassignAsync(perfil.Id);
+        if (ok)
+        {
+            _mine.Remove(perfil);
+            _available.Add(perfil);
+            Snackbar.Add($"Perfil \"{perfil.Nombre}\" retirado.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"No se pudo retirar el perfil \"{perfil.Nombre}\".", Severity.Error);
+        }
+        _busy = false;
+    }
+
+    private static string GetDisplayName(ClaimsPrincipal user)
+        => user.FindFirst("username")?.Value ?? user.Identity?.Name ?? "Usuario";
+}

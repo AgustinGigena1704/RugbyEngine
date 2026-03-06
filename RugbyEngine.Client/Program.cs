@@ -26,6 +26,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStatePr
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<MainMenuService>();
 builder.Services.AddScoped<IPersonaService, PersonaService>();
+builder.Services.AddScoped<IPerfilService, PerfilService>();
 builder.Services.AddMudServices();
 
 await builder.Build().RunAsync();
