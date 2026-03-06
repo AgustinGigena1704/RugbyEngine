@@ -1,5 +1,9 @@
+using RugbyEngine.Api.Data.Attributes;
+using RugbyEngine.Api.Data.Repositories;
+
 namespace RugbyEngine.Api.Data.Entities
 {
+    [Repository(typeof(PerfilRepository))]
     public class Perfil : GenericEntity, IAudithory
     {
         public string Nombre { get; set; } = null!;
