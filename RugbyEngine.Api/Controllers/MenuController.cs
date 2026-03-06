@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
@@ -36,6 +37,7 @@ namespace RugbyEngine.Api.Controllers
                     ToolTip = menu.ToolTip ?? string.Empty,
                     Icon = menu.Icono ?? string.Empty,
                     Route = menu.Ruta ?? string.Empty,
+                    Role = menu.Permiso?.Codigo,
                     Items = new List<MenuDTO>()
                 };
             }
@@ -54,6 +56,14 @@ namespace RugbyEngine.Api.Controllers
             }
 
             return Ok(rootMenus);
+        }
+
+        [HttpGet("RouteRoles")]
+        [Authorize]
+        public async Task<IActionResult> GetRouteRoles()
+        {
+            var routeRoles = await _entityManager.GetRepository<MenuRepository>().GetAllRouteRolesAsync();
+            return Ok(routeRoles);
         }
     }
 }
