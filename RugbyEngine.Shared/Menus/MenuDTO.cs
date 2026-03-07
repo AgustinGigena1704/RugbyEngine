@@ -1,4 +1,4 @@
-﻿namespace RugbyEngine.Shared.Menus
+namespace RugbyEngine.Shared.Menus
 {
     public class MenuDTO
     {
