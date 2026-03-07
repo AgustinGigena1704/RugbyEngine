@@ -1,4 +1,4 @@
-﻿using Microsoft.JSInterop;
+using Microsoft.JSInterop;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
