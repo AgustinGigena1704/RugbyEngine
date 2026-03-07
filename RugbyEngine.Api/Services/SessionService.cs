@@ -30,7 +30,7 @@ namespace RugbyEngine.Api.Services
 
                 if (usuario == null)
                 {
-                    _logger.LogWarning("Intento de login fallido. Usuario no encontrado: {Username}", username);
+                    _logger.LogWarning("Intento de login fallido. Usuario no encontrado: {Username}", SanitizeForLogging(username));
                     return (null, "Usuario o contrase�a incorrectos");
                 }
 
@@ -38,12 +38,12 @@ namespace RugbyEngine.Api.Services
 
                 if (!dbPasswordIsHashed)
                 {
-                    _logger.LogWarning("Password en DB no est� hasheado para usuario: {Username}. Hasheando autom�ticamente...", username);
+                    _logger.LogWarning("Password en DB no est� hasheado para usuario: {Username}. Hasheando autom�ticamente...", SanitizeForLogging(username));
 
                     usuario.PasswordHash = _passwordHasher.HashPassword(usuario.PasswordHash);
                     await repository.UpdateAsync(usuario, usuario);
 
-                    _logger.LogInformation("Password hasheado y actualizado para usuario: {Username}", username);
+                    _logger.LogInformation("Password hasheado y actualizado para usuario: {Username}", SanitizeForLogging(username));
                 }
 
                 bool frontendPasswordIsHashed = IsPasswordHashed(password);
@@ -52,7 +52,7 @@ namespace RugbyEngine.Api.Services
 
                 if (frontendPasswordIsHashed)
                 {
-                    _logger.LogWarning("El frontend envi� un password hasheado para usuario: {Username}", username);
+                    _logger.LogWarning("El frontend envi� un password hasheado para usuario: {Username}", SanitizeForLogging(username));
                     isPasswordValid = password == usuario.PasswordHash;
                 }
                 else
@@ -62,30 +62,30 @@ namespace RugbyEngine.Api.Services
 
                 if (!isPasswordValid)
                 {
-                    _logger.LogWarning("Intento de login fallido. Contrase�a incorrecta para usuario: {Username}", username);
+                    _logger.LogWarning("Intento de login fallido. Contrase�a incorrecta para usuario: {Username}", SanitizeForLogging(username));
                     return (null, "Usuario o contrase�a incorrectos");
                 }
 
                 usuario.LastLogin = DateTime.UtcNow;
                 await repository.UpdateAsync(usuario, usuario);
 
-                _logger.LogInformation("Login exitoso para usuario ID: {UserId}, Username: {Username}", usuario.Id, usuario.Username);
+                _logger.LogInformation("Login exitoso para usuario ID: {UserId}, Username: {Username}", usuario.Id, SanitizeForLogging(usuario.Username));
 
                 return (usuario.Id, null);
             }
             catch (NpgsqlException ex)
             {
-                _logger.LogError(ex, "Error de conexi�n a la base de datos al intentar login para usuario: {Username}", username);
+                _logger.LogError(ex, "Error de conexi�n a la base de datos al intentar login para usuario: {Username}", SanitizeForLogging(username));
                 return (null, "Error de conexi�n con la base de datos. Por favor, intente nuevamente.");
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "Error al actualizar la base de datos para usuario: {Username}", username);
+                _logger.LogError(ex, "Error al actualizar la base de datos para usuario: {Username}", SanitizeForLogging(username));
                 return (null, "Error al procesar la solicitud. Por favor, intente nuevamente.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado al validar credenciales para usuario: {Username}", username);
+                _logger.LogError(ex, "Error inesperado al validar credenciales para usuario: {Username}", SanitizeForLogging(username));
                 return (null, "Error interno del servidor. Por favor, contacte al administrador.");
             }
         }
@@ -96,6 +96,16 @@ namespace RugbyEngine.Api.Services
                 return false;
 
             return BcryptPattern.IsMatch(password);
+        }
+
+        private string SanitizeForLogging(string input)
+        {
+            if (input == null)
+                return string.Empty;
+
+            // Remove line breaks to prevent log forging via user-controlled input.
+            return input.Replace("\r", string.Empty)
+                        .Replace("\n", string.Empty);
         }
     }
 }
