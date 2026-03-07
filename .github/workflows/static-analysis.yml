@@ -86,8 +86,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [codeql, build-and-audit]
     # Skipped automatically by needs semantics when Group 1 fails.
-    # Also skipped on workflow_dispatch (no code changes to review).
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/production'
     permissions:
       contents: write
     env:
@@ -127,9 +125,9 @@ jobs:
           dotnet format whitespace RugbyEngine.slnx --verify-no-changes $INCLUDE_FLAGS $EXCLUDE_FLAGS
         continue-on-error: true
 
-      # Auto-fix only on PRs — cannot push to a protected production branch
+      # Auto-fix on any branch except production — cannot push to a protected branch
       - name: Apply style fixes
-        if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
+        if: steps.fmt.outcome == 'failure' && github.ref != 'refs/heads/production'
         run: |
           set -f
           INCLUDE_FLAGS=$(echo "$FORMAT_INCLUDE" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//' | sed 's/^/--include /' | tr '\n' ' ')
@@ -137,7 +135,7 @@ jobs:
           dotnet format whitespace RugbyEngine.slnx $INCLUDE_FLAGS $EXCLUDE_FLAGS
 
       - name: Commit auto-style fixes
-        if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
+        if: steps.fmt.outcome == 'failure' && github.ref != 'refs/heads/production'
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
@@ -150,9 +148,9 @@ jobs:
       - name: Fail on style issues
         if: steps.fmt.outcome == 'failure'
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "${{ github.ref }}" != "refs/heads/production" ]; then
             echo "::error::Code style issues were found and auto-fixed."
-            echo "::error::A new commit has been pushed to this PR — the workflow will re-run automatically."
+            echo "::error::A new commit has been pushed to this branch — the workflow will re-run automatically."
           else
             echo "::error::Code style issues found on production. Fix locally and re-push."
           fi
