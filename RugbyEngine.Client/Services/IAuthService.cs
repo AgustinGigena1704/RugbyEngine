@@ -1,4 +1,4 @@
-﻿using RugbyEngine.Shared.Auth;
+using RugbyEngine.Shared.Auth;
 using System.Threading;
 using System.Threading.Tasks;
 

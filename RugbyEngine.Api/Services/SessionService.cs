@@ -31,14 +31,14 @@ namespace RugbyEngine.Api.Services
                 if (usuario == null)
                 {
                     _logger.LogWarning("Intento de login fallido. Usuario no encontrado: {Username}", username);
-                    return (null, "Usuario o contraseña incorrectos");
+                    return (null, "Usuario o contraseï¿½a incorrectos");
                 }
 
                 bool dbPasswordIsHashed = IsPasswordHashed(usuario.PasswordHash);
 
                 if (!dbPasswordIsHashed)
                 {
-                    _logger.LogWarning("Password en DB no está hasheado para usuario: {Username}. Hasheando automáticamente...", username);
+                    _logger.LogWarning("Password en DB no estï¿½ hasheado para usuario: {Username}. Hasheando automï¿½ticamente...", username);
 
                     usuario.PasswordHash = _passwordHasher.HashPassword(usuario.PasswordHash);
                     await repository.UpdateAsync(usuario, usuario);
@@ -52,7 +52,7 @@ namespace RugbyEngine.Api.Services
 
                 if (frontendPasswordIsHashed)
                 {
-                    _logger.LogWarning("El frontend envió un password hasheado para usuario: {Username}", username);
+                    _logger.LogWarning("El frontend enviï¿½ un password hasheado para usuario: {Username}", username);
                     isPasswordValid = password == usuario.PasswordHash;
                 }
                 else
@@ -62,8 +62,8 @@ namespace RugbyEngine.Api.Services
 
                 if (!isPasswordValid)
                 {
-                    _logger.LogWarning("Intento de login fallido. Contraseña incorrecta para usuario: {Username}", username);
-                    return (null, "Usuario o contraseña incorrectos");
+                    _logger.LogWarning("Intento de login fallido. Contraseï¿½a incorrecta para usuario: {Username}", username);
+                    return (null, "Usuario o contraseï¿½a incorrectos");
                 }
 
                 usuario.LastLogin = DateTime.UtcNow;
@@ -75,8 +75,8 @@ namespace RugbyEngine.Api.Services
             }
             catch (NpgsqlException ex)
             {
-                _logger.LogError(ex, "Error de conexión a la base de datos al intentar login para usuario: {Username}", username);
-                return (null, "Error de conexión con la base de datos. Por favor, intente nuevamente.");
+                _logger.LogError(ex, "Error de conexiï¿½n a la base de datos al intentar login para usuario: {Username}", username);
+                return (null, "Error de conexiï¿½n con la base de datos. Por favor, intente nuevamente.");
             }
             catch (DbUpdateException ex)
             {
