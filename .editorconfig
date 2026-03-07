@@ -1,0 +1,41 @@
+# EditorConfig — https://editorconfig.org
+# This file is the single source of truth for code formatting rules.
+# It is read automatically by Visual Studio, VS Code, Rider, and by
+# 'dotnet format' during CI (static-analysis.yml → style job).
+#
+# Reference: https://learn.microsoft.com/dotnet/fundamentals/code-analysis/code-style-rule-options
+
+root = true
+
+# ── All files ──────────────────────────────────────────────────────────────
+[*]
+end_of_line             = lf
+insert_final_newline    = true
+trim_trailing_whitespace = true
+charset                 = utf-8
+
+# ── C# source files ────────────────────────────────────────────────────────
+[*.cs]
+indent_style = space
+indent_size  = 4
+tab_width    = 4
+
+# ── Razor / Blazor components ──────────────────────────────────────────────
+[*.razor]
+indent_style = space
+indent_size  = 4
+tab_width    = 4
+
+# ── Project / config files ─────────────────────────────────────────────────
+[*.{csproj,slnx,props,targets,xml}]
+indent_style = space
+indent_size  = 2
+
+# ── Data / web config files ────────────────────────────────────────────────
+[*.{json,yml,yaml}]
+indent_style = space
+indent_size  = 2
+
+# ── Markdown — preserve trailing spaces (they represent line breaks) ───────
+[*.md]
+trim_trailing_whitespace = false
