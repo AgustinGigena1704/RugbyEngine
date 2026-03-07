@@ -65,7 +65,7 @@
             ? _allLevel2Items
             : _allLevel2Items
                 .Where(m => m.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                            m.ToolTip.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+                            (m.ToolTip != null && m.ToolTip.Contains(_searchText, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
     protected override async Task OnInitializedAsync()
