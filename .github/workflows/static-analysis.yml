@@ -7,11 +7,12 @@ on:
       - production
   workflow_dispatch:
 
-# Cancel any in-progress run for the same PR or branch when a new commit is pushed.
-# This eliminates the duplicate execution that occurs when both the push event
-# and the pull_request:synchronize event fire simultaneously for the same commit.
+# When a commit is pushed to a branch that has an open PR, GitHub fires both
+# a push event and a pull_request:synchronize event for the exact same SHA.
+# Using the commit SHA as the concurrency key guarantees both events land in
+# the same group, so the second run cancels the first.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
