@@ -171,9 +171,9 @@ using (var scope = app.Services.CreateScope())
 
 // Servir Blazor WASM desde wwwroot (copiado por el Dockerfile)
 var mimeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
-mimeProvider.Mappings[".dat"]    = "application/octet-stream";
-mimeProvider.Mappings[".wasm"]   = "application/wasm";
-mimeProvider.Mappings[".blat"]   = "application/octet-stream";
+mimeProvider.Mappings[".dat"] = "application/octet-stream";
+mimeProvider.Mappings[".wasm"] = "application/wasm";
+mimeProvider.Mappings[".blat"] = "application/octet-stream";
 mimeProvider.Mappings[".webcil"] = "application/octet-stream";
 
 app.UseDefaultFiles();
