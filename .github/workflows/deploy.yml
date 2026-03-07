@@ -1,15 +1,22 @@
 name: 🚀 Deploy to Production
 
 on:
-  push:
+  # Only deploy when Static Analysis passes on production
+  workflow_run:
+    workflows: ["🔍 Static Analysis"]
+    types:
+      - completed
     branches:
       - production
+  # Allow manual deploy bypass (e.g. hotfix)
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Build, Push & Deploy
     runs-on: ubuntu-latest
+    # Block deploy if analysis failed; workflow_dispatch bypasses for hotfixes
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: read
       packages: write
@@ -18,6 +25,9 @@ jobs:
       # ── 1. Código fuente ─────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Deploy the exact commit that was analysed, not just HEAD
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       # ── 2. Calcular nombre de imagen en minúsculas ────────────────
       - name: Set image name (lowercase)

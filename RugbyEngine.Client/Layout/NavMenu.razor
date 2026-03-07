@@ -40,7 +40,6 @@
     private bool _isLoggingOut;
     private List<MenuDTO>? _menus;
     private AuthenticationState? _authState;
-    private bool _isLoading = false;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
@@ -69,19 +68,13 @@
     {
         try
         {
-            _isLoading = true;
-            StateHasChanged();
-
             _menus = await MenuService.GetMenuTreeAsync();
-
-            _isLoading = false;
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error cargando menú: {ex.Message}");
             _menus = new List<MenuDTO>();
-            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -157,7 +150,7 @@
                      Label="@menu.Title"
                      StartIcon="@iconToUse"
                      EndIcon="@Icons.Material.Filled.ArrowDropDown"
-                     ActivatorClassname="@activatorClass">
+                     activatorClassname="@activatorClass">
                 @foreach (var subMenu in menu.Items)
                 {
                     var subIcon = !string.IsNullOrEmpty(subMenu.Icon) ? subMenu.Icon : Icons.Material.Filled.Circle;

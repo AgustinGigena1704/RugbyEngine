@@ -1,0 +1,139 @@
+name: 🔍 Static Analysis
+
+on:
+  pull_request:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+jobs:
+  # ── 1. Build + Roslyn Analyzers ────────────────────────────────────────────
+  build:
+    name: 🧱 Build & Roslyn Analyzers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RugbyEngine.slnx
+
+      - name: Build (Release — TreatWarningsAsErrors)
+        run: dotnet build RugbyEngine.slnx --no-restore --configuration Release
+
+  # ── 2. NuGet Vulnerability Audit ───────────────────────────────────────────
+  nuget-audit:
+    name: 📦 NuGet Vulnerability Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RugbyEngine.slnx
+
+      - name: Audit vulnerable packages
+        # Exits with code 1 if any vulnerability is found (.NET 8+)
+        run: dotnet list RugbyEngine.slnx package --vulnerable --include-transitive
+
+  # ── 3. CodeQL Security Analysis ────────────────────────────────────────────
+  codeql:
+    name: 🔒 CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+          # security-and-quality: security vulnerabilities + code quality rules
+          queries: security-and-quality
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Build for CodeQL
+        run: dotnet build RugbyEngine.slnx
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:csharp"
+
+  # ── 4. Whitespace Format ───────────────────────────────────────────────────
+  #
+  # PRs:        auto-fix → commit → fail (re-triggers the workflow on next push)
+  # production: verify only → fail (no auto-commit; dev must fix locally)
+  #
+  # Either way a failed format job makes the workflow conclusion = failure,
+  # which blocks the deploy regardless of whether build/audit/codeql passed.
+  #
+  # Requires secret GH_PAT (repo scope) for the auto-commit to re-trigger
+  # this workflow. Without GH_PAT the fix is committed but will NOT re-trigger
+  # (GitHub limitation with GITHUB_TOKEN commits).
+  format:
+    name: 🎨 Whitespace Format
+    runs-on: ubuntu-latest
+    # Always runs: PRs get auto-fix+commit; production pushes get verify-only
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/production'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # GH_PAT re-triggers the workflow on the auto-commit; GITHUB_TOKEN won't
+          token: ${{ secrets.GH_PAT || github.token }}
+          ref: ${{ github.head_ref || github.ref }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RugbyEngine.slnx
+
+      - name: Check whitespace formatting
+        id: fmt
+        # Exit code 2 = differences found; 0 = clean
+        run: dotnet format whitespace RugbyEngine.slnx --verify-no-changes
+        continue-on-error: true
+
+      # ── Auto-fix: PRs only (can't push to protected production branch) ────
+      - name: Apply whitespace fixes
+        if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
+        run: dotnet format whitespace RugbyEngine.slnx
+
+      - name: Commit auto-format fixes
+        if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git diff --staged --quiet \
+            && echo "No changes to commit" \
+            || (git commit -m "style: auto-format whitespace [github-actions]" && git push)
+
+      # ── Always fail when issues exist (blocks deploy in both scenarios) ───
+      - name: Fail on formatting issues
+        if: steps.fmt.outcome == 'failure'
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "::error::Whitespace formatting issues were found and auto-fixed."
+            echo "::error::A new commit has been pushed to this PR — the workflow will re-run automatically."
+          else
+            echo "::error::Whitespace formatting issues found on production. Fix locally and re-push."
+          fi
+          exit 1
