@@ -7,43 +7,19 @@ on:
       - production
   workflow_dispatch:
 
+# Cancel any in-progress run for the same PR or branch when a new commit is pushed.
+# This eliminates the duplicate execution that occurs when both the push event
+# and the pull_request:synchronize event fire simultaneously for the same commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ── 1. Build + Roslyn Analyzers ────────────────────────────────────────────
-  build:
-    name: 🧱 Build & Roslyn Analyzers
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # ───────────────────────────────────────────────────────────────────────────
+  # GROUP 1 — Quality & Security (run in parallel)
+  # Both must pass before the format job is allowed to run.
+  # ───────────────────────────────────────────────────────────────────────────
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore dependencies
-        run: dotnet restore RugbyEngine.slnx
-
-      - name: Build (Release — TreatWarningsAsErrors)
-        run: dotnet build RugbyEngine.slnx --no-restore --configuration Release
-
-  # ── 2. NuGet Vulnerability Audit ───────────────────────────────────────────
-  nuget-audit:
-    name: 📦 NuGet Vulnerability Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore dependencies
-        run: dotnet restore RugbyEngine.slnx
-
-      - name: Audit vulnerable packages
-        # Exits with code 1 if any vulnerability is found (.NET 8+)
-        run: dotnet list RugbyEngine.slnx package --vulnerable --include-transitive
-
-  # ── 3. CodeQL Security Analysis ────────────────────────────────────────────
   codeql:
     name: 🔒 CodeQL Security Analysis
     runs-on: ubuntu-latest
@@ -73,24 +49,62 @@ jobs:
         with:
           category: "/language:csharp"
 
-  # ── 4. Whitespace Format ───────────────────────────────────────────────────
+  build-and-audit:
+    name: 🧱 Build & Roslyn · 📦 NuGet Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore dependencies
+        run: dotnet restore RugbyEngine.slnx
+
+      - name: Build (Release — TreatWarningsAsErrors)
+        run: dotnet build RugbyEngine.slnx --no-restore --configuration Release
+
+      - name: Audit vulnerable packages
+        # Exits with code 1 if any vulnerability is found (.NET 8+)
+        run: dotnet list RugbyEngine.slnx package --vulnerable --include-transitive
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # GROUP 2 — Code Style (sequential: only runs if Group 1 fully passes)
   #
-  # PRs:        auto-fix → commit → fail (re-triggers the workflow on next push)
+  # Configuration
+  #   • Formatting rules  → edit .editorconfig at the repo root
+  #   • Files to analyse  → edit FORMAT_INCLUDE / FORMAT_EXCLUDE below
+  #
+  # PRs:        auto-fix → commit → fail so the workflow re-runs on the new commit
   # production: verify only → fail (no auto-commit; dev must fix locally)
-  #
-  # Either way a failed format job makes the workflow conclusion = failure,
-  # which blocks the deploy regardless of whether build/audit/codeql passed.
   #
   # Requires secret GH_PAT (repo scope) for the auto-commit to re-trigger
   # this workflow. Without GH_PAT the fix is committed but will NOT re-trigger
   # (GitHub limitation with GITHUB_TOKEN commits).
-  format:
-    name: 🎨 Whitespace Format
+  # ───────────────────────────────────────────────────────────────────────────
+
+  style:
+    name: 🎨 Code Style
     runs-on: ubuntu-latest
-    # Always runs: PRs get auto-fix+commit; production pushes get verify-only
+    needs: [codeql, build-and-audit]
+    # Skipped automatically by needs semantics when Group 1 fails.
+    # Also skipped on workflow_dispatch (no code changes to review).
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/production'
     permissions:
       contents: write
+    env:
+      # ── File patterns ───────────────────────────────────────────────────
+      # One glob pattern per line. These are passed to dotnet format as
+      # --include / --exclude flags. Blank lines are ignored.
+      # Formatting rules themselves live in .editorconfig at the repo root.
+      FORMAT_INCLUDE: |
+        **/*.cs
+        **/*.razor
+      FORMAT_EXCLUDE: |
+        **/Migrations/**
+        **/obj/**
+        **/bin/**
     steps:
       - uses: actions/checkout@v4
         with:
@@ -105,18 +119,27 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore RugbyEngine.slnx
 
-      - name: Check whitespace formatting
+      - name: Check code style
         id: fmt
-        # Exit code 2 = differences found; 0 = clean
-        run: dotnet format whitespace RugbyEngine.slnx --verify-no-changes
+        # Build --include / --exclude flags from the env vars above.
+        # set -f disables shell glob expansion so patterns are passed literally.
+        run: |
+          set -f
+          INCLUDE_FLAGS=$(echo "$FORMAT_INCLUDE" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//' | sed 's/^/--include /' | tr '\n' ' ')
+          EXCLUDE_FLAGS=$(echo "$FORMAT_EXCLUDE" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//' | sed 's/^/--exclude /' | tr '\n' ' ')
+          dotnet format whitespace RugbyEngine.slnx --verify-no-changes $INCLUDE_FLAGS $EXCLUDE_FLAGS
         continue-on-error: true
 
-      # ── Auto-fix: PRs only (can't push to protected production branch) ────
-      - name: Apply whitespace fixes
+      # Auto-fix only on PRs — cannot push to a protected production branch
+      - name: Apply style fixes
         if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
-        run: dotnet format whitespace RugbyEngine.slnx
+        run: |
+          set -f
+          INCLUDE_FLAGS=$(echo "$FORMAT_INCLUDE" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//' | sed 's/^/--include /' | tr '\n' ' ')
+          EXCLUDE_FLAGS=$(echo "$FORMAT_EXCLUDE" | grep -v '^[[:space:]]*$' | sed 's/^[[:space:]]*//' | sed 's/^/--exclude /' | tr '\n' ' ')
+          dotnet format whitespace RugbyEngine.slnx $INCLUDE_FLAGS $EXCLUDE_FLAGS
 
-      - name: Commit auto-format fixes
+      - name: Commit auto-style fixes
         if: steps.fmt.outcome == 'failure' && github.event_name == 'pull_request'
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -126,14 +149,14 @@ jobs:
             && echo "No changes to commit" \
             || (git commit -m "style: auto-format whitespace [github-actions]" && git push)
 
-      # ── Always fail when issues exist (blocks deploy in both scenarios) ───
-      - name: Fail on formatting issues
+      # Fail in both scenarios — ensures deploy is always blocked on dirty code
+      - name: Fail on style issues
         if: steps.fmt.outcome == 'failure'
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "::error::Whitespace formatting issues were found and auto-fixed."
+            echo "::error::Code style issues were found and auto-fixed."
             echo "::error::A new commit has been pushed to this PR — the workflow will re-run automatically."
           else
-            echo "::error::Whitespace formatting issues found on production. Fix locally and re-push."
+            echo "::error::Code style issues found on production. Fix locally and re-push."
           fi
           exit 1
