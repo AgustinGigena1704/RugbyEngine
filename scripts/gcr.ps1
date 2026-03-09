@@ -1,0 +1,59 @@
+#!/usr/bin/env pwsh
+# gcr — Git Checkout & Restore
+# Creates (or resets) a local branch tracking a remote base branch,
+# then restores all .NET dependencies for the RugbyEngine solution.
+#
+# Usage:
+#   gcr <remote-base-branch> [new-branch-suffix]
+#
+# Examples:
+#   gcr development             → branch: development              tracks origin/development
+#   gcr development my-feature  → branch: development_my-feature   tracks origin/development
+#   gcr production hotfix-login → branch: production_hotfix-login  tracks origin/production
+
+param(
+    [string] $BaseBranch,
+    [string] $Suffix
+)
+
+$REMOTE = 'origin'
+
+if (-not $BaseBranch) {
+    Write-Host @"
+gcr — Git Checkout & Restore for RugbyEngine
+
+Creates a new branch based on a remote branch.
+If the branch already exists locally it is reset to match the remote.
+
+Usage:
+    gcr <$REMOTE base branch> [new-branch-suffix]
+
+Examples:
+    gcr development              -> branch 'development'              tracks $REMOTE/development
+    gcr development my-feature   -> branch 'development_my-feature'   tracks $REMOTE/development
+    gcr production hotfix-login  -> branch 'production_hotfix-login'  tracks $REMOTE/production
+"@
+    exit 0
+}
+
+$REPOSITORY_PATH = git rev-parse --show-toplevel
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+# Fetch latest state from remote (prune stale branches and tags)
+git fetch --prune --tags --prune-tags --jobs=4 $REMOTE
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+# Build the local branch name
+if (-not $Suffix) {
+    $BRANCH_NAME = $BaseBranch
+} else {
+    $BRANCH_NAME = "${BaseBranch}_${Suffix}"
+}
+
+# Create or reset the branch tracking the remote base
+git checkout -t "$REMOTE/$BaseBranch" -B $BRANCH_NAME
+if ($LASTEXITCODE -ne 0) { exit 1 }
+
+# Restore all .NET dependencies for the solution
+dotnet restore "$REPOSITORY_PATH/RugbyEngine.slnx"
+if ($LASTEXITCODE -ne 0) { exit 1 }
