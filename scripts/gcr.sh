@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # gcr — Git Checkout & Restore
-# Creates (or resets) a local branch tracking a remote base branch,
-# then restores all .NET dependencies for the RugbyEngine solution.
+# Creates (or resets) a local branch from a remote base, pushes it to origin
+# with the correct upstream, and restores all .NET dependencies.
 #
 # Usage:
 #   gcr <remote-base-branch> [new-branch-suffix]
@@ -42,8 +42,14 @@ else
     BRANCH_NAME="${1}_${2}"
 fi
 
-# Create or reset the branch tracking the remote base
-git checkout -t "${REMOTE}/${1}" -B "${BRANCH_NAME}" || exit 1
+# Create or reset the local branch at the tip of the remote base (no -t: avoids
+# inheriting origin/<base> as upstream, which would cause pushes to land on the
+# wrong remote branch).
+git checkout "${REMOTE}/${1}" -B "${BRANCH_NAME}" || exit 1
+
+# Push to origin and set the correct upstream (origin/<BRANCH_NAME>).
+# This ensures git push / pull always target the right remote branch.
+git push -u "${REMOTE}" "${BRANCH_NAME}" || exit 1
 
 # Restore all .NET dependencies for the solution
 dotnet restore "${REPOSITORY_PATH}/RugbyEngine.slnx"
