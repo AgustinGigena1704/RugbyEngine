@@ -16,14 +16,18 @@
         <MudDivider Style="max-height:1px" />
         <div style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
             <MudNavMenu>
-                <MudNavLink Icon="@Icons.Material.Filled.Person" Href="/account/profile">Perfil</MudNavLink>
-                <MudNavLink Icon="@Icons.Material.Filled.Settings" Href="/account/settings">Configuración</MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Person" Href="/account/profile">
+                    <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">Perfil</span>
+                </MudNavLink>
+                <MudNavLink Icon="@Icons.Material.Filled.Settings" Href="/account/settings">
+                    <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">Configuración</span>
+                </MudNavLink>
             </MudNavMenu>
             <div style="margin-top:auto;">
                 <MudDivider />
                 <MudNavMenu>
                     <MudNavLink Icon="@Icons.Material.Filled.ExitToApp" OnClick="LogoutAsync" Disabled="@_isLoggingOut">
-                        Salir
+                        <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">Salir</span>
                     </MudNavLink>
                 </MudNavMenu>
                 <MudText Typo="Typo.caption"

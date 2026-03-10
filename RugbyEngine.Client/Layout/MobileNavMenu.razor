@@ -51,7 +51,7 @@
 
         if (menu.Items != null && menu.Items.Any())
         {
-            <MudNavGroup Title="@menu.Title" Icon="@icon" Expanded="false">
+            <MudNavGroup Title="@menu.Title.ToUpperInvariant()" Icon="@icon" Expanded="false" Style="font-weight: bold; font-size: 0.85rem;">
                 @foreach (var sub in menu.Items)
                 {
                     var subIcon = !string.IsNullOrEmpty(sub.Icon) ? sub.Icon : Icons.Material.Filled.Circle;
@@ -61,14 +61,18 @@
 
                     if (!string.IsNullOrEmpty(route))
                     {
-                        <MudNavLink Icon="@subIcon" Href="@route">@sub.Title</MudNavLink>
+                        <MudNavLink Icon="@subIcon" Href="@route">
+                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@sub.Title</span>
+                        </MudNavLink>
                     }
                 }
             </MudNavGroup>
         }
         else if (!string.IsNullOrEmpty(menu.Route))
         {
-            <MudNavLink Icon="@icon" Href="@menu.Route">@menu.Title</MudNavLink>
+            <MudNavLink Icon="@icon" Href="@menu.Route">
+                <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@menu.Title</span>
+            </MudNavLink>
         }
     };
 }
