@@ -126,9 +126,10 @@
         {
             <MudMenu Color="Color.Inherit"
                      AnchorOrigin="Origin.BottomLeft"
-                     Label="@menu.Title"
+                     Label="@menu.Title.ToUpperInvariant()"
                      StartIcon="@iconToUse"
                      EndIcon="@Icons.Material.Filled.ArrowDropDown"
+                     Style="font-weight: bold; font-size: 0.85rem;"
                      activatorClassname="@activatorClass">
                 @foreach (var subMenu in menu.Items)
                 {
@@ -137,7 +138,7 @@
                     if (!string.IsNullOrEmpty(subMenu.Route))
                     {
                         <MudMenuItem Href="@subMenu.Route" Icon="@subIcon">
-                            @subMenu.Title
+                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@subMenu.Title</span>
                         </MudMenuItem>
                     }
                     else
@@ -148,7 +149,7 @@
                         <MudMenuItem OnClick="@(() => NavigateTo(firstChildRoute))"
                                      Icon="@subIcon"
                                      Disabled="@(string.IsNullOrEmpty(firstChildRoute))">
-                            @subMenu.Title
+                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@subMenu.Title</span>
                         </MudMenuItem>
                     }
                 }
@@ -156,8 +157,8 @@
         }
         else
         {
-            <MudButton Href="@menu.Route" StartIcon="@iconToUse" Color="Color.Inherit" Class="@activatorClass">
-                @menu.Title
+            <MudButton Href="@menu.Route" StartIcon="@iconToUse" Color="Color.Inherit" Class="@activatorClass" Style="font-weight: bold; font-size: 0.85rem;">
+                <span style="text-transform: uppercase;">@menu.Title</span>
             </MudButton>
         }
     };

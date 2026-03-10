@@ -1,0 +1,611 @@
+@page "/Admin/Registro/Usuarios"
+@attribute [Authorize(Roles = "admin")]
+@using RugbyEngine.Shared.Usuarios
+@using RugbyEngine.Shared.Perfiles
+@using RugbyEngine.Shared.Personas
+
+@inject IUsuarioService UsuarioService
+@inject IPerfilService PerfilService
+@inject IPersonaService PersonaService
+@inject ISnackbar Snackbar
+
+<PageTitle>Usuarios</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Gestión de Usuarios</MudText>
+
+<MudPaper Elevation="2" Class="pa-4">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
+        <MudTextField T="string"
+                      @bind-Value="_searchText"
+                      Placeholder="Buscar por usuario, nombre o documento..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Clearable="true"
+                      Immediate="true"
+                      Class="flex-grow-1" />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="OpenCreateDialogAsync">
+            Nuevo Usuario
+        </MudButton>
+    </MudStack>
+
+    <MudTable Items="@FilteredUsuarios"
+              Dense="true"
+              Hover="true"
+              Striped="true"
+              Loading="@_isLoading"
+              LoadingProgressColor="Color.Primary"
+              SortLabel="Ordenar por">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<UsuarioResponse, object>(u => u.Username)">Usuario</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<UsuarioResponse, object>(u => u.NombreCompleto)">Nombre</MudTableSortLabel></MudTh>
+            <MudTh>Documento</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Perfiles</MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<UsuarioResponse, object>(u => u.LastLogin)">Último acceso</MudTableSortLabel></MudTh>
+            <MudTh>Estado</MudTh>
+            <MudTh Style="text-align:right">Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Usuario">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Default" Size="Size.Small" />
+                    <MudText>@context.Username</MudText>
+                </MudStack>
+            </MudTd>
+            <MudTd DataLabel="Nombre">@context.NombreCompleto</MudTd>
+            <MudTd DataLabel="Documento">@context.Documento</MudTd>
+            <MudTd DataLabel="Email">@(string.IsNullOrEmpty(context.Email) ? "-" : context.Email)</MudTd>
+            <MudTd DataLabel="Perfiles">
+                @if (context.Perfiles.Count == 0)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Sin perfiles</MudText>
+                }
+                else
+                {
+                    @foreach (var p in context.Perfiles.Take(2))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="ma-0 mr-1">@p.Nombre</MudChip>
+                    }
+                    @if (context.Perfiles.Count > 2)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Class="ma-0">+@(context.Perfiles.Count - 2)</MudChip>
+                    }
+                }
+            </MudTd>
+            <MudTd DataLabel="Último acceso">
+                <MudText Typo="Typo.caption">@context.LastLogin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Estado">
+                @if (context.Activo)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">Activo</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Cancel">Inactivo</MudChip>
+                }
+            </MudTd>
+            <MudTd Style="text-align:right">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               title="Editar"
+                               OnClick="() => OpenEditDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.ManageAccounts"
+                               Color="Color.Secondary"
+                               Size="Size.Small"
+                               title="Gestionar perfiles"
+                               OnClick="() => OpenPerfilesDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               title="Eliminar"
+                               OnClick="() => ConfirmDelete(context)" />
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Class="pa-4">No se encontraron usuarios.</MudText>
+        </NoRecordsContent>
+    </MudTable>
+</MudPaper>
+
+@* ── Dialog: Alta ── *@
+<MudDialog @bind-Visible="_createDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Class="mr-2" />
+            Nuevo Usuario
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_createForm" Model="_createModel">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Nombre de usuario"
+                                  @bind-Value="_createModel.Username"
+                                  Required="true"
+                                  RequiredError="Requerido"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudPasswordField @bind-Value="_createModel.Password"
+                                      Label="Contraseña"
+                                      Required="true"
+                                      RequiredError="Requerido"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string"
+                                  Label="Email"
+                                  @bind-Value="_createModel.Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudAutocomplete T="PersonaResponse"
+                                     Label="Persona vinculada"
+                                     SearchFunc="SearchPersonas"
+                                     ToStringFunc="@(p => p == null ? string.Empty : $"{p.Apellidos}, {p.Nombres} — {p.Documento}")"
+                                     Value="_selectedPersona"
+                                     ValueChanged="OnPersonaSelected"
+                                     Required="true"
+                                     RequiredError="Debe seleccionar una persona"
+                                     Variant="Variant.Outlined"
+                                     Adornment="Adornment.Start"
+                                     AdornmentIcon="@Icons.Material.Filled.Badge"
+                                     FullWidth="true"
+                                     Clearable="true"
+                                     ResetValueOnEmptyText="true" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog" Disabled="@_isSaving">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveCreateAsync" Disabled="@_isSaving">
+            @if (_isSaving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            Guardar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* ── Dialog: Edición ── *@
+<MudDialog @bind-Visible="_editDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-2" />
+            Editar Usuario — @_editingUsuario?.Username
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_editForm" Model="_editModel">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Nombre de usuario"
+                                  @bind-Value="_editModel.Username"
+                                  Required="true"
+                                  RequiredError="Requerido"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="string"
+                                  Label="Email"
+                                  @bind-Value="_editModel.Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Email" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudPasswordField @bind-Value="_editModel.Password"
+                                      Label="Nueva contraseña (opcional)"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      FullWidth="true" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseEditDialog" Disabled="@_isSaving">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveEditAsync" Disabled="@_isSaving">
+            @if (_isSaving) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            Guardar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* ── Dialog: Gestión de perfiles ── *@
+<MudDialog @bind-Visible="_perfilesDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Class="mr-2" />
+            Perfiles — @_perfilesUsuario?.Username
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_perfilesLoading)
+        {
+            @for (int i = 0; i < 3; i++)
+            {
+                <MudSkeleton Width="100%" Height="44px" Class="mb-2" />
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Perfiles asignados</MudText>
+            @if (_perfilesAsignados.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">Sin perfiles asignados.</MudText>
+            }
+            else
+            {
+                <MudList T="PerfilDto" Dense="true" Class="mb-2">
+                    @foreach (var p in _perfilesAsignados)
+                    {
+                        <MudListItem>
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <MudText Typo="Typo.body2">@p.Nombre</MudText>
+                                    @if (!string.IsNullOrEmpty(p.Descripcion))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                    }
+                                </div>
+                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               Disabled="@_perfilesBusy"
+                                               OnClick="@(() => RemovePerfilAsync(p))"
+                                               title="Retirar perfil" />
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+
+            <MudDivider Class="my-2" />
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Perfiles disponibles</MudText>
+            @if (_perfilesDisponibles.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No hay perfiles disponibles.</MudText>
+            }
+            else
+            {
+                <MudList T="PerfilDto" Dense="true">
+                    @foreach (var p in _perfilesDisponibles)
+                    {
+                        <MudListItem>
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <MudText Typo="Typo.body2">@p.Nombre</MudText>
+                                    @if (!string.IsNullOrEmpty(p.Descripcion))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                    }
+                                </div>
+                                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                               Color="Color.Success"
+                                               Size="Size.Small"
+                                               Disabled="@_perfilesBusy"
+                                               OnClick="@(() => AddPerfilAsync(p))"
+                                               title="Agregar perfil" />
+                            </div>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _perfilesDialogVisible = false">Cerrar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* ── Dialog: Confirmación baja ── *@
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="@(new DialogOptions { MaxWidth = MaxWidth.ExtraSmall })">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Class="mr-2" />
+            Confirmar eliminación
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>¿Está seguro que desea eliminar al usuario <strong>@_deletingUsuario?.Username</strong>?</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">Esta acción no se puede deshacer.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false" Disabled="@_isDeleting">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ExecuteDeleteAsync" Disabled="@_isDeleting">
+            @if (_isDeleting) { <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" /> }
+            Eliminar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    // ── Lista ─────────────────────────────────────────────────────────────────
+    private List<UsuarioResponse> _usuarios = [];
+    private List<PersonaResponse> _todasPersonas = [];
+    private List<PerfilDto> _todosPerfiles = [];
+    private bool _isLoading = true;
+    private string _searchText = string.Empty;
+
+    private IEnumerable<UsuarioResponse> FilteredUsuarios => string.IsNullOrWhiteSpace(_searchText)
+        ? _usuarios
+        : _usuarios.Where(u =>
+            u.Username.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            u.NombreCompleto.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            u.Documento.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+            u.Email.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
+
+    // ── Dialog alta ───────────────────────────────────────────────────────────
+    private bool _createDialogVisible;
+    private bool _isSaving;
+    private readonly UsuarioCreateDto _createModel = new();
+    private PersonaResponse? _selectedPersona;
+    private MudForm _createForm = null!;
+
+    private readonly DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    // ── Dialog edición ────────────────────────────────────────────────────────
+    private bool _editDialogVisible;
+    private UsuarioResponse? _editingUsuario;
+    private readonly UsuarioUpdateDto _editModel = new();
+    private MudForm _editForm = null!;
+
+    // ── Dialog perfiles ───────────────────────────────────────────────────────
+    private bool _perfilesDialogVisible;
+    private bool _perfilesLoading;
+    private bool _perfilesBusy;
+    private UsuarioResponse? _perfilesUsuario;
+    private List<PerfilDto> _perfilesAsignados = [];
+    private List<PerfilDto> _perfilesDisponibles = [];
+
+    // ── Dialog baja ───────────────────────────────────────────────────────────
+    private bool _deleteDialogVisible;
+    private bool _isDeleting;
+    private UsuarioResponse? _deletingUsuario;
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadUsuariosAsync(), LoadPersonasAsync(), LoadPerfilesAsync());
+    }
+
+    private async Task LoadUsuariosAsync()
+    {
+        _isLoading = true;
+        _usuarios = await UsuarioService.GetAllAsync();
+        _isLoading = false;
+    }
+
+    private async Task LoadPersonasAsync()
+    {
+        _todasPersonas = await PersonaService.GetAllAsync();
+    }
+
+    private async Task LoadPerfilesAsync()
+    {
+        _todosPerfiles = await PerfilService.GetAllAsync();
+    }
+
+    // ── Alta ──────────────────────────────────────────────────────────────────
+    private void OpenCreateDialogAsync()
+    {
+        ResetCreateModel();
+        _createDialogVisible = true;
+    }
+
+    private void CloseCreateDialog()
+    {
+        _createDialogVisible = false;
+        ResetCreateModel();
+    }
+
+    private void ResetCreateModel()
+    {
+        _createModel.Username = string.Empty;
+        _createModel.Password = string.Empty;
+        _createModel.Email = string.Empty;
+        _createModel.PersonaId = 0;
+        _selectedPersona = null;
+    }
+
+    private async Task SaveCreateAsync()
+    {
+        await _createForm.Validate();
+        if (!_createForm.IsValid) return;
+
+        _isSaving = true;
+        var result = await UsuarioService.CreateAsync(_createModel);
+        _isSaving = false;
+
+        if (result is not null)
+        {
+            Snackbar.Add("Usuario creado correctamente.", Severity.Success);
+            CloseCreateDialog();
+            await LoadUsuariosAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo crear el usuario. Verifique los datos.", Severity.Error);
+        }
+    }
+
+    private Task<IEnumerable<PersonaResponse>> SearchPersonas(string text, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return Task.FromResult(_todasPersonas.AsEnumerable());
+
+        var filtered = _todasPersonas.Where(p =>
+            p.Nombres.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+            p.Apellidos.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+            p.Documento.Contains(text, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(filtered);
+    }
+
+    private void OnPersonaSelected(PersonaResponse? persona)
+    {
+        _selectedPersona = persona;
+        _createModel.PersonaId = persona?.Id ?? 0;
+    }
+
+    // ── Edición ───────────────────────────────────────────────────────────────
+    private void OpenEditDialog(UsuarioResponse usuario)
+    {
+        _editingUsuario = usuario;
+        _editModel.Username = usuario.Username;
+        _editModel.Email = usuario.Email;
+        _editModel.Password = null;
+        _editDialogVisible = true;
+    }
+
+    private void CloseEditDialog()
+    {
+        _editDialogVisible = false;
+        _editingUsuario = null;
+        _editModel.Password = null;
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editModel.Password))
+            _editModel.Password = null;
+
+        await _editForm.Validate();
+        if (!_editForm.IsValid || _editingUsuario is null) return;
+
+        _isSaving = true;
+        var result = await UsuarioService.UpdateAsync(_editingUsuario.Id, _editModel);
+        _isSaving = false;
+
+        if (result is not null)
+        {
+            Snackbar.Add("Usuario actualizado correctamente.", Severity.Success);
+            CloseEditDialog();
+            await LoadUsuariosAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
+        }
+    }
+
+    // ── Gestión de perfiles ───────────────────────────────────────────────────
+    private async Task OpenPerfilesDialog(UsuarioResponse usuario)
+    {
+        _perfilesUsuario = usuario;
+        _perfilesDialogVisible = true;
+        _perfilesLoading = true;
+
+        var fresh = await UsuarioService.GetByIdAsync(usuario.Id);
+        _perfilesAsignados = fresh?.Perfiles ?? [.. usuario.Perfiles];
+        _perfilesDisponibles = _todosPerfiles
+        .Where(p => _perfilesAsignados.All(a => a.Id != p.Id))
+        .ToList();
+
+        _perfilesLoading = false;
+    }
+
+    private async Task AddPerfilAsync(PerfilDto perfil)
+    {
+        if (_perfilesUsuario is null) return;
+        _perfilesBusy = true;
+        var ok = await UsuarioService.AssignPerfilAsync(_perfilesUsuario.Id, perfil.Id);
+        if (ok)
+        {
+            _perfilesAsignados.Add(perfil);
+            _perfilesDisponibles.Remove(perfil);
+            RefreshUsuarioPerfiles();
+            Snackbar.Add($"Perfil \"{perfil.Nombre}\" asignado.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"No se pudo asignar el perfil \"{perfil.Nombre}\".", Severity.Error);
+        }
+        _perfilesBusy = false;
+    }
+
+    private async Task RemovePerfilAsync(PerfilDto perfil)
+    {
+        if (_perfilesUsuario is null) return;
+        _perfilesBusy = true;
+        var ok = await UsuarioService.UnassignPerfilAsync(_perfilesUsuario.Id, perfil.Id);
+        if (ok)
+        {
+            _perfilesAsignados.Remove(perfil);
+            _perfilesDisponibles.Add(perfil);
+            RefreshUsuarioPerfiles();
+            Snackbar.Add($"Perfil \"{perfil.Nombre}\" retirado.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add($"No se pudo retirar el perfil \"{perfil.Nombre}\".", Severity.Error);
+        }
+        _perfilesBusy = false;
+    }
+
+    private void RefreshUsuarioPerfiles()
+    {
+        if (_perfilesUsuario is null) return;
+        var u = _usuarios.FirstOrDefault(x => x.Id == _perfilesUsuario.Id);
+        if (u is not null)
+            u.Perfiles = [.. _perfilesAsignados];
+    }
+
+    // ── Baja ──────────────────────────────────────────────────────────────────
+    private void ConfirmDelete(UsuarioResponse usuario)
+    {
+        _deletingUsuario = usuario;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task ExecuteDeleteAsync()
+    {
+        if (_deletingUsuario is null) return;
+
+        _isDeleting = true;
+        var ok = await UsuarioService.DeleteAsync(_deletingUsuario.Id);
+        _isDeleting = false;
+
+        if (ok)
+        {
+            Snackbar.Add("Usuario eliminado correctamente.", Severity.Success);
+            _deleteDialogVisible = false;
+            _deletingUsuario = null;
+            await LoadUsuariosAsync();
+        }
+        else
+        {
+            Snackbar.Add("No se pudo eliminar el usuario.", Severity.Error);
+        }
+    }
+}
