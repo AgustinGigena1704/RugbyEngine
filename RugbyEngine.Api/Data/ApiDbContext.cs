@@ -239,7 +239,7 @@ namespace RugbyEngine.Api.Data
         /// <summary>
         /// Configura automáticamente las relaciones de auditoría para todas las entidades que implementan IAudithory
         /// </summary>
-        private void ConfigureAuditoryEntities(ModelBuilder modelBuilder)
+        private static void ConfigureAuditoryEntities(ModelBuilder modelBuilder)
         {
             var auditoryEntityTypes = Assembly.GetExecutingAssembly()
                 .GetTypes()

@@ -37,17 +37,11 @@
 </AuthorizeView>
 
 @code {
-    private bool _isLoggingOut;
     private List<MenuDTO>? _menus;
     private AuthenticationState? _authState;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-
-    private static string GetUserDisplayName(ClaimsPrincipal? user)
-    {
-        return user?.FindFirst("username")?.Value ?? user?.Identity?.Name ?? "Usuario";
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,21 +98,6 @@
         {
             Console.WriteLine($"Error en OnAuthenticationStateChanged: {ex.Message}");
         }
-    }
-
-    private async Task LogoutAsync()
-    {
-        if (_isLoggingOut)
-        {
-            return;
-        }
-
-        _isLoggingOut = true;
-        _menus = null;
-        MenuService.ClearCache();
-        await AuthService.LogoutAsync();
-        NavigationManager.NavigateTo("/Auth/Login", true);
-        _isLoggingOut = false;
     }
 
     private void NavigateTo(string uri)

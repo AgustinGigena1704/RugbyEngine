@@ -7,59 +7,60 @@
 
 <PageTitle>Iniciar sesión</PageTitle>
 
-<MudGrid Justify="Justify.Center" Class="mt-8">
-    <MudItem xs="12" sm="8" md="6" lg="4">
-        <MudPaper Elevation="4" Class="pa-6">
-            <MudStack Spacing="4">
-                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary">
-                    RugbyEngine
-                </MudText>
-                <MudText Typo="Typo.h6" Align="Align.Center">
-                    Inicia sesión para continuar
-                </MudText>
+<div style="width: clamp(280px, 90vw, 420px);">
+    <MudPaper Elevation="4" Style="padding: clamp(20px, 4vw, 40px);">
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary"
+                     Style="font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700;">
+                RugbyEngine
+            </MudText>
+            <MudText Typo="Typo.subtitle1" Align="Align.Center"
+                     Style="font-size: clamp(0.78rem, 2vw, 1rem);">
+                Inicia sesión para continuar
+            </MudText>
 
-                @if (!string.IsNullOrWhiteSpace(_statusMessage))
-                {
-                    <MudAlert Severity="@_statusSeverity" Dense="true">
-                        @_statusMessage
-                    </MudAlert>
-                }
+            @if (!string.IsNullOrWhiteSpace(_statusMessage))
+            {
+                <MudAlert Severity="@_statusSeverity" Dense="true">
+                    @_statusMessage
+                </MudAlert>
+            }
 
-                <MudTextField T="string" 
-                              Label="Usuario" 
-                              @bind-Value="_model.Username" 
-                              Required="true" 
-                              RequiredError="El usuario es requerido"
-                              Variant="Variant.Outlined"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Person" />
+            <MudTextField T="string"
+                          Label="Usuario"
+                          @bind-Value="_model.Username"
+                          Required="true"
+                          RequiredError="El usuario es requerido"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Person" />
 
-                <MudTextField T="string" 
-                              Label="Contraseña" 
-                              @bind-Value="_model.Password" 
-                              Required="true" 
+            <MudPasswordField @bind-Value="_model.Password"
+                              Label="Contraseña"
+                              Required="true"
                               RequiredError="La contraseña es requerida"
-                              InputType="InputType.Password" 
                               Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
                               Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Lock" />
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              FullWidth="true" />
 
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           Disabled="@_isSubmitting" 
-                           FullWidth="true"
-                           Size="Size.Large"
-                           OnClick="HandleLoginAsync">
-                    @if (_isSubmitting)
-                    {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                    }
-                    @_buttonText
-                </MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@_isSubmitting"
+                       FullWidth="true"
+                       Size="Size.Large"
+                       OnClick="HandleLoginAsync">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                @_buttonText
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</div>
 
 @code {
     private readonly LoginDTO _model = new();

@@ -1,6 +1,6 @@
 namespace RugbyEngine.Shared.Perfiles
 {
-    public class PerfilDTO
+    public class PerfilDto
     {
         public int Id { get; set; }
         public required string Nombre { get; set; }

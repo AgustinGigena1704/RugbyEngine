@@ -13,41 +13,14 @@ concurrency:
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
-  # GROUP 1 — Quality & Security (run in parallel)
-  # Both must pass before the format job is allowed to run.
+  # GROUP 1 — Quality & Security
+  # Must pass before the style job is allowed to run.
+  # Security analysis runs via SonarAnalyzer.CSharp (Roslyn) during the build —
+  # no separate job needed. TreatWarningsAsErrors turns any finding into a build error.
   # ───────────────────────────────────────────────────────────────────────────
 
-  codeql:
-    name: 🔒 CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
-        with:
-          languages: csharp
-          # security-and-quality: security vulnerabilities + code quality rules
-          queries: security-and-quality
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Build for CodeQL
-        run: dotnet build RugbyEngine.slnx
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
-        with:
-          category: "/language:csharp"
-
   build-and-audit:
-    name: 🧱 Build & Roslyn · 📦 NuGet Audit
+    name: 🧱 Build & Roslyn · 🔒 Sonar · 📦 NuGet Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +36,7 @@ jobs:
         run: dotnet build RugbyEngine.slnx --no-restore --configuration Release
 
       - name: Audit vulnerable packages
-        # Exits with code 1 if any vulnerability is found (.NET 8+)
+
         run: dotnet list RugbyEngine.slnx package --vulnerable --include-transitive
 
   # ───────────────────────────────────────────────────────────────────────────
@@ -84,7 +57,7 @@ jobs:
   style:
     name: 🎨 Code Style
     runs-on: ubuntu-latest
-    needs: [codeql, build-and-audit]
+    needs: [build-and-audit]
     # Skipped automatically by needs semantics when Group 1 fails.
     permissions:
       contents: write
@@ -142,7 +115,7 @@ jobs:
           git add -A
           git diff --staged --quiet \
             && echo "No changes to commit" \
-            || (git commit -m "style: auto-format whitespace [github-actions]" && git push)
+            || (git commit -m "[automatic] Refactor automatico" && git push)
 
       # Fail in both scenarios — ensures deploy is always blocked on dirty code
       - name: Fail on style issues

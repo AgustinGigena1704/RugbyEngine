@@ -54,13 +54,13 @@ namespace RugbyEngine.Client.Services
             }
         }
 
-        public async Task<PersonaResponse?> CreateAsync(PersonaRequest personaRequest, CancellationToken cancellationToken = default)
+        public async Task<PersonaResponse?> CreateAsync(PersonaRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var request = await CreateAuthorizedRequestAsync(HttpMethod.Post, "api/Persona");
-                request.Content = JsonContent.Create(personaRequest);
-                var response = await _httpClient.SendAsync(request, cancellationToken);
+                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Post, "api/Persona");
+                httpRequest.Content = JsonContent.Create(request);
+                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<PersonaResponse>(cancellationToken);
             }
@@ -71,13 +71,13 @@ namespace RugbyEngine.Client.Services
             }
         }
 
-        public async Task<PersonaResponse?> UpdateAsync(int id, PersonaRequest personaRequest, CancellationToken cancellationToken = default)
+        public async Task<PersonaResponse?> UpdateAsync(int id, PersonaRequest request, CancellationToken cancellationToken = default)
         {
             try
             {
-                var request = await CreateAuthorizedRequestAsync(HttpMethod.Put, $"api/Persona/{id}");
-                request.Content = JsonContent.Create(personaRequest);
-                var response = await _httpClient.SendAsync(request, cancellationToken);
+                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Put, $"api/Persona/{id}");
+                httpRequest.Content = JsonContent.Create(request);
+                var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<PersonaResponse>(cancellationToken);
             }

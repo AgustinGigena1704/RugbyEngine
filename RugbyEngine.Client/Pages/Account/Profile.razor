@@ -4,6 +4,7 @@
 @using System.Security.Claims
 @inject IPerfilService PerfilService
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Mi Perfil</PageTitle>
 
@@ -24,56 +25,72 @@
                 </MudPaper>
             </MudItem>
 
-            <AuthorizeView Roles="admin" Context="adminContext">
-                <Authorized>
-                    <MudItem xs="12" md="8">
-                        <MudPaper Elevation="2" Class="pa-4" Style="height:100%;">
-                            @if (_loading)
-                            {
-                                <MudSkeleton Width="60%" Height="28px" Class="mb-4" />
-                                @for (int i = 0; i < 3; i++)
-                                {
-                                    <MudSkeleton Width="100%" Height="44px" Class="mb-2" />
-                                }
-                            }
-                            else
-                            {
-                                <MudText Typo="Typo.h6" Class="mb-2">Perfiles asignados</MudText>
+            @* ── Panel de perfiles — visible a todos ── *@
+            <MudItem xs="12" md="8">
+                <MudPaper Elevation="2" Class="pa-4" Style="height:100%;">
+                    @if (_loading)
+                    {
+                        <MudSkeleton Width="60%" Height="28px" Class="mb-4" />
+                        @for (int i = 0; i < 3; i++)
+                        {
+                            <MudSkeleton Width="100%" Height="44px" Class="mb-2" />
+                        }
+                    }
+                    else
+                    {
+                        @* Mis perfiles — lectura para todos, botón quitar solo admins *@
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                            <MudText Typo="Typo.h6">Mis perfiles</MudText>
+                            <AuthorizeView Roles="admin">
+                                <NotAuthorized>
+                                    <MudChip T="string" Icon="@Icons.Material.Filled.Lock"
+                                             Color="Color.Default" Size="Size.Small" Disabled="true">
+                                        Solo lectura
+                                    </MudChip>
+                                </NotAuthorized>
+                            </AuthorizeView>
+                        </MudStack>
 
-                                @if (_mine.Count == 0)
+                        @if (_mine.Count == 0)
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                                Sin perfiles asignados.
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudList T="PerfilDto" Dense="true" Class="mb-2">
+                                @foreach (var p in _mine)
                                 {
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                                        Sin perfiles asignados.
-                                    </MudText>
-                                }
-                                else
-                                {
-                                    <MudList T="PerfilDTO" Dense="true" Class="mb-2">
-                                        @foreach (var p in _mine)
-                                        {
-                                            <MudListItem>
-                                                <div class="d-flex align-center justify-space-between">
-                                                    <div>
-                                                        <MudText Typo="Typo.body1">@p.Nombre</MudText>
-                                                        @if (!string.IsNullOrEmpty(p.Descripcion))
-                                                        {
-                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
-                                                        }
-                                                    </div>
+                                    <MudListItem>
+                                        <div class="d-flex align-center justify-space-between">
+                                            <div>
+                                                <MudText Typo="Typo.body1">@p.Nombre</MudText>
+                                                @if (!string.IsNullOrEmpty(p.Descripcion))
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                                }
+                                            </div>
+                                            <AuthorizeView Roles="admin">
+                                                <Authorized>
                                                     <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
                                                                    Color="Color.Error"
                                                                    Size="Size.Small"
                                                                    Disabled="@_busy"
                                                                    OnClick="@(() => RemoveAsync(p))"
                                                                    title="Retirar perfil" />
-                                                </div>
-                                            </MudListItem>
-                                        }
-                                    </MudList>
+                                                </Authorized>
+                                            </AuthorizeView>
+                                        </div>
+                                    </MudListItem>
                                 }
+                            </MudList>
+                        }
 
+                        @* Perfiles disponibles — solo admins *@
+                        <AuthorizeView Roles="admin">
+                            <Authorized>
                                 <MudDivider Class="my-3" />
-
                                 <MudText Typo="Typo.h6" Class="mb-2">Perfiles disponibles</MudText>
 
                                 @if (_available.Count == 0)
@@ -84,7 +101,7 @@
                                 }
                                 else
                                 {
-                                    <MudList T="PerfilDTO" Dense="true">
+                                    <MudList T="PerfilDto" Dense="true">
                                         @foreach (var p in _available)
                                         {
                                             <MudListItem>
@@ -107,28 +124,22 @@
                                         }
                                     </MudList>
                                 }
-                            }
-                        </MudPaper>
-                    </MudItem>
-                </Authorized>
-                <NotAuthorized>
-                    <MudItem xs="12" md="8">
-                        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
-                            No tienes permiso para gestionar perfiles.
-                        </MudAlert>
-                    </MudItem>
-                </NotAuthorized>
-            </AuthorizeView>
+                            </Authorized>
+                        </AuthorizeView>
+                    }
+                </MudPaper>
+            </MudItem>
         </MudGrid>
     </Authorized>
 </AuthorizeView>
 
 @code {
-    private List<PerfilDTO> _all = [];
-    private List<PerfilDTO> _mine = [];
-    private List<PerfilDTO> _available = [];
+    private List<PerfilDto> _all = [];
+    private List<PerfilDto> _mine = [];
+    private List<PerfilDto> _available = [];
     private bool _loading = true;
     private bool _busy;
+    private bool _isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,17 +149,24 @@
     private async Task LoadAsync()
     {
         _loading = true;
-        var allTask = PerfilService.GetAllAsync();
-        var mineTask = PerfilService.GetMineAsync();
-        await Task.WhenAll(allTask, mineTask);
-        _all = allTask.Result;
-        _mine = mineTask.Result;
-        _available = _all.Where(p => _mine.All(m => m.Id != p.Id)).ToList();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isAdmin = authState.User.IsInRole("admin");
+
+        _mine = await PerfilService.GetMineAsync();
+
+        if (_isAdmin)
+        {
+            _all = await PerfilService.GetAllAsync();
+            _available = _all.Where(p => _mine.All(m => m.Id != p.Id)).ToList();
+        }
+
         _loading = false;
     }
 
-    private async Task AssignAsync(PerfilDTO perfil)
+    private async Task AssignAsync(PerfilDto perfil)
     {
+        if (!_isAdmin) return;
         _busy = true;
         var ok = await PerfilService.AssignAsync(perfil.Id);
         if (ok)
@@ -164,8 +182,9 @@
         _busy = false;
     }
 
-    private async Task RemoveAsync(PerfilDTO perfil)
+    private async Task RemoveAsync(PerfilDto perfil)
     {
+        if (!_isAdmin) return;
         _busy = true;
         var ok = await PerfilService.UnassignAsync(perfil.Id);
         if (ok)

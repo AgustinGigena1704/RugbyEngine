@@ -6,7 +6,7 @@ namespace RugbyEngine.Api.Data.Repositories
 {
     public class UsuarioRepository : GenericRepository<Usuario>
     {
-        public UsuarioRepository(ApiDbContext context, ILogger<GenericRepository<Usuario>> logger)
+        public UsuarioRepository(ApiDbContext context, ILogger<UsuarioRepository> logger)
             : base(context, logger)
         {
         }
@@ -23,7 +23,7 @@ namespace RugbyEngine.Api.Data.Repositories
 
             if (!borradoLogico)
             {
-                query = query.Where(u => u.BorradoLogico == false);
+                query = query.Where(u => !u.BorradoLogico);
             }
 
             return await query.FirstOrDefaultAsync(cancellationToken);
@@ -41,7 +41,7 @@ namespace RugbyEngine.Api.Data.Repositories
 
             if (!borradoLogico)
             {
-                query = query.Where(u => u.BorradoLogico == false);
+                query = query.Where(u => !u.BorradoLogico);
             }
 
             return await query.AnyAsync(cancellationToken);

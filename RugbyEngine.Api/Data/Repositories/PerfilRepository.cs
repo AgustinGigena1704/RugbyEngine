@@ -5,7 +5,7 @@ namespace RugbyEngine.Api.Data.Repositories
 {
     public class PerfilRepository : GenericRepository<Perfil>
     {
-        public PerfilRepository(ApiDbContext context, ILogger<GenericRepository<Perfil>> logger)
+        public PerfilRepository(ApiDbContext context, ILogger<PerfilRepository> logger)
             : base(context, logger)
         {
         }

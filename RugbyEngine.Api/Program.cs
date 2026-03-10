@@ -213,4 +213,4 @@ app.MapControllers();
 // SPA fallback: rutas del cliente Blazor que no coinciden con la API devuelven index.html
 app.MapFallbackToFile("index.html");
 
-app.Run();
+await app.RunAsync();

@@ -8,8 +8,8 @@ namespace RugbyEngine.Api.Data.Repositories
     {
         protected readonly ApiDbContext _context;
         protected readonly DbSet<TEntity> _dbSet;
-        protected readonly ILogger<GenericRepository<TEntity>> _logger;
-        public GenericRepository(ApiDbContext context, ILogger<GenericRepository<TEntity>> logger)
+        protected readonly ILogger _logger;
+        public GenericRepository(ApiDbContext context, ILogger logger)
         {
             _context = context;
             _dbSet = context.Set<TEntity>();

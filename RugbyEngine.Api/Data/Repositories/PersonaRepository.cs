@@ -5,7 +5,7 @@ namespace RugbyEngine.Api.Data.Repositories
 {
     public class PersonaRepository : GenericRepository<Persona>
     {
-        public PersonaRepository(ApiDbContext context, ILogger<GenericRepository<Persona>> logger) : base(context, logger)
+        public PersonaRepository(ApiDbContext context, ILogger<PersonaRepository> logger) : base(context, logger)
         {
         }
 
@@ -14,7 +14,7 @@ namespace RugbyEngine.Api.Data.Repositories
             var query = _dbSet.Where(p => p.Documento == dni);
             if (!borradoLogico)
             {
-                query = query.Where(p => p.BorradoLogico == false);
+                query = query.Where(p => !p.BorradoLogico);
             }
             return await query.FirstOrDefaultAsync(cancellationToken);
         }
@@ -24,7 +24,7 @@ namespace RugbyEngine.Api.Data.Repositories
             var query = _dbSet.Where(p => p.Documento == dni);
             if (!borradoLogico)
             {
-                query = query.Where(p => p.BorradoLogico == false);
+                query = query.Where(p => !p.BorradoLogico);
             }
             return await query.AnyAsync(cancellationToken);
         }
@@ -34,7 +34,7 @@ namespace RugbyEngine.Api.Data.Repositories
             var query = _dbSet.Where(p => p.Nombres.Contains(nombre));
             if (!borradoLogico)
             {
-                query = query.Where(p => p.BorradoLogico == false);
+                query = query.Where(p => !p.BorradoLogico);
             }
             return await query.ToListAsync(cancellationToken);
         }

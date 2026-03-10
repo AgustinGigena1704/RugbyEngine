@@ -1,24 +1,30 @@
 ﻿@inject MainMenuService MenuService
+@inject NavigationManager NavigationManager
 @implements IDisposable
 
-<MudPaper Elevation="2"
-          Style="position: fixed; left: 0; top: 64px; bottom: 0; width: 260px; display: flex; flex-direction: column; z-index: 999; border-right: 1px solid var(--mud-palette-divider); background-color: var(--mud-palette-surface);">
+<div style="display: flex; flex-direction: column; padding-top: 8px;">
 
-    <div style="padding: 8px;">
-        <MudTextField @bind-Value="_searchText"
-                      Placeholder="Buscar opciones..."
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Variant="Variant.Outlined"
-                      Margin="Margin.Dense"
-                      FullWidth="true"
-                      Immediate="true"
-                      Clearable="true" />
+    <div style="padding: 0 8px 8px;">
+        <MudAutocomplete T="MenuDTO"
+                         Placeholder="Buscar opciones..."
+                         SearchFunc="SearchItems"
+                         ToStringFunc="@(item => item?.Title ?? string.Empty)"
+                         Value="_selectedItem"
+                         ValueChanged="OnItemSelected"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Dense"
+                         FullWidth="true"
+                         Clearable="true"
+                         ResetValueOnEmptyText="true"
+                         CoerceText="false"
+                         CoerceValue="false" />
     </div>
 
     <MudDivider />
 
-    <div style="overflow-y: auto; flex: 1; padding: 4px 0;">
+    <div style="padding: 4px 0;">
         @if (_isLoading)
         {
             <div style="padding: 8px;">
@@ -28,15 +34,15 @@
                 }
             </div>
         }
-        else if (_filteredItems.Any())
+        else if (_allLevel2Items.Any())
         {
             <MudNavMenu>
-                @foreach (var item in _filteredItems)
+                @foreach (var item in _allLevel2Items)
                 {
                     <MudNavLink Href="@item.Route"
-                                Icon="@(!string.IsNullOrEmpty(item.Icon) ? item.Icon : Icons.Material.Filled.ChevronRight)"
+                                Icon="@(!string.IsNullOrEmpty(item.Icon) ? item.Icon : string.Empty)"
                                 Match="NavLinkMatch.All">
-                        @item.Title
+                        <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@item.Title</span>
                     </MudNavLink>
                 }
             </MudNavMenu>
@@ -48,25 +54,38 @@
             </div>
         }
     </div>
-</MudPaper>
+
+</div>
 
 @code {
     [Parameter]
     public MenuDTO? ParentMenu { get; set; }
 
     private bool _isLoading = false;
-    private string _searchText = string.Empty;
+    private MenuDTO? _selectedItem;
     private List<MenuDTO> _allLevel2Items = new();
     private MenuDTO? _previousParentMenu;
     private bool _firstLoad = true;
 
-    private List<MenuDTO> _filteredItems =>
-        string.IsNullOrWhiteSpace(_searchText)
-            ? _allLevel2Items
-            : _allLevel2Items
-                .Where(m => m.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-                            (m.ToolTip != null && m.ToolTip.Contains(_searchText, StringComparison.OrdinalIgnoreCase)))
-                .ToList();
+    private Task<IEnumerable<MenuDTO>> SearchItems(string text, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return Task.FromResult(_allLevel2Items.AsEnumerable());
+
+        var filtered = _allLevel2Items
+            .Where(m => m.Title.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                        (m.ToolTip != null && m.ToolTip.Contains(text, StringComparison.OrdinalIgnoreCase)));
+        return Task.FromResult(filtered);
+    }
+
+    private void OnItemSelected(MenuDTO? item)
+    {
+        if (item?.Route is not null)
+        {
+            NavigationManager.NavigateTo(item.Route);
+        }
+        _selectedItem = null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,11 +104,10 @@
 
     private void OnActiveMenuChanged()
     {
-        // Cuando la ruta cambia y no hay ParentMenu explícito, usar el ActiveLevel1 del servicio
         if (ParentMenu == null)
         {
             _allLevel2Items = MenuService.ActiveLevel1?.Items ?? new();
-            _searchText = string.Empty;
+            _selectedItem = null;
             StateHasChanged();
         }
     }
@@ -108,8 +126,6 @@
             }
             else
             {
-                // Usar el ActiveLevel1 del servicio si ya está resuelto;
-                // si no, cargar el árbol completo y usar el nivel activo (o todos si aún no hay ruta activa).
                 await MenuService.GetMenuTreeAsync();
 
                 if (MenuService.ActiveLevel1 != null)

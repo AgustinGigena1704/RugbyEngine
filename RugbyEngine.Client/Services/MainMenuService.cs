@@ -1,21 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.JSInterop;
 using RugbyEngine.Shared.Menus;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace RugbyEngine.Client.Services
 {
     public class MainMenuService : IDisposable
     {
         private readonly HttpClient _httpClient;
-        private readonly IAuthService _authService;
         private readonly NavigationManager _navigationManager;
-        private readonly IJSRuntime _jsRuntime;
-
-        private const string SessionKey = "rugby_menu";
-        private const string SessionKeyRouteRoles = "rugby_route_roles";
 
         private List<MenuDTO> _menuTree = new();
         private Dictionary<string, string> _routeRoles = new();
@@ -29,12 +22,10 @@ namespace RugbyEngine.Client.Services
         /// <summary>Se dispara cuando el menú activo cambia (navegación o recarga del árbol).</summary>
         public event Action? ActiveMenuChanged;
 
-        public MainMenuService(HttpClient httpClient, IAuthService authService, NavigationManager navigationManager, IJSRuntime jsRuntime)
+        public MainMenuService(HttpClient httpClient, NavigationManager navigationManager)
         {
             _httpClient = httpClient;
-            _authService = authService;
             _navigationManager = navigationManager;
-            _jsRuntime = jsRuntime;
             _navigationManager.LocationChanged += OnLocationChanged;
         }
 
@@ -65,30 +56,11 @@ namespace RugbyEngine.Client.Services
             ActiveLevel0 = null;
             ActiveLevel1 = null;
             ActiveLevel2 = null;
-            _ = _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", SessionKey).AsTask();
-            _ = _jsRuntime.InvokeVoidAsync("sessionStorage.removeItem", SessionKeyRouteRoles).AsTask();
             ActiveMenuChanged?.Invoke();
         }
 
         private async Task LoadMenuTreeAsync()
         {
-            // Intentar leer ambas cachés desde sessionStorage
-            try
-            {
-                var cachedMenu = await _jsRuntime.InvokeAsync<string?>("sessionStorage.getItem", SessionKey);
-                var cachedRoles = await _jsRuntime.InvokeAsync<string?>("sessionStorage.getItem", SessionKeyRouteRoles);
-                if (!string.IsNullOrEmpty(cachedMenu) && !string.IsNullOrEmpty(cachedRoles))
-                {
-                    _menuTree = JsonSerializer.Deserialize<List<MenuDTO>>(cachedMenu) ?? new();
-                    _routeRoles = BuildRouteRoles(JsonSerializer.Deserialize<List<RouteRoleDTO>>(cachedRoles) ?? new());
-                    _menuLoaded = true;
-                    UpdateActiveMenu(_navigationManager.Uri);
-                    ActiveMenuChanged?.Invoke();
-                    return;
-                }
-            }
-            catch { /* sessionStorage no disponible */ }
-
             // Consultar la API: menú del usuario y rutas protegidas en paralelo
             try
             {
@@ -103,20 +75,7 @@ namespace RugbyEngine.Client.Services
                 {
                     var list = await rolesTask.Result.Content.ReadFromJsonAsync<List<RouteRoleDTO>>() ?? new();
                     _routeRoles = BuildRouteRoles(list);
-                    try
-                    {
-                        await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", SessionKeyRouteRoles,
-                            JsonSerializer.Serialize(list));
-                    }
-                    catch { /* ignorar errores de almacenamiento */ }
                 }
-
-                try
-                {
-                    await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", SessionKey,
-                        JsonSerializer.Serialize(_menuTree));
-                }
-                catch { /* ignorar errores de almacenamiento */ }
             }
             catch (Exception)
             {
@@ -174,15 +133,13 @@ namespace RugbyEngine.Client.Services
             {
                 foreach (var lvl1 in lvl0.Items)
                 {
-                    foreach (var lvl2 in lvl1.Items)
+                    var matchedLvl2 = lvl1.Items.FirstOrDefault(lvl2 => IsRouteMatch(lvl2.Route, path));
+                    if (matchedLvl2 != null)
                     {
-                        if (IsRouteMatch(lvl2.Route, path))
-                        {
-                            ActiveLevel0 = lvl0;
-                            ActiveLevel1 = lvl1;
-                            ActiveLevel2 = lvl2;
-                            return;
-                        }
+                        ActiveLevel0 = lvl0;
+                        ActiveLevel1 = lvl1;
+                        ActiveLevel2 = matchedLvl2;
+                        return;
                     }
 
                     if (IsRouteMatch(lvl1.Route, path))
@@ -209,9 +166,18 @@ namespace RugbyEngine.Client.Services
                 || currentPath.StartsWith(normalized + "/", StringComparison.Ordinal);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _navigationManager.LocationChanged -= OnLocationChanged;
+            }
+        }
+
         public void Dispose()
         {
-            _navigationManager.LocationChanged -= OnLocationChanged;
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

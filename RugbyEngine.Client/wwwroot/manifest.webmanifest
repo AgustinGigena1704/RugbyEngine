@@ -4,7 +4,6 @@
   "description": "Sistema de gestión de rugby",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1976D2",
   "prefer_related_applications": false,
