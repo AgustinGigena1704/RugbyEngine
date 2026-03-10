@@ -4,6 +4,16 @@ html, body {
     overflow: hidden;
 }
 
+.admin-table-shell {
+    --responsive-admin-table-height: 62dvh;
+}
+
+@media (max-width: 959.98px) {
+    .admin-table-shell {
+        --responsive-admin-table-height: 52dvh;
+    }
+}
+
 .nav-menu-active {
     background-color: rgba(255, 255, 255, 0.18) !important;
     border-radius: 4px;
