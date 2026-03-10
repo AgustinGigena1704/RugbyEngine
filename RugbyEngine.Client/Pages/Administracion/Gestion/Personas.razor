@@ -9,7 +9,7 @@
 
 <MudText Typo="Typo.h5" Class="mb-4">Gestión de Personas</MudText>
 
-<MudPaper Elevation="2" Class="pa-4">
+<MudPaper Elevation="2" Class="pa-4 admin-table-shell">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
         <MudTextField T="string"
                       @bind-Value="_searchText"
@@ -34,7 +34,11 @@
               Striped="true"
               Loading="@_isLoading"
               LoadingProgressColor="Color.Primary"
-              SortLabel="Ordenar por">
+              SortLabel="Ordenar por"
+              Virtualize="true"
+              FixedHeader="true"
+              Height="var(--responsive-admin-table-height)"
+              RowsPerPage="10">
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.Apellidos)">Apellidos</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<PersonaResponse, object>(p => p.Nombres)">Nombres</MudTableSortLabel></MudTh>
@@ -67,6 +71,9 @@
         <NoRecordsContent>
             <MudText Class="pa-4">No se encontraron personas.</MudText>
         </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@_pageSizeOptions" />
+        </PagerContent>
     </MudTable>
 </MudPaper>
 
@@ -199,6 +206,7 @@
     private List<PersonaResponse> _personas = [];
     private bool _isLoading = true;
     private string _searchText = string.Empty;
+    private readonly int[] _pageSizeOptions = [10, 20, 30, 40, 50];
 
     private IEnumerable<PersonaResponse> FilteredPersonas => string.IsNullOrWhiteSpace(_searchText)
         ? _personas

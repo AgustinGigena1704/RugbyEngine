@@ -13,7 +13,7 @@
 
 <MudText Typo="Typo.h5" Class="mb-4">Gestión de Usuarios</MudText>
 
-<MudPaper Elevation="2" Class="pa-4">
+<MudPaper Elevation="2" Class="pa-4 admin-table-shell">
 
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
         <MudTextField T="string"
@@ -40,7 +40,11 @@
               Striped="true"
               Loading="@_isLoading"
               LoadingProgressColor="Color.Primary"
-              SortLabel="Ordenar por">
+              SortLabel="Ordenar por"
+              Virtualize="true"
+              FixedHeader="true"
+              Height="var(--responsive-admin-table-height)"
+              RowsPerPage="10">
         <HeaderContent>
             <MudTh><MudTableSortLabel SortBy="new Func<UsuarioResponse, object>(u => u.Username)">Usuario</MudTableSortLabel></MudTh>
             <MudTh><MudTableSortLabel SortBy="new Func<UsuarioResponse, object>(u => u.NombreCompleto)">Nombre</MudTableSortLabel></MudTh>
@@ -112,6 +116,9 @@
         <NoRecordsContent>
             <MudText Class="pa-4">No se encontraron usuarios.</MudText>
         </NoRecordsContent>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="@_pageSizeOptions" />
+        </PagerContent>
     </MudTable>
 </MudPaper>
 
@@ -352,6 +359,7 @@
     private List<PerfilDto> _todosPerfiles = [];
     private bool _isLoading = true;
     private string _searchText = string.Empty;
+    private readonly int[] _pageSizeOptions = [10, 20, 30, 40, 50];
 
     private IEnumerable<UsuarioResponse> FilteredUsuarios => string.IsNullOrWhiteSpace(_searchText)
         ? _usuarios
