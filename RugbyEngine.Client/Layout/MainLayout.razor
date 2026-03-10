@@ -96,6 +96,23 @@
             </MenuRouteGuard>
         </MudContainer>
     </MudMainContent>
+
+    @* Pestaña para abrir el menú lateral en mobile (Android gesture nav).
+       Adherida al borde derecho — border-radius solo en el lado izquierdo. *@
+    @if (_isMobile && _hasSideMenu && !_mobileSideOpen)
+    {
+        <div @onclick="() => { _mobileSideOpen = true; StateHasChanged(); }"
+             title="Abrir menú lateral"
+             style="position: fixed; top: 72px; right: 0; z-index: 1500;
+                    background-color: var(--mud-palette-primary);
+                    border-radius: 10px 0 0 10px;
+                    box-shadow: -4px 3px 10px rgba(0,0,0,0.30);
+                    cursor: pointer; display: flex; align-items: center;
+                    padding: 12px 6px 12px 10px; user-select: none;">
+            <MudIcon Icon="@Icons.Material.Filled.ChevronLeft"
+                     Style="color: white; font-size: 1.6rem;" />
+        </div>
+    }
 </MudLayout>
 
 @code {
