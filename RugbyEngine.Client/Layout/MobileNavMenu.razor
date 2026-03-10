@@ -45,7 +45,7 @@
         MenuService.ActiveMenuChanged -= OnMenuChanged;
     }
 
-    private RenderFragment RenderMobileMenu(MenuDTO menu) => __builder =>
+    private static RenderFragment RenderMobileMenu(MenuDTO menu) => __builder =>
     {
         var icon = !string.IsNullOrEmpty(menu.Icon) ? menu.Icon : Icons.Material.Filled.Circle;
 

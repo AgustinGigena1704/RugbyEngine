@@ -22,14 +22,14 @@ namespace RugbyEngine.Client.Services
             _apiBaseUri = NormalizeBaseUri(configuredBaseUrl) ?? _httpClient.BaseAddress;
         }
 
-        public async Task<List<PerfilDTO>> GetAllAsync(CancellationToken cancellationToken = default)
+        public async Task<List<PerfilDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 var request = await CreateAuthorizedRequestAsync(HttpMethod.Get, "api/Perfil");
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<List<PerfilDTO>>(cancellationToken) ?? [];
+                return await response.Content.ReadFromJsonAsync<List<PerfilDto>>(cancellationToken) ?? [];
             }
             catch (Exception ex)
             {
@@ -38,14 +38,14 @@ namespace RugbyEngine.Client.Services
             }
         }
 
-        public async Task<List<PerfilDTO>> GetMineAsync(CancellationToken cancellationToken = default)
+        public async Task<List<PerfilDto>> GetMineAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 var request = await CreateAuthorizedRequestAsync(HttpMethod.Get, "api/Perfil/mine");
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<List<PerfilDTO>>(cancellationToken) ?? [];
+                return await response.Content.ReadFromJsonAsync<List<PerfilDto>>(cancellationToken) ?? [];
             }
             catch (Exception ex)
             {

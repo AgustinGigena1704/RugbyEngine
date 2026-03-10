@@ -1,7 +1,11 @@
 ﻿@using MudBlazor
+@using MudBlazor.Services
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@inject MainMenuService MenuService
+@inject IBrowserViewportService ViewportService
 @implements IDisposable
+@implements IBrowserViewportObserver
 
 <MudThemeProvider Theme="_theme" />
 <MudPopoverProvider />
@@ -10,19 +14,24 @@
 
 <MudLayout>
     <MudAppBar Elevation="4" Color="Color.Primary">
+        @* Hamburger — mobile only *@
         <MudHidden Breakpoint="Breakpoint.SmAndUp">
             <MudIconButton Icon="@Icons.Material.Filled.Menu"
                            Color="Color.Inherit"
                            Edge="Edge.Start"
                            OnClick="ToggleLeftDrawer" />
         </MudHidden>
+
         <NavMenu />
+
         <MudIconButton Icon="@Icons.Material.Filled.AccountCircle"
                        Color="Color.Inherit"
                        Edge="Edge.End"
                        OnClick="ToggleRightDrawer" />
     </MudAppBar>
 
+    @* Mobile navigation drawer (hamburger).
+       Swipe disabled when side menu is active so swipe opens the side menu instead. *@
     <MudDrawer @bind-Open="_leftDrawerOpen"
                Anchor="Anchor.Left"
                Elevation="2"
@@ -34,6 +43,44 @@
         <MobileNavMenu />
     </MudDrawer>
 
+    @* Side menu:
+       – Desktop (Md+) : Persistent, clips under AppBar, pushes content from the right.
+       – Mobile (Xs/Sm): Temporary + MudSwipeArea at right edge (MudDrawer has no built-in swipe in v9). *@
+    @if (_hasSideMenu)
+    {
+        @if (_isMobile)
+        {
+            <MudDrawer @bind-Open="_mobileSideOpen"
+                       Anchor="Anchor.Right"
+                       Elevation="2"
+                       Variant="DrawerVariant.Temporary"
+                       ClipMode="DrawerClipMode.Never"
+                       Width="260px">
+                <MenuLateral />
+            </MudDrawer>
+
+            @* 30-px hotspot at the right screen edge — open on RightToLeft swipe *@
+            @if (!_mobileSideOpen)
+            {
+                <MudSwipeArea OnSwipeEnd="OnRightEdgeSwipe"
+                              Sensitivity="30"
+                              Style="position:fixed;right:0;top:0;bottom:0;width:30px;z-index:1400;" />
+            }
+        }
+        else
+        {
+            <MudDrawer Open="true"
+                       Anchor="Anchor.Right"
+                       Elevation="2"
+                       Variant="DrawerVariant.Persistent"
+                       ClipMode="DrawerClipMode.Always"
+                       Width="260px">
+                <MenuLateral />
+            </MudDrawer>
+        }
+    }
+
+    @* Profile / account drawer (right) — independent *@
     <MudDrawer @bind-Open="_rightDrawerOpen"
                Anchor="Anchor.Right"
                Elevation="2"
@@ -42,8 +89,8 @@
         <MobileUserDrawer />
     </MudDrawer>
 
-    <MudMainContent Class="mt-16 pa-4" Style="background-color: var(--mud-palette-background-gray);">
-        <MudContainer MaxWidth="MaxWidth.Large">
+    <MudMainContent Style="margin-top: 64px; padding: clamp(8px, 2vw, 24px); background-color: var(--mud-palette-background-gray);">
+        <MudContainer MaxWidth="MaxWidth.Large" Style="padding: 0;">
             <MenuRouteGuard>
                 @Body
             </MenuRouteGuard>
@@ -52,29 +99,73 @@
 </MudLayout>
 
 @code {
+    // ── State ────────────────────────────────────────────────────────────────
     private bool _leftDrawerOpen;
     private bool _rightDrawerOpen;
+    private bool _mobileSideOpen;
+    private bool _hasSideMenu;
+    private bool _isMobile;
 
+    // ── IBrowserViewportObserver ──────────────────────────────────────────────
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+    ResizeOptions? IBrowserViewportObserver.ResizeOptions { get; } = new ResizeOptions { NotifyOnBreakpointOnly = true };
+
+    async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
+    {
+        _isMobile = browserViewportEventArgs.Breakpoint is Breakpoint.Xs or Breakpoint.Sm;
+        if (!_isMobile) _mobileSideOpen = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;
+        MenuService.ActiveMenuChanged += OnActiveMenuChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await ViewportService.SubscribeAsync(this, fireImmediately: true);
+    }
+
+    // ── Handlers ──────────────────────────────────────────────────────────────
+    private void OnActiveMenuChanged()
+    {
+        _hasSideMenu = MenuService.ActiveLevel1 != null && MenuService.ActiveLevel1.Items.Any();
+        if (!_hasSideMenu) _mobileSideOpen = false;
+        InvokeAsync(StateHasChanged);
     }
 
     private void ToggleLeftDrawer() => _leftDrawerOpen = !_leftDrawerOpen;
     private void ToggleRightDrawer() => _rightDrawerOpen = !_rightDrawerOpen;
 
+    private void OnRightEdgeSwipe(SwipeEventArgs args)
+    {
+        if (args.SwipeDirection == SwipeDirection.RightToLeft)
+        {
+            _mobileSideOpen = true;
+            StateHasChanged();
+        }
+    }
+
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
         _leftDrawerOpen = false;
         _rightDrawerOpen = false;
+        _mobileSideOpen = false;
         InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        MenuService.ActiveMenuChanged -= OnActiveMenuChanged;
+        _ = ViewportService.UnsubscribeAsync(this);
     }
 
+    // ── Theme ─────────────────────────────────────────────────────────────────
     private readonly MudTheme _theme = new()
     {
         PaletteLight = new PaletteLight

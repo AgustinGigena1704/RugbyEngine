@@ -90,7 +90,7 @@ namespace RugbyEngine.Api.Services
             }
         }
 
-        private bool IsPasswordHashed(string password)
+        private static bool IsPasswordHashed(string password)
         {
             if (string.IsNullOrEmpty(password))
                 return false;
@@ -98,7 +98,7 @@ namespace RugbyEngine.Api.Services
             return BcryptPattern.IsMatch(password);
         }
 
-        private string SanitizeForLogging(string input)
+        private static string SanitizeForLogging(string input)
         {
             if (input == null)
                 return string.Empty;

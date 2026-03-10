@@ -6,7 +6,7 @@ namespace RugbyEngine.Api.Data.Repositories
 {
     public class MenuRepository : GenericRepository<Menu>
     {
-        public MenuRepository(ApiDbContext context, ILogger<GenericRepository<Menu>> logger) : base(context, logger)
+        public MenuRepository(ApiDbContext context, ILogger<MenuRepository> logger) : base(context, logger)
         {
         }
 

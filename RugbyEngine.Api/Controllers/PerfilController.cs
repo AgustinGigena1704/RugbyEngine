@@ -23,7 +23,7 @@ namespace RugbyEngine.Api.Controllers
         public async Task<IActionResult> GetAll()
         {
             var perfiles = await _entityManager.GetRepository<PerfilRepository>().GetAllAsync();
-            return Ok(perfiles.Select(p => new PerfilDTO { Id = p.Id, Nombre = p.Nombre, Descripcion = p.Descripcion }));
+            return Ok(perfiles.Select(p => new PerfilDto { Id = p.Id, Nombre = p.Nombre, Descripcion = p.Descripcion }));
         }
 
         /// <summary>Devuelve los perfiles asignados al usuario autenticado.</summary>
@@ -34,7 +34,7 @@ namespace RugbyEngine.Api.Controllers
             if (user == null) return NotFound();
 
             var perfiles = await _entityManager.GetRepository<PerfilRepository>().GetByUserIdAsync(user.Id);
-            return Ok(perfiles.Select(p => new PerfilDTO { Id = p.Id, Nombre = p.Nombre, Descripcion = p.Descripcion }));
+            return Ok(perfiles.Select(p => new PerfilDto { Id = p.Id, Nombre = p.Nombre, Descripcion = p.Descripcion }));
         }
 
         /// <summary>Asigna un perfil al usuario autenticado. Requiere permiso ADMIN.</summary>

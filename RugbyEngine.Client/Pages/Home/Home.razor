@@ -1,27 +1,42 @@
 ﻿@page "/"
 @attribute [Authorize]
+@using System.Security.Claims
 
 <PageTitle>Inicio</PageTitle>
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <h1>Bienvenido!</h1>
+
+        <MudStack Spacing="6">
+
+            @* ── Bienvenida ── *@
+            <MudPaper Elevation="2" Style="padding: clamp(20px, 3vw, 36px); background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%); color: white; border-radius: 12px;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents"
+                             Style="font-size: clamp(2.5rem, 6vw, 4rem); opacity: 0.85;" />
+                    <div>
+                        <MudText Style="font-size: clamp(1.3rem, 4vw, 2rem); font-weight: 700; color: white; line-height: 1.2;">
+                            ¡Bienvenido, @GetDisplayName(authContext.User)!
+                        </MudText>
+                        <MudText Style="font-size: clamp(0.8rem, 2vw, 1rem); color: rgba(255,255,255,0.8); margin-top: 4px;">
+                            RugbyEngine — Panel de gestión
+                        </MudText>
+                    </div>
+                </MudStack>
+            </MudPaper>
+
+        </MudStack>
+
     </Authorized>
     <NotAuthorized>
-        <p>Validando sesión...</p>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="min-height: 200px;">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Validando sesión...</MudText>
+        </MudStack>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
-    
-
-    private static IEnumerable<string> GetRoles(ClaimsPrincipal user)
-    {
-        return user.FindAll(ClaimTypes.Role).Select(claim => claim.Value).Distinct();
-    }
-
-    private static bool HasRoles(ClaimsPrincipal user)
-    {
-        return user.Claims.Any(claim => claim.Type == ClaimTypes.Role);
-    }
+    private static string GetDisplayName(ClaimsPrincipal user)
+        => user.FindFirst("username")?.Value ?? user.Identity?.Name ?? "Usuario";
 }

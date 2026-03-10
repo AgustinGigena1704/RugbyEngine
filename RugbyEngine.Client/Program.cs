@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using MudBlazor.Services;
+using MudExtensions.Services;
 using RugbyEngine.Client;
 using RugbyEngine.Client.Services;
 
@@ -28,5 +29,6 @@ builder.Services.AddScoped<MainMenuService>();
 builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<IPerfilService, PerfilService>();
 builder.Services.AddMudServices();
+builder.Services.AddMudExtensions();
 
 await builder.Build().RunAsync();
