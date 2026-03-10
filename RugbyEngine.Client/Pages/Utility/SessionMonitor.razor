@@ -1,0 +1,31 @@
+@inject IJSRuntime JS
+@inject IAuthService AuthService
+@implements IAsyncDisposable
+
+@code {
+    private DotNetObjectReference<SessionMonitor>? _objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _objRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("sessionMonitor.register", _objRef);
+        await AuthService.ValidateSessionAsync();
+    }
+
+    [JSInvokable]
+    public Task OnAppResume()
+    {
+        return AuthService.ValidateSessionAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_objRef is not null)
+        {
+            await JS.InvokeVoidAsync("sessionMonitor.unregister");
+            _objRef.Dispose();
+        }
+    }
+}

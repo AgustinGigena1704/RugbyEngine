@@ -15,5 +15,7 @@ namespace RugbyEngine.Client.Services
         Task<bool> IsAuthenticatedAsync();
 
         Task<string?> GetTokenAsync();
+
+        Task<bool> ValidateSessionAsync(CancellationToken cancellationToken = default);
     }
 }
