@@ -21,6 +21,7 @@ namespace RugbyEngine.Client.Services
         private readonly ApiAuthenticationStateProvider _authenticationStateProvider;
         private readonly ILogger<AuthService> _logger;
         private readonly Uri? _apiBaseUri;
+        private readonly int _jwtExpiryMinutes;
 
         public event Action? AuthenticationStateChanged;
 
@@ -33,6 +34,9 @@ namespace RugbyEngine.Client.Services
             _apiBaseUri = NormalizeBaseUri(configuredBaseUrl) ?? _httpClient.BaseAddress;
             _authenticationStateProvider = authenticationStateProvider as ApiAuthenticationStateProvider
                 ?? throw new InvalidOperationException("El proveedor de autenticación configurado no es válido.");
+
+            var expiryConfig = configuration["Jwt:ExpiryInMinutes"] ?? Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES") ?? "60";
+            _jwtExpiryMinutes = int.TryParse(expiryConfig, out var minutes) ? minutes : 60;
         }
 
         public async Task<LoginResponse> LoginAsync(LoginDTO request, CancellationToken cancellationToken = default)
@@ -107,6 +111,48 @@ namespace RugbyEngine.Client.Services
             return _cookieService.GetCookieAsync(TokenCookieName);
         }
 
+        public async Task<bool> ValidateSessionAsync(CancellationToken cancellationToken = default)
+        {
+            var token = await _cookieService.GetCookieAsync(TokenCookieName);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _authenticationStateProvider.NotifyUserLogout();
+                AuthenticationStateChanged?.Invoke();
+                return false;
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Post, BuildApiUri("api/Auth/Refresh"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            try
+            {
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(payload?.Token))
+                    {
+                        await PersistTokenAsync(payload.Token);
+                    }
+                    else
+                    {
+                        _authenticationStateProvider.NotifyUserAuthentication(token);
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo validar/refrescar la sesión actual");
+            }
+
+            await _cookieService.DeleteCookieAsync(TokenCookieName);
+            _authenticationStateProvider.NotifyUserLogout();
+            AuthenticationStateChanged?.Invoke();
+            return false;
+        }
+
         private async Task PersistTokenAsync(string token)
         {
             JwtSecurityToken? jwtToken = null;
@@ -121,7 +167,7 @@ namespace RugbyEngine.Client.Services
 
             var expiry = jwtToken?.ValidTo > DateTime.UtcNow
                 ? new DateTimeOffset(jwtToken!.ValidTo)
-                : DateTimeOffset.UtcNow.AddHours(1);
+                : DateTimeOffset.UtcNow.AddMinutes(_jwtExpiryMinutes);
 
             await _cookieService.SetCookieAsync(TokenCookieName, token, expiry);
             _authenticationStateProvider.NotifyUserAuthentication(token);

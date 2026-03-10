@@ -133,6 +133,70 @@ namespace RugbyEngine.Api.Controllers
 
             return Ok(new { Success = true, UserId = userId });
         }
+
+        /// <summary>
+        /// Refresca un token JWT si está cerca de expirar
+        /// </summary>
+        /// <remarks>
+        /// Utiliza la expiración deslizante para extender la validez del token.
+        /// </remarks>
+        /// <response code="200">Token refrescado exitosamente</response>
+        /// <response code="400">Solicitud incorrecta</response>
+        /// <response code="401">Token inválido o no autorizado</response>
+        [HttpPost("Refresh")]
+        [Authorize]
+        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status401Unauthorized)]
+        public ActionResult<LoginResponse> RefreshToken()
+        {
+            var authorization = Request.Headers.Authorization.ToString();
+            if (string.IsNullOrWhiteSpace(authorization) || !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new LoginResponse
+                {
+                    Success = false,
+                    Message = "Token no provisto."
+                });
+            }
+
+            var token = authorization["Bearer ".Length..].Trim();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return BadRequest(new LoginResponse
+                {
+                    Success = false,
+                    Message = "Token no provisto."
+                });
+            }
+
+            if (!_jwtService.ShouldRefreshToken(token))
+            {
+                return Ok(new LoginResponse
+                {
+                    Success = true,
+                    Message = "Token vigente.",
+                    Token = token
+                });
+            }
+
+            var newToken = _jwtService.RefreshToken(token);
+            if (string.IsNullOrWhiteSpace(newToken))
+            {
+                return Unauthorized(new LoginResponse
+                {
+                    Success = false,
+                    Message = "Token inválido."
+                });
+            }
+
+            return Ok(new LoginResponse
+            {
+                Success = true,
+                Message = "Token refrescado.",
+                Token = newToken
+            });
+        }
     }
 }
 
