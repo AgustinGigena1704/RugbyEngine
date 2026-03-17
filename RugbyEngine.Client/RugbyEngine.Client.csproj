@@ -22,6 +22,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot/appsettings.json" />
+    <Content Remove="wwwroot/appsettings.Production.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 

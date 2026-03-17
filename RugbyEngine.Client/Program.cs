@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using RugbyEngine.Client;
 using RugbyEngine.Client.Services;
+using System;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -13,7 +14,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
-    var apiBaseUrl = configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://localhost";
+    // Primero intenta obtener la variable de entorno
+    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://localhost";
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)
         : new Uri(builder.HostEnvironment.BaseAddress);

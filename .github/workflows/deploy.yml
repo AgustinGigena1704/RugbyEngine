@@ -65,9 +65,12 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          # Solo copiar archivos de infraestructura, nunca archivos de configuración sensibles
           source: "RugbyEngine.Api/docker-compose.yml,RugbyEngine.Api/Caddyfile"
           target: ~/rugbyengine/
           strip_components: 1
+          # Excluir explícitamente archivos de configuración
+          # No copiar appsettings.json ni appsettings.Production.json
 
       # ── 6. Deploy en la VM ────────────────────────────────────────
       - name: Deploy and restart
