@@ -47,6 +47,8 @@ namespace RugbyEngine.Client.Services
             _menuLoaded = false;
             _menuTree = new();
             _routeRoles = new();
+            await SessionStorage.RemoveItemAsync("menuTree");
+            await SessionStorage.RemoveItemAsync("routeRoles");
             await LoadMenuTreeAsync();
         }
 
@@ -59,6 +61,11 @@ namespace RugbyEngine.Client.Services
             ActiveLevel0 = null;
             ActiveLevel1 = null;
             ActiveLevel2 = null;
+            _ = Task.Run(async () =>
+            {
+                await SessionStorage.RemoveItemAsync("menuTree");
+                await SessionStorage.RemoveItemAsync("routeRoles");
+            });
             ActiveMenuChanged?.Invoke();
         }
 
@@ -69,7 +76,7 @@ namespace RugbyEngine.Client.Services
                 var cachedMenu = await SessionStorage.GetItemAsync<List<MenuDTO>>("menuTree");
                 var cachedRoles = await SessionStorage.GetItemAsync<Dictionary<string, string>>("routeRoles");
 
-                if (cachedMenu != null && cachedRoles != null)
+                if (cachedMenu != null && cachedMenu.Count > 0 && cachedRoles != null)
                 {
                     _menuTree = cachedMenu;
                     _routeRoles = cachedRoles;
@@ -92,13 +99,18 @@ namespace RugbyEngine.Client.Services
                     var list = await rolesTask.Result.Content.ReadFromJsonAsync<List<RouteRoleDTO>>() ?? new();
                     _routeRoles = BuildRouteRoles(list);
                 }
+
+                if (_menuTree.Count > 0)
+                {
+                    await SessionStorage.SetItemAsync("menuTree", _menuTree);
+                    await SessionStorage.SetItemAsync("routeRoles", _routeRoles);
+                }
             }
             catch (Exception)
             {
                 _menuTree = new();
             }
-            await SessionStorage.SetItemAsync("menuTree", _menuTree);
-            await SessionStorage.SetItemAsync("routeRoles", _routeRoles);
+
             _menuLoaded = true;
             UpdateActiveMenu(_navigationManager.Uri);
             ActiveMenuChanged?.Invoke();
