@@ -3,7 +3,7 @@
 @inject MainMenuService MenuService
 @implements IDisposable
 
-<span class="app-brand me-3">RugbyEngine</span>
+<span class="app-brand me-3" onclick="@(() => NavigationManager.NavigateTo("/"))">RugbyEngine</span>
 
 <AuthorizeView>
     <Authorized>
