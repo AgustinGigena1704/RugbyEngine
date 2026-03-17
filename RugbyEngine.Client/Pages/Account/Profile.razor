@@ -3,133 +3,125 @@
 @using RugbyEngine.Shared.Perfiles
 @using System.Security.Claims
 @inject IPerfilService PerfilService
-@inject ISnackbar Snackbar
 @inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Mi Perfil</PageTitle>
 
-<MudText Typo="Typo.h5" Class="mb-4">Mi Perfil</MudText>
+@if (_toast is not null)
+{
+    <div class="app-toast @(_toastIsError ? "app-toast--error" : "app-toast--success")" role="alert">@_toast</div>
+}
+
+<h4 class="mb-4 fw-bold">Mi Perfil</h4>
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <MudGrid>
-            <MudItem xs="12" md="4">
-                <MudPaper Elevation="2" Class="pa-4">
-                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
-                        <MudIcon Icon="@Icons.Material.Filled.AccountCircle"
-                                 Size="Size.Large"
-                                 Color="Color.Primary"
-                                 Style="font-size: 4rem;" />
-                        <MudText Typo="Typo.h6">@GetDisplayName(authContext.User)</MudText>
-                    </MudStack>
-                </MudPaper>
-            </MudItem>
+        <div class="row g-4">
+            <!-- Avatar -->
+            <div class="col-12 col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="var(--app-primary)" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                        </svg>
+                        <h5 class="mt-3 mb-0">@GetDisplayName(authContext.User)</h5>
+                    </div>
+                </div>
+            </div>
 
-            @* ── Panel de perfiles — visible a todos ── *@
-            <MudItem xs="12" md="8">
-                <MudPaper Elevation="2" Class="pa-4" Style="height:100%;">
-                    @if (_loading)
-                    {
-                        <MudSkeleton Width="60%" Height="28px" Class="mb-4" />
-                        @for (int i = 0; i < 3; i++)
+            <!-- Perfiles -->
+            <div class="col-12 col-md-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        @if (_loading)
                         {
-                            <MudSkeleton Width="100%" Height="44px" Class="mb-2" />
-                        }
-                    }
-                    else
-                    {
-                        @* Mis perfiles — lectura para todos, botón quitar solo admins *@
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
-                            <MudText Typo="Typo.h6">Mis perfiles</MudText>
-                            <AuthorizeView Roles="admin">
-                                <NotAuthorized>
-                                    <MudChip T="string" Icon="@Icons.Material.Filled.Lock"
-                                             Color="Color.Default" Size="Size.Small" Disabled="true">
-                                        Solo lectura
-                                    </MudChip>
-                                </NotAuthorized>
-                            </AuthorizeView>
-                        </MudStack>
-
-                        @if (_mine.Count == 0)
-                        {
-                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                                Sin perfiles asignados.
-                            </MudText>
+                            <div class="loading-ball">
+                                <img src="images/loadingPelota.gif" alt="Cargando..." />
+                            </div>
                         }
                         else
                         {
-                            <MudList T="PerfilDto" Dense="true" Class="mb-2">
-                                @foreach (var p in _mine)
-                                {
-                                    <MudListItem>
-                                        <div class="d-flex align-center justify-space-between">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="mb-0 fw-bold">Mis perfiles</h5>
+                                <AuthorizeView Roles="admin">
+                                    <NotAuthorized>
+                                        <span class="badge bg-secondary">Solo lectura</span>
+                                    </NotAuthorized>
+                                </AuthorizeView>
+                            </div>
+
+                            @if (_mine.Count == 0)
+                            {
+                                <p class="text-muted small mb-4">Sin perfiles asignados.</p>
+                            }
+                            else
+                            {
+                                <ul class="list-group list-group-flush mb-3">
+                                    @foreach (var p in _mine)
+                                    {
+                                        <li class="list-group-item d-flex align-items-center justify-content-between px-0">
                                             <div>
-                                                <MudText Typo="Typo.body1">@p.Nombre</MudText>
+                                                <span class="fw-semibold">@p.Nombre</span>
                                                 @if (!string.IsNullOrEmpty(p.Descripcion))
                                                 {
-                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                                    <br /><span class="text-muted small">@p.Descripcion</span>
                                                 }
                                             </div>
                                             <AuthorizeView Roles="admin">
                                                 <Authorized>
-                                                    <MudIconButton Icon="@Icons.Material.Filled.RemoveCircleOutline"
-                                                                   Color="Color.Error"
-                                                                   Size="Size.Small"
-                                                                   Disabled="@_busy"
-                                                                   OnClick="@(() => RemoveAsync(p))"
-                                                                   title="Retirar perfil" />
+                                                    <button class="btn btn-sm btn-outline-danger" disabled="@_busy"
+                                                            @onclick="() => RemoveAsync(p)" title="Retirar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                                            <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                                        </svg>
+                                                    </button>
                                                 </Authorized>
                                             </AuthorizeView>
-                                        </div>
-                                    </MudListItem>
-                                }
-                            </MudList>
-                        }
+                                        </li>
+                                    }
+                                </ul>
+                            }
 
-                        @* Perfiles disponibles — solo admins *@
-                        <AuthorizeView Roles="admin">
-                            <Authorized>
-                                <MudDivider Class="my-3" />
-                                <MudText Typo="Typo.h6" Class="mb-2">Perfiles disponibles</MudText>
-
-                                @if (_available.Count == 0)
-                                {
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                        No hay perfiles disponibles para agregar.
-                                    </MudText>
-                                }
-                                else
-                                {
-                                    <MudList T="PerfilDto" Dense="true">
-                                        @foreach (var p in _available)
-                                        {
-                                            <MudListItem>
-                                                <div class="d-flex align-center justify-space-between">
+                            <AuthorizeView Roles="admin">
+                                <Authorized>
+                                    <hr />
+                                    <h6 class="fw-bold mb-2">Perfiles disponibles</h6>
+                                    @if (_available.Count == 0)
+                                    {
+                                        <p class="text-muted small">No hay perfiles disponibles para agregar.</p>
+                                    }
+                                    else
+                                    {
+                                        <ul class="list-group list-group-flush">
+                                            @foreach (var p in _available)
+                                            {
+                                                <li class="list-group-item d-flex align-items-center justify-content-between px-0">
                                                     <div>
-                                                        <MudText Typo="Typo.body1">@p.Nombre</MudText>
+                                                        <span class="fw-semibold">@p.Nombre</span>
                                                         @if (!string.IsNullOrEmpty(p.Descripcion))
                                                         {
-                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@p.Descripcion</MudText>
+                                                            <br /><span class="text-muted small">@p.Descripcion</span>
                                                         }
                                                     </div>
-                                                    <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
-                                                                   Color="Color.Success"
-                                                                   Size="Size.Small"
-                                                                   Disabled="@_busy"
-                                                                   OnClick="@(() => AssignAsync(p))"
-                                                                   title="Agregar perfil" />
-                                                </div>
-                                            </MudListItem>
-                                        }
-                                    </MudList>
-                                }
-                            </Authorized>
-                        </AuthorizeView>
-                    }
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
+                                                    <button class="btn btn-sm btn-outline-success" disabled="@_busy"
+                                                            @onclick="() => AssignAsync(p)" title="Agregar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                                        </svg>
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </Authorized>
+                            </AuthorizeView>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
     </Authorized>
 </AuthorizeView>
 
@@ -140,27 +132,22 @@
     private bool _loading = true;
     private bool _busy;
     private bool _isAdmin;
+    private string? _toast;
+    private bool _toastIsError;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadAsync();
-    }
+    protected override async Task OnInitializedAsync() => await LoadAsync();
 
     private async Task LoadAsync()
     {
         _loading = true;
-
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         _isAdmin = authState.User.IsInRole("admin");
-
         _mine = await PerfilService.GetMineAsync();
-
         if (_isAdmin)
         {
             _all = await PerfilService.GetAllAsync();
             _available = _all.Where(p => _mine.All(m => m.Id != p.Id)).ToList();
         }
-
         _loading = false;
     }
 
@@ -169,16 +156,8 @@
         if (!_isAdmin) return;
         _busy = true;
         var ok = await PerfilService.AssignAsync(perfil.Id);
-        if (ok)
-        {
-            _mine.Add(perfil);
-            _available.Remove(perfil);
-            Snackbar.Add($"Perfil \"{perfil.Nombre}\" agregado.", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add($"No se pudo agregar el perfil \"{perfil.Nombre}\".", Severity.Error);
-        }
+        if (ok) { _mine.Add(perfil); _available.Remove(perfil); _ = ShowToastAsync($"Perfil \"{perfil.Nombre}\" agregado.", false); }
+        else _ = ShowToastAsync($"No se pudo agregar el perfil \"{perfil.Nombre}\".", true);
         _busy = false;
     }
 
@@ -187,19 +166,20 @@
         if (!_isAdmin) return;
         _busy = true;
         var ok = await PerfilService.UnassignAsync(perfil.Id);
-        if (ok)
-        {
-            _mine.Remove(perfil);
-            _available.Add(perfil);
-            Snackbar.Add($"Perfil \"{perfil.Nombre}\" retirado.", Severity.Success);
-        }
-        else
-        {
-            Snackbar.Add($"No se pudo retirar el perfil \"{perfil.Nombre}\".", Severity.Error);
-        }
+        if (ok) { _mine.Remove(perfil); _available.Add(perfil); _ = ShowToastAsync($"Perfil \"{perfil.Nombre}\" retirado.", false); }
+        else _ = ShowToastAsync($"No se pudo retirar el perfil \"{perfil.Nombre}\".", true);
         _busy = false;
     }
 
     private static string GetDisplayName(ClaimsPrincipal user)
         => user.FindFirst("username")?.Value ?? user.Identity?.Name ?? "Usuario";
+
+    private async Task ShowToastAsync(string message, bool isError)
+    {
+        _toast = message; _toastIsError = isError; StateHasChanged();
+        await Task.Delay(3500);
+        _toast = null; StateHasChanged();
+    }
 }
+
+

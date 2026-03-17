@@ -1,16 +1,14 @@
-﻿@using MudBlazor
-@using RugbyEngine.Shared
-@using RugbyEngine.Client.Services
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject MainMenuService MenuService
 @implements IDisposable
 
-<MudText Typo="Typo.h6" Class="mr-4" Style="color: white;">RugbyEngine</MudText>
+<span class="app-brand me-3">RugbyEngine</span>
 
 <AuthorizeView>
     <Authorized>
-        <MudHidden Breakpoint="Breakpoint.Xs">
+        <!-- Desktop nav (md+) -->
+        <div class="d-none d-md-flex align-items-center gap-1 flex-grow-1">
             @if (_menus != null && _menus.Any())
             {
                 @foreach (var menu in _menus)
@@ -22,23 +20,18 @@
             {
                 @for (int i = 0; i < 4; i++)
                 {
-                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="90px" Height="36px" Class="mr-2" />
+                    <span class="nav-skeleton me-2"></span>
                 }
             }
-        </MudHidden>
-
-        <MudSpacer /> 
-
+        </div>
     </Authorized>
     <NotAuthorized>
-        <MudSpacer />
-        
+        <div class="flex-grow-1"></div>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
     private List<MenuDTO>? _menus;
-    private AuthenticationState? _authState;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
@@ -47,13 +40,10 @@
     {
         if (AuthenticationStateTask != null)
         {
-            _authState = await AuthenticationStateTask;
-            if (_authState?.User?.Identity?.IsAuthenticated == true)
-            {
+            var state = await AuthenticationStateTask;
+            if (state?.User?.Identity?.IsAuthenticated == true)
                 await LoadMenuAsync();
-            }
         }
-
         AuthService.AuthenticationStateChanged += OnAuthenticationStateChanged;
         MenuService.ActiveMenuChanged += OnActiveMenuChanged;
     }
@@ -68,7 +58,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error cargando menú: {ex.Message}");
-            _menus = new List<MenuDTO>();
+            _menus = [];
             StateHasChanged();
         }
     }
@@ -79,19 +69,18 @@
         {
             if (AuthenticationStateTask != null)
             {
-                _authState = await AuthenticationStateTask;
-                if (_authState?.User?.Identity?.IsAuthenticated == true)
+                var state = await AuthenticationStateTask;
+                if (state?.User?.Identity?.IsAuthenticated == true)
                 {
                     await MenuService.InvalidateAsync();
                     _menus = await MenuService.GetMenuTreeAsync();
-                    StateHasChanged();
                 }
                 else
                 {
                     _menus = null;
                     MenuService.ClearCache();
-                    StateHasChanged();
                 }
+                StateHasChanged();
             }
         }
         catch (Exception ex)
@@ -100,10 +89,7 @@
         }
     }
 
-    private void NavigateTo(string uri)
-    {
-        NavigationManager.NavigateTo(uri, forceLoad: false);
-    }
+    private void OnActiveMenuChanged() => StateHasChanged();
 
     public void Dispose()
     {
@@ -111,55 +97,35 @@
         MenuService.ActiveMenuChanged -= OnActiveMenuChanged;
     }
 
-    private void OnActiveMenuChanged()
-    {
-        StateHasChanged();
-    }
-
     private RenderFragment RenderMenu(MenuDTO menu) => __builder =>
     {
-        var iconToUse = !string.IsNullOrEmpty(menu.Icon) ? menu.Icon : Icons.Material.Filled.Circle;
-        var isActive = MenuService.ActiveLevel0 == menu;
-        var activatorClass = isActive ? "nav-menu-active" : "";
-
         if (menu.Items != null && menu.Items.Any())
         {
-            <MudMenu Color="Color.Inherit"
-                     AnchorOrigin="Origin.BottomLeft"
-                     Label="@menu.Title.ToUpperInvariant()"
-                     StartIcon="@iconToUse"
-                     EndIcon="@Icons.Material.Filled.ArrowDropDown"
-                     Style="font-weight: bold; font-size: 0.85rem;"
-                     activatorClassname="@activatorClass">
-                @foreach (var subMenu in menu.Items)
-                {
-                    var subIcon = !string.IsNullOrEmpty(subMenu.Icon) ? subMenu.Icon : Icons.Material.Filled.Circle;
-
-                    if (!string.IsNullOrEmpty(subMenu.Route))
+            <div class="dropdown">
+                <button class="btn btn-link text-white nav-menu-btn dropdown-toggle @(MenuService.ActiveLevel0 == menu ? "active" : "")"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    @(menu.Title)
+                </button>
+                <ul class="dropdown-menu">
+                    @foreach (var sub in menu.Items)
                     {
-                        <MudMenuItem Href="@subMenu.Route" Icon="@subIcon">
-                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@subMenu.Title</span>
-                        </MudMenuItem>
+                        var route = !string.IsNullOrEmpty(sub.Route)
+                            ? sub.Route
+                            : sub.Items?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route ?? string.Empty;
+                        <li>
+                            <a class="dropdown-item nav-dropdown-item" href="@route">@(sub.Title)</a>
+                        </li>
                     }
-                    else
-                    {
-                        var firstChildRoute = subMenu.Items
-                            .FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route
-                            ?? string.Empty;
-                        <MudMenuItem OnClick="@(() => NavigateTo(firstChildRoute))"
-                                     Icon="@subIcon"
-                                     Disabled="@(string.IsNullOrEmpty(firstChildRoute))">
-                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@subMenu.Title</span>
-                        </MudMenuItem>
-                    }
-                }
-            </MudMenu>
+                </ul>
+            </div>
         }
         else
         {
-            <MudButton Href="@menu.Route" StartIcon="@iconToUse" Color="Color.Inherit" Class="@activatorClass" Style="font-weight: bold; font-size: 0.85rem;">
-                <span style="text-transform: uppercase;">@menu.Title</span>
-            </MudButton>
+            <a class="btn btn-link text-white nav-menu-btn @(MenuService.ActiveLevel0 == menu ? "active" : "")" href="@menu.Route">
+                @(menu.Title)
+            </a>
         }
     };
 }
+
+

@@ -1,26 +1,30 @@
-@using MudBlazor
 @using RugbyEngine.Shared.Menus
-@using RugbyEngine.Client.Services
 @inject MainMenuService MenuService
 @implements IDisposable
 
-<MudNavMenu>
+<nav class="mobile-nav">
     <AuthorizeView>
         <Authorized>
             @if (_menus != null)
             {
-                @foreach (var menu in _menus)
-                {
-                    @RenderMobileMenu(menu)
-                }
+                <ul class="mobile-nav__list list-unstyled mb-0">
+                    @foreach (var menu in _menus)
+                    {
+                        @RenderMobileMenu(menu)
+                    }
+                </ul>
             }
             else
             {
-                <MudNavLink Icon="@Icons.Material.Filled.HourglassEmpty" Disabled="true">Cargando...</MudNavLink>
+                <div class="p-3">
+                    <div class="mobile-nav-skeleton mb-2"></div>
+                    <div class="mobile-nav-skeleton mb-2"></div>
+                    <div class="mobile-nav-skeleton"></div>
+                </div>
             }
         </Authorized>
     </AuthorizeView>
-</MudNavMenu>
+</nav>
 
 @code {
     private List<MenuDTO>? _menus;
@@ -47,32 +51,45 @@
 
     private static RenderFragment RenderMobileMenu(MenuDTO menu) => __builder =>
     {
-        var icon = !string.IsNullOrEmpty(menu.Icon) ? menu.Icon : Icons.Material.Filled.Circle;
-
         if (menu.Items != null && menu.Items.Any())
         {
-            <MudNavGroup Title="@menu.Title.ToUpperInvariant()" Icon="@icon" Expanded="false" Style="font-weight: bold; font-size: 0.85rem;">
-                @foreach (var sub in menu.Items)
-                {
-                    var subIcon = !string.IsNullOrEmpty(sub.Icon) ? sub.Icon : Icons.Material.Filled.Circle;
-                    var route = !string.IsNullOrEmpty(sub.Route)
-                        ? sub.Route
-                        : sub.Items?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route ?? string.Empty;
-
-                    if (!string.IsNullOrEmpty(route))
+            var collapseId = $"mob-collapse-{menu.Title.Replace(" ", "")}";
+            <li class="mobile-nav__group">
+                <button class="mobile-nav__group-btn collapsed"
+                        data-bs-toggle="collapse"
+                        data-bs-target="@($"#{collapseId}")"
+                        aria-expanded="false">
+                    @(menu.Title)
+                    <svg class="mobile-nav__chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+                <ul id="@collapseId" class="collapse list-unstyled mobile-nav__sublist">
+                    @foreach (var sub in menu.Items)
                     {
-                        <MudNavLink Icon="@subIcon" Href="@route">
-                            <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@sub.Title</span>
-                        </MudNavLink>
+                        var route = !string.IsNullOrEmpty(sub.Route)
+                            ? sub.Route
+                            : sub.Items?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route ?? string.Empty;
+                        if (!string.IsNullOrEmpty(route))
+                        {
+                            <li>
+                                <a class="mobile-nav__link" href="@route">@(sub.Title)</a>
+                            </li>
+                        }
                     }
-                }
-            </MudNavGroup>
+                </ul>
+            </li>
         }
         else if (!string.IsNullOrEmpty(menu.Route))
         {
-            <MudNavLink Icon="@icon" Href="@menu.Route">
-                <span style="text-transform: uppercase; font-weight: bold; font-size: 0.85rem;">@menu.Title</span>
-            </MudNavLink>
+            <li>
+                <a class="mobile-nav__link mobile-nav__link--top" href="@menu.Route">
+                    @(menu.Title)
+                </a>
+            </li>
         }
     };
 }
+
+
+

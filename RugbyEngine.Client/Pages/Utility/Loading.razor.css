@@ -1,0 +1,31 @@
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.loading-svg {
+    animation: spin 1.5s linear infinite;
+    max-width: 5%;
+    max-height: 5%;
+    width: auto;
+    height: auto;
+    transform-origin: center;
+}
+
+@media (max-width: 768px) {
+    .loading-svg {
+        max-width: 10%;
+        max-height: 10%;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

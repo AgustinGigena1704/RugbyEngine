@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "browser-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [ "-y", "@ricardodeazambuja/browser-mcp-server", "--browser=chromium" ]
+    }
+  }
+}   

@@ -1,3 +1,4 @@
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using RugbyEngine.Shared.Menus;
@@ -9,6 +10,7 @@ namespace RugbyEngine.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly NavigationManager _navigationManager;
+        private readonly ISessionStorageService SessionStorage;
 
         private List<MenuDTO> _menuTree = new();
         private Dictionary<string, string> _routeRoles = new();
@@ -22,10 +24,11 @@ namespace RugbyEngine.Client.Services
         /// <summary>Se dispara cuando el menú activo cambia (navegación o recarga del árbol).</summary>
         public event Action? ActiveMenuChanged;
 
-        public MainMenuService(HttpClient httpClient, NavigationManager navigationManager)
+        public MainMenuService(HttpClient httpClient, NavigationManager navigationManager, ISessionStorageService sessionStorage)
         {
             _httpClient = httpClient;
             _navigationManager = navigationManager;
+            SessionStorage = sessionStorage;
             _navigationManager.LocationChanged += OnLocationChanged;
         }
 
@@ -61,9 +64,22 @@ namespace RugbyEngine.Client.Services
 
         private async Task LoadMenuTreeAsync()
         {
-            // Consultar la API: menú del usuario y rutas protegidas en paralelo
             try
             {
+                var cachedMenu = await SessionStorage.GetItemAsync<List<MenuDTO>>("menuTree");
+                var cachedRoles = await SessionStorage.GetItemAsync<Dictionary<string, string>>("routeRoles");
+
+                if (cachedMenu != null && cachedRoles != null)
+                {
+                    _menuTree = cachedMenu;
+                    _routeRoles = cachedRoles;
+                    _menuLoaded = true;
+                    UpdateActiveMenu(_navigationManager.Uri);
+                    ActiveMenuChanged?.Invoke();
+                    return;
+                }
+
+
                 var menuTask = _httpClient.GetAsync("api/Menu");
                 var rolesTask = _httpClient.GetAsync("api/Menu/RouteRoles");
                 await Task.WhenAll(menuTask, rolesTask);
@@ -81,7 +97,8 @@ namespace RugbyEngine.Client.Services
             {
                 _menuTree = new();
             }
-
+            await SessionStorage.SetItemAsync("menuTree", _menuTree);
+            await SessionStorage.SetItemAsync("routeRoles", _routeRoles);
             _menuLoaded = true;
             UpdateActiveMenu(_navigationManager.Uri);
             ActiveMenuChanged?.Invoke();
@@ -117,8 +134,18 @@ namespace RugbyEngine.Client.Services
         private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         {
             if (!_menuLoaded) return;
+
+            var previousLevel0 = ActiveLevel0;
+            var previousLevel1 = ActiveLevel1;
+            var previousLevel2 = ActiveLevel2;
+
             UpdateActiveMenu(e.Location);
-            ActiveMenuChanged?.Invoke();
+
+            // Only invoke ActiveMenuChanged if the active menu has actually changed
+            if (previousLevel0 != ActiveLevel0 || previousLevel1 != ActiveLevel1 || previousLevel2 != ActiveLevel2)
+            {
+                ActiveMenuChanged?.Invoke();
+            }
         }
 
         private void UpdateActiveMenu(string uri)
