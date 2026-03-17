@@ -133,6 +133,13 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
 builder.Services.AddRepositories();
 
 builder.Services.AddScoped<ISessionService, SessionService>();
@@ -202,6 +209,10 @@ app.UseCors();
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
+}
+else
+{
+    app.UseHsts();
 }
 
 app.UseAuthentication();

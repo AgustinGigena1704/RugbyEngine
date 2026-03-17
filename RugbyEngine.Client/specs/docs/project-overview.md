@@ -1,40 +1,31 @@
 # RugbyEngine Client - Project Overview
 
-<purpose>
-Documentar la arquitectura general, estructura de carpetas, dependencias y flujos principales del proyecto cliente Blazor WebAssembly para facilitar el onboarding de desarrolladores y mantenimiento del código.
-</purpose>
+## Cambios recientes
+- Loader consistente y reutilizable en Blazor e index.html, con animación y tamaño adaptativo.
+- Menús desplegables: <li> ocupa el 100% del ancho, bordes redondeados y fondo activo completo.
+- Contraste visual mejorado en el fondo de la página de login.
+- Sombra más notoria en el menú lateral (desktop y mobile).
+- Layouts principales y navegación implementados con Bootstrap 5 y CSS propio, sin MudBlazor en la shell principal.
 
-<scope>
-What will be documented:
-- Arquitectura general del cliente Blazor WebAssembly (.NET 10)
-- Estructura de carpetas y convenciones de nombrado
-- Dependencias NuGet y su propósito
-- Configuración de desarrollo y producción
-- Flujo completo de autenticación JWT
-- Sistema de layout con MudBlazor
-- Protección de rutas y autorización
-</scope>
-
-<content_outline>
 ## 1. Overview
 - **Tecnología**: Blazor WebAssembly standalone
 - **Target Framework**: .NET 10
-- **UI Framework**: MudBlazor 9.x
+- **UI**: Bootstrap 5.3 (CDN) + CSS propio — sin MudBlazor en layouts principales
 - **Autenticación**: JWT con cookies
 
 ## 2. Project Structure
 ```
 RugbyEngine.Client/
 ├── Layout/
-│   ├── MainLayout.razor      # Layout principal con MudBlazor
-│   └── NavMenu.razor         # Navegación superior
+│   ├── MainLayout.razor      # Layout principal con Bootstrap y CSS propio
+│   └── NavMenu.razor         # Navegación superior con dropdowns y <li> de ancho completo
 ├── Models/
 │   └── Auth/
 │       ├── LoginRequest.cs   # DTO de login
 │       └── LoginResponse.cs  # DTO de respuesta
 ├── Pages/
 │   ├── Auth/
-│   │   └── Login.razor       # Página de login
+│   │   └── Login.razor       # Página de login, fondo contrastado
 │   ├── Extra/
 │   │   ├── Counter.razor     # Demo contador
 │   │   └── Weather.razor     # Demo weather
@@ -56,7 +47,7 @@ RugbyEngine.Client/
 │   ├── js/
 │   │   └── cookieInterop.js  # Funciones JS para cookies
 │   ├── appsettings.json      # Config (API_BASE_URL)
-│   └── index.html            # Host HTML
+│   └── index.html            # Host HTML, loader consistente
 ├── App.razor                 # Router y auth wrapper
 ├── Program.cs                # Configuración de servicios
 └── _Imports.razor            # Usings globales
@@ -67,8 +58,8 @@ RugbyEngine.Client/
 |---------|---------|---------|
 | Microsoft.AspNetCore.Components.WebAssembly | 10.0.x | Runtime Blazor WASM |
 | Microsoft.AspNetCore.Components.Authorization | 10.0.x | Auth components |
-| MudBlazor | 9.0.x | UI components |
-| System.IdentityModel.Tokens.Jwt | 7.5.x | JWT parsing |
+| System.IdentityModel.Tokens.Jwt | 8.x | JWT parsing |
+| SonarAnalyzer.CSharp | 10.x | Análisis estático |
 
 ## 4. Configuration
 - `wwwroot/appsettings.json` - Runtime config
@@ -88,17 +79,4 @@ RugbyEngine.Client/
 3. `dotnet run` in RugbyEngine.Client folder
 4. Navigate to https://localhost:7255
 
-Audience: Desarrolladores nuevos al proyecto
-Tone: Técnico, conciso, con ejemplos de código donde aplique
-</content_outline>
-
-<completion_criteria>
-How to verify documentation is complete:
-- [ ] Un desarrollador nuevo puede levantar el proyecto en < 15 minutos
-- [ ] La estructura de carpetas está documentada con propósito de cada una
-- [ ] Todas las dependencias listadas con versión y propósito
-- [ ] El flujo de autenticación está explicado paso a paso
-- [ ] Configuración de desarrollo y producción diferenciada
-- [ ] Diagramas de arquitectura incluidos donde sea útil
-- [ ] Links a specs de features para detalles de implementación
-</completion_criteria>
+(El resto de la documentación se mantiene igual, solo se han resaltado los cambios visuales y estructurales recientes.)

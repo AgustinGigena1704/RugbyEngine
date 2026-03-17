@@ -1,4 +1,4 @@
-﻿@page "/Auth/Login"
+@page "/Auth/Login"
 @attribute [AllowAnonymous]
 @layout LoginLayout
 
@@ -7,87 +7,72 @@
 
 <PageTitle>Iniciar sesión</PageTitle>
 
-<div style="width: clamp(280px, 90vw, 420px);">
-    <MudPaper Elevation="4" Style="padding: clamp(20px, 4vw, 40px);">
-        <MudStack Spacing="3">
-            <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary"
-                     Style="font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700;">
-                RugbyEngine
-            </MudText>
-            <MudText Typo="Typo.subtitle1" Align="Align.Center"
-                     Style="font-size: clamp(0.78rem, 2vw, 1rem);">
-                Inicia sesión para continuar
-            </MudText>
+<div class="login-card">
+    <h1 class="login-card__brand">RugbyEngine</h1>
+    <p class="login-card__subtitle">Inicia sesión para continuar</p>
 
-            @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+    {
+        <div class="alert @(_statusIsError ? "alert-danger" : "alert-success") py-2" role="alert">
+            @_statusMessage
+        </div>
+    }
+
+    <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="username" class="form-label">Usuario</label>
+            <InputText id="username"
+                       class="form-control"
+                       @bind-Value="_model.Username"
+                       placeholder="Ingresa tu usuario"
+                       autocomplete="username" />
+            <ValidationMessage For="@(() => _model.Username)" class="text-danger small" />
+        </div>
+
+        <div class="mb-4">
+            <label for="password" class="form-label">Contraseña</label>
+            <InputText id="password"
+                       type="password"
+                       class="form-control"
+                       @bind-Value="_model.Password"
+                       placeholder="Ingresa tu contraseña"
+                       autocomplete="current-password" />
+            <ValidationMessage For="@(() => _model.Password)" class="text-danger small" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" disabled="@_isSubmitting">
+            @if (_isSubmitting)
             {
-                <MudAlert Severity="@_statusSeverity" Dense="true">
-                    @_statusMessage
-                </MudAlert>
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span>Ingresando...</span>
             }
-
-            <MudTextField T="string"
-                          Label="Usuario"
-                          @bind-Value="_model.Username"
-                          Required="true"
-                          RequiredError="El usuario es requerido"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Person" />
-
-            <MudPasswordField @bind-Value="_model.Password"
-                              Label="Contraseña"
-                              Required="true"
-                              RequiredError="La contraseña es requerida"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Lock"
-                              FullWidth="true" />
-
-            <MudButton Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       Disabled="@_isSubmitting"
-                       FullWidth="true"
-                       Size="Size.Large"
-                       OnClick="HandleLoginAsync">
-                @if (_isSubmitting)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                }
-                @_buttonText
-            </MudButton>
-        </MudStack>
-    </MudPaper>
+            else
+            {
+                <span>Ingresar</span>
+            }
+        </button>
+    </EditForm>
 </div>
 
 @code {
     private readonly LoginDTO _model = new();
     private bool _isSubmitting;
     private string? _statusMessage;
-    private Severity _statusSeverity = Severity.Error;
+    private bool _statusIsError = true;
     private string? _returnUrl;
-
-    private string _buttonText => _isSubmitting ? "Ingresando..." : "Ingresar";
 
     protected override async Task OnInitializedAsync()
     {
         _returnUrl = ExtractReturnUrl();
-
         if (await AuthService.IsAuthenticatedAsync())
-        {
             NavigationManager.NavigateTo(_returnUrl ?? "/", true);
-        }
     }
 
     private async Task HandleLoginAsync()
     {
-        if (_isSubmitting)
-        {
-            return;
-        }
-
+        if (_isSubmitting) return;
         _isSubmitting = true;
         _statusMessage = null;
         StateHasChanged();
@@ -101,7 +86,7 @@
             return;
         }
 
-        _statusSeverity = Severity.Error;
+        _statusIsError = true;
         _statusMessage = string.IsNullOrWhiteSpace(response.Message)
             ? "No se pudo iniciar sesión."
             : response.Message;
@@ -111,21 +96,16 @@
     private string? ExtractReturnUrl()
     {
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        if (string.IsNullOrEmpty(uri.Query))
-        {
-            return null;
-        }
+        if (string.IsNullOrEmpty(uri.Query)) return null;
 
-        var query = uri.Query.TrimStart('?');
-        foreach (var parameter in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var parameter in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
         {
             var parts = parameter.Split('=', 2);
             if (parts.Length == 2 && parts[0].Equals("returnUrl", StringComparison.OrdinalIgnoreCase))
-            {
                 return Uri.UnescapeDataString(parts[1]);
-            }
         }
-
         return null;
     }
 }
+
+

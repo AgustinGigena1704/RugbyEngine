@@ -1,153 +1,155 @@
-﻿@using MudBlazor
-@using MudBlazor.Services
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject MainMenuService MenuService
-@inject IBrowserViewportService ViewportService
 @implements IDisposable
-@implements IBrowserViewportObserver
 
-<MudThemeProvider Theme="_theme" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<!-- Topbar -->
+<nav class="app-topbar navbar navbar-expand-md navbar-dark">
+    <div class="container-fluid px-3">
 
-<MudLayout>
-    <MudAppBar Elevation="4" Color="Color.Primary">
-        @* Hamburger — mobile only *@
-        <MudHidden Breakpoint="Breakpoint.SmAndUp">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                           Color="Color.Inherit"
-                           Edge="Edge.Start"
-                           OnClick="ToggleLeftDrawer" />
-        </MudHidden>
+        <!-- Hamburger: mobile -->
+        <button class="btn btn-link text-white d-md-none me-1 p-1"
+                @onclick="ToggleLeftDrawer" aria-label="Menú">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+            </svg>
+        </button>
 
         <NavMenu />
 
-        <MudIconButton Icon="@Icons.Material.Filled.AccountCircle"
-                       Color="Color.Inherit"
-                       Edge="Edge.End"
-                       OnClick="ToggleRightDrawer" />
-    </MudAppBar>
+        <!-- Account button -->
+        <button class="btn btn-link text-white ms-auto p-1" @onclick="ToggleRightDrawer" aria-label="Cuenta">
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+            </svg>
+        </button>
+    </div>
+</nav>
 
-    @* Mobile navigation drawer (hamburger).
-       Swipe disabled when side menu is active so swipe opens the side menu instead. *@
-    <MudDrawer @bind-Open="_leftDrawerOpen"
-               Anchor="Anchor.Left"
-               Elevation="2"
-               Variant="DrawerVariant.Temporary"
-               ClipMode="DrawerClipMode.Never">
-        <MudDrawerHeader>
-            <MudText Typo="Typo.h6">RugbyEngine</MudText>
-        </MudDrawerHeader>
-        <MobileNavMenu />
-    </MudDrawer>
+<!-- Left drawer: mobile navigation -->
+<div class="app-drawer-backdrop @(_leftDrawerOpen ? "app-drawer-backdrop--visible" : "")"
+     @onclick="() => _leftDrawerOpen = false"></div>
+<div class="app-drawer app-drawer--left @(_leftDrawerOpen ? "app-drawer--open" : "")">
+    <div class="app-drawer__header">
+        <span class="app-drawer__title">RugbyEngine</span>
+        <button class="btn-close" @onclick="() => _leftDrawerOpen = false" aria-label="Cerrar"></button>
+    </div>
+    <MobileNavMenu />
+</div>
 
-    @* Side menu:
-       – Desktop (Md+) : Persistent, clips under AppBar, pushes content from the right.
-       – Mobile (Xs/Sm): Temporary + MudSwipeArea at right edge (MudDrawer has no built-in swipe in v9). *@
-    @if (_hasSideMenu)
-    {
-        @if (_isMobile)
-        {
-            <MudDrawer @bind-Open="_mobileSideOpen"
-                       Anchor="Anchor.Right"
-                       Elevation="2"
-                       Variant="DrawerVariant.Temporary"
-                       ClipMode="DrawerClipMode.Never"
-                       Width="260px">
-                <MenuLateral />
-            </MudDrawer>
+<!-- Right drawer: account -->
+<div class="app-drawer-backdrop @(_rightDrawerOpen ? "app-drawer-backdrop--visible" : "")"
+     @onclick="() => _rightDrawerOpen = false"></div>
+<div class="app-drawer app-drawer--right @(_rightDrawerOpen ? "app-drawer--open" : "")">
+    <div class="app-drawer__header">
+        <span class="app-drawer__title">Mi cuenta</span>
+        <button class="btn-close" @onclick="() => _rightDrawerOpen = false" aria-label="Cerrar"></button>
+    </div>
+    <MobileUserDrawer />
+</div>
 
-            @* 30-px hotspot at the right screen edge — open on RightToLeft swipe *@
-            @if (!_mobileSideOpen)
-            {
-                <MudSwipeArea OnSwipeEnd="OnRightEdgeSwipe"
-                              Sensitivity="30"
-                              Style="position:fixed;right:0;top:0;bottom:0;width:30px;z-index:1400;" />
-            }
-        }
-        else
-        {
-            <MudDrawer Open="true"
-                       Anchor="Anchor.Right"
-                       Elevation="2"
-                       Variant="DrawerVariant.Persistent"
-                       ClipMode="DrawerClipMode.Always"
-                       Width="260px">
-                <MenuLateral />
-            </MudDrawer>
-        }
-    }
-
-    @* Profile / account drawer (right) — independent *@
-    <MudDrawer @bind-Open="_rightDrawerOpen"
-               Anchor="Anchor.Right"
-               Elevation="2"
-               Variant="DrawerVariant.Temporary"
-               ClipMode="DrawerClipMode.Never">
-        <MobileUserDrawer />
-    </MudDrawer>
-
-    <MudMainContent Style="margin-top: 64px; padding: clamp(8px, 2vw, 24px); background-color: var(--mud-palette-background-gray);">
-        <MudContainer MaxWidth="MaxWidth.Large" Style="padding: 0;">
+<!-- Main content + optional side menu -->
+<div class="app-body @(_hasSideMenu ? "app-body--with-side" : "")">
+    <main class="app-main">
+        <div class="app-content">
             <MenuRouteGuard>
                 @Body
             </MenuRouteGuard>
-        </MudContainer>
-    </MudMainContent>
-
-    @* Pestaña para abrir el menú lateral en mobile (Android gesture nav).
-       Adherida al borde derecho — border-radius solo en el lado izquierdo. *@
-    @if (_isMobile && _hasSideMenu && !_mobileSideOpen)
-    {
-        <div @onclick="() => { _mobileSideOpen = true; StateHasChanged(); }"
-             title="Abrir menú lateral"
-             style="position: fixed; top: 72px; right: 0; z-index: 1500;
-                    background-color: var(--mud-palette-primary);
-                    border-radius: 10px 0 0 10px;
-                    box-shadow: -4px 3px 10px rgba(0,0,0,0.30);
-                    cursor: pointer; display: flex; align-items: center;
-                    padding: 12px 6px 12px 10px; user-select: none;">
-            <MudIcon Icon="@Icons.Material.Filled.ChevronLeft"
-                     Style="color: white; font-size: 1.6rem;" />
         </div>
+    </main>
+
+    @if (_hasSideMenu)
+    {
+        <!-- Zona de swipe: borde derecho, solo mobile, solo cuando el panel está cerrado -->
+        @if (!_mobileSideOpen)
+        {
+            <div class="app-swipe-zone d-md-none"
+                 @ontouchstart="OnTouchStart"
+                 @ontouchend="OnTouchEndOpen">
+            </div>
+        }
+
+        <!-- Tab: solo mobile, visible cuando el panel está cerrado -->
+        @if (!_mobileSideOpen)
+        {
+            <button class="app-side-tab d-md-none" @onclick="() => _mobileSideOpen = true" title="Abrir menú lateral">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+            </button>
+        }
+
+        <!-- Backdrop: solo mobile -->
+        <div class="app-drawer-backdrop d-md-none @(_mobileSideOpen ? "app-drawer-backdrop--visible" : "")"
+             @onclick="() => _mobileSideOpen = false"></div>
+
+        <!-- Panel deslizable: solo mobile, con swipe-to-close -->
+        <div class="app-sidemenu app-sidemenu--mobile d-md-none @(_mobileSideOpen ? "app-sidemenu--open" : "")"
+             @ontouchstart="OnTouchStart"
+             @ontouchend="OnTouchEndClose">
+            <div class="app-drawer__header">
+                <span class="app-drawer__title">Menú</span>
+                <button class="btn-close" @onclick="() => _mobileSideOpen = false" aria-label="Cerrar"></button>
+            </div>
+            <MenuLateral />
+        </div>
+
+        <!-- Aside persistente: solo desktop -->
+        <aside class="app-sidemenu app-sidemenu--desktop d-none d-md-flex flex-column">
+            <MenuLateral />
+        </aside>
     }
-</MudLayout>
+</div>
 
 @code {
-    // ── State ────────────────────────────────────────────────────────────────
     private bool _leftDrawerOpen;
     private bool _rightDrawerOpen;
     private bool _mobileSideOpen;
     private bool _hasSideMenu;
-    private bool _isMobile;
 
-    // ── IBrowserViewportObserver ──────────────────────────────────────────────
-    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
-    ResizeOptions? IBrowserViewportObserver.ResizeOptions { get; } = new ResizeOptions { NotifyOnBreakpointOnly = true };
+    private double _touchStartX;
+    private double _touchStartY;
 
-    async Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
-    {
-        _isMobile = browserViewportEventArgs.Breakpoint is Breakpoint.Xs or Breakpoint.Sm;
-        if (!_isMobile) _mobileSideOpen = false;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;
         MenuService.ActiveMenuChanged += OnActiveMenuChanged;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // ── Swipe gestures ────────────────────────────────────────────────────────
+    private void OnTouchStart(TouchEventArgs e)
     {
-        if (firstRender)
-            await ViewportService.SubscribeAsync(this, fireImmediately: true);
+        if (e.Touches.Length > 0)
+        {
+            _touchStartX = e.Touches[0].ClientX;
+            _touchStartY = e.Touches[0].ClientY;
+        }
     }
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
+    private void OnTouchEndOpen(TouchEventArgs e)
+    {
+        if (e.ChangedTouches.Length <= 0) return;
+        var dx = e.ChangedTouches[0].ClientX - _touchStartX;
+        var dy = e.ChangedTouches[0].ClientY - _touchStartY;
+        if (Math.Abs(dx) > 40 && Math.Abs(dx) > Math.Abs(dy) && dx < 0)
+        {
+            _mobileSideOpen = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnTouchEndClose(TouchEventArgs e)
+    {
+        if (e.ChangedTouches.Length <= 0) return;
+        var dx = e.ChangedTouches[0].ClientX - _touchStartX;
+        var dy = e.ChangedTouches[0].ClientY - _touchStartY;
+        if (Math.Abs(dx) > 40 && Math.Abs(dx) > Math.Abs(dy) && dx > 0)
+        {
+            _mobileSideOpen = false;
+            StateHasChanged();
+        }
+    }
+
     private void OnActiveMenuChanged()
     {
         _hasSideMenu = MenuService.ActiveLevel1 != null && MenuService.ActiveLevel1.Items.Any();
@@ -157,15 +159,6 @@
 
     private void ToggleLeftDrawer() => _leftDrawerOpen = !_leftDrawerOpen;
     private void ToggleRightDrawer() => _rightDrawerOpen = !_rightDrawerOpen;
-
-    private void OnRightEdgeSwipe(SwipeEventArgs args)
-    {
-        if (args.SwipeDirection == SwipeDirection.RightToLeft)
-        {
-            _mobileSideOpen = true;
-            StateHasChanged();
-        }
-    }
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
@@ -179,29 +172,7 @@
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
         MenuService.ActiveMenuChanged -= OnActiveMenuChanged;
-        _ = ViewportService.UnsubscribeAsync(this);
     }
-
-    // ── Theme ─────────────────────────────────────────────────────────────────
-    private readonly MudTheme _theme = new()
-    {
-        PaletteLight = new PaletteLight
-        {
-            Primary = "#1976D2",
-            Secondary = "#FF4081",
-            AppbarBackground = "#1976D2",
-            Background = "#f5f5f5",
-            Surface = "#ffffff",
-            DrawerBackground = "#ffffff",
-            DrawerText = "rgba(0,0,0,0.87)",
-            AppbarText = "#ffffff"
-        },
-        Typography = new Typography
-        {
-            Default = new DefaultTypography
-            {
-                FontFamily = ["Roboto", "Helvetica", "Arial", "sans-serif"]
-            }
-        }
-    };
 }
+
+
