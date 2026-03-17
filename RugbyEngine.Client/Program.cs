@@ -15,7 +15,7 @@ builder.Services.AddScoped(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
     // Primero intenta obtener la variable de entorno
-    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://localhost";
+    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://rugbyengine.agigena.com";
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)
         : new Uri(builder.HostEnvironment.BaseAddress);
