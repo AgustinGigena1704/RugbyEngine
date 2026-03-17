@@ -6,6 +6,7 @@ services:
       - "127.0.0.1:8080:8080"   # solo accesible desde localhost → Caddy hace el proxy
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      API_BASE_URL:          ${API_BASE_URL}
       DB_HOST:               ${DB_HOST}
       DB_PORT:               ${DB_PORT}
       DB_NAME:               ${DB_NAME}
