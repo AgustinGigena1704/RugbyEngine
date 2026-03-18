@@ -6,6 +6,7 @@ using RugbyEngine.Api.Data.Repositories;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Shared;
 using RugbyEngine.Shared.Personas;
+using RugbyEngine.Shared.Tablas;
 
 namespace RugbyEngine.Api.Controllers
 {
@@ -30,13 +31,17 @@ namespace RugbyEngine.Api.Controllers
         /// </summary>
         /// <response code="200">Lista de personas</response>
         [HttpGet]
-        [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<PersonaResponse>>> GetAll(CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(TableResponse<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<TableResponse<PersonaResponse>>> GetAll([FromQuery] PaginacionDto paginacion, CancellationToken cancellationToken)
         {
-            var personas = await _entityManager.GetRepository<PersonaRepository>()
-                .GetAllAsync(cancellationToken: cancellationToken);
+            return Ok(await GetTableResponseAsync(paginacion, cancellationToken));
+        }
 
-            return Ok(personas.Select(MapToResponse).ToList());
+        [HttpPost("table")]
+        [ProducesResponseType(typeof(TableResponse<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<TableResponse<PersonaResponse>>> GetTable([FromBody] PaginacionDto paginacion, CancellationToken cancellationToken)
+        {
+            return Ok(await GetTableResponseAsync(paginacion, cancellationToken));
         }
 
         /// <summary>
@@ -164,6 +169,25 @@ namespace RugbyEngine.Api.Controllers
                 return NotFound();
 
             return Ok(new ApiResponse { Success = true, Message = "Persona eliminada correctamente." });
+        }
+
+        private async Task<TableResponse<PersonaResponse>> GetTableResponseAsync(PaginacionDto paginacion, CancellationToken cancellationToken)
+        {
+            paginacion.Pagina = paginacion.Pagina < 1 ? 1 : paginacion.Pagina;
+            paginacion.RegistrosPorPagina = paginacion.RegistrosPorPagina < 1 ? 10 : paginacion.RegistrosPorPagina;
+
+            var repo = _entityManager.GetRepository<PersonaRepository>();
+
+            var totalRegistros = (await repo.GetAllAsync(cancellationToken: cancellationToken)).Count();
+            var personas = await repo.GetAllAsync(paginacion: paginacion, cancellationToken: cancellationToken);
+
+            paginacion.Total = totalRegistros;
+
+            return new TableResponse<PersonaResponse>
+            {
+                Paginacion = paginacion,
+                Registros = personas.Select(MapToResponse).ToList()
+            };
         }
 
         private static PersonaResponse MapToResponse(Persona p) => new()

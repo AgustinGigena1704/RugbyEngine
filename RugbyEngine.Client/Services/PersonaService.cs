@@ -1,13 +1,16 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RugbyEngine.Shared.Personas;
+using RugbyEngine.Shared.Tablas;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace RugbyEngine.Client.Services
 {
     public class PersonaService : IPersonaService
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
         private readonly HttpClient _httpClient;
         private readonly IAuthService _authService;
         private readonly ILogger<PersonaService> _logger;
@@ -26,10 +29,8 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var request = await CreateAuthorizedRequestAsync(HttpMethod.Get, "api/Persona");
-                var response = await _httpClient.SendAsync(request, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                return await response.Content.ReadFromJsonAsync<List<PersonaResponse>>(cancellationToken) ?? [];
+                var table = await GetTableAsync(new PaginacionDto { Pagina = 1, RegistrosPorPagina = 1000000 }, cancellationToken);
+                return table?.Registros ?? [];
             }
             catch (Exception ex)
             {
@@ -42,7 +43,7 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var request = await CreateAuthorizedRequestAsync(HttpMethod.Get, $"api/Persona/{id}");
+                var request = await CreateAuthorizedRequestAsync(HttpMethod.Get, $"api/persona/{id}");
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<PersonaResponse>(cancellationToken);
@@ -58,7 +59,7 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Post, "api/Persona");
+                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Post, "api/persona");
                 httpRequest.Content = JsonContent.Create(request);
                 var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 response.EnsureSuccessStatusCode();
@@ -75,7 +76,7 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Put, $"api/Persona/{id}");
+                var httpRequest = await CreateAuthorizedRequestAsync(HttpMethod.Put, $"api/persona/{id}");
                 httpRequest.Content = JsonContent.Create(request);
                 var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 response.EnsureSuccessStatusCode();
@@ -92,7 +93,7 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var request = await CreateAuthorizedRequestAsync(HttpMethod.Delete, $"api/Persona/{id}");
+                var request = await CreateAuthorizedRequestAsync(HttpMethod.Delete, $"api/persona/{id}");
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 return response.IsSuccessStatusCode;
             }
@@ -100,6 +101,72 @@ namespace RugbyEngine.Client.Services
             {
                 _logger.LogError(ex, "Error al eliminar persona {Id}", id);
                 return false;
+            }
+        }
+
+        public async Task<TableResponse<PersonaResponse>?> GetTableAsync(PaginacionDto paginacion, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var request = await CreateAuthorizedRequestAsync(HttpMethod.Post, "api/persona/table");
+                request.Content = JsonContent.Create(paginacion);
+                var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
+                {
+                    var fallbackRequest = await CreateAuthorizedRequestAsync(
+                        HttpMethod.Get,
+                        $"api/persona?Pagina={paginacion.Pagina}&RegistrosPorPagina={paginacion.RegistrosPorPagina}");
+                    response = await _httpClient.SendAsync(fallbackRequest, cancellationToken);
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    var legacyList = JsonSerializer.Deserialize<List<PersonaResponse>>(json, _jsonOptions) ?? [];
+                    var pagina = paginacion.Pagina < 1 ? 1 : paginacion.Pagina;
+                    var registrosPorPagina = paginacion.RegistrosPorPagina < 1 ? 10 : paginacion.RegistrosPorPagina;
+                    var total = legacyList.Count;
+                    var registros = legacyList
+                        .Skip((pagina - 1) * registrosPorPagina)
+                        .Take(registrosPorPagina)
+                        .ToList();
+
+                    return new TableResponse<PersonaResponse>
+                    {
+                        Paginacion = new PaginacionDto
+                        {
+                            Pagina = pagina,
+                            RegistrosPorPagina = registrosPorPagina,
+                            Total = total
+                        },
+                        Registros = registros
+                    };
+                }
+
+                if (doc.RootElement.ValueKind == JsonValueKind.Object)
+                {
+                    var table = JsonSerializer.Deserialize<TableResponse<PersonaResponse>>(json, _jsonOptions);
+                    if (table is not null)
+                        return table;
+                }
+
+                _logger.LogError("Formato de respuesta no soportado al obtener tabla paginada de personas");
+                return null;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Respuesta inválida al obtener tabla paginada de personas");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener tabla paginada de personas");
+                return null;
             }
         }
 

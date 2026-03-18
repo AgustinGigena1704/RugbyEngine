@@ -1,5 +1,6 @@
 @page "/Admin/Registro/Personas"
 @attribute [Authorize]
+@using RugbyEngine.Shared.Tablas
 
 @inject IPersonaService PersonaService
 
@@ -37,8 +38,8 @@
         }
         else
         {
-            <div class="table-responsive-stack">
-                <table class="table table-hover table-striped align-middle mb-0 table-stack">
+            <div class="table-responsive-stack personas-table-container">
+                <table class="table table-hover table-striped align-middle mb-0 table-stack personas-table">
                     <thead class="table-light">
                         <tr>
                             <th>Apellidos</th>
@@ -86,6 +87,35 @@
                             </tr>
                         }
                     </tbody>
+                    <tfoot class="personas-table-footer">
+                        <tr>
+                            <td colspan="7">
+                                <div class="personas-pagination-row">
+                                    <small class="personas-count">@FilteredPersonas.Count() / @_paginacion.Total</small>
+                                    <div class="personas-pagination-controls">
+                                        <label class="small personas-label mb-0">Filas</label>
+                                        <select class="form-select form-select-sm personas-page-size" value="@_paginacion.RegistrosPorPagina" @onchange="OnPageSizeChanged">
+                                            @foreach (var size in _pageSizes)
+                                            {
+                                                <option value="@size">@size</option>
+                                            }
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-secondary personas-nav-btn"
+                                                @onclick="() => GoToPageAsync(_paginacion.Pagina - 1)"
+                                                disabled="@(_paginacion.Pagina <= 1)"
+                                                aria-label="Página anterior"
+                                                title="Página anterior">&lt;</button>
+                                        <span class="small personas-page-indicator">@_paginacion.Pagina de @Math.Max(1, _paginacion.TotalPaginas)</span>
+                                        <button class="btn btn-sm btn-outline-secondary personas-nav-btn"
+                                                @onclick="() => GoToPageAsync(_paginacion.Pagina + 1)"
+                                                disabled="@(_paginacion.Pagina >= Math.Max(1, _paginacion.TotalPaginas))"
+                                                aria-label="Página siguiente"
+                                                title="Página siguiente">&gt;</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         }
@@ -191,6 +221,8 @@
     private List<PersonaResponse> _personas = [];
     private bool _isLoading = true;
     private string _searchText = string.Empty;
+    private readonly int[] _pageSizes = [10, 20, 50];
+    private PaginacionDto _paginacion = new() { Pagina = 1, RegistrosPorPagina = 10 };
 
     private string? _toast;
     private bool _toastIsError;
@@ -219,8 +251,57 @@
     private async Task LoadPersonasAsync()
     {
         _isLoading = true;
-        _personas = await PersonaService.GetAllAsync();
+
+        var table = await PersonaService.GetTableAsync(_paginacion);
+        if (table is not null)
+        {
+            _personas = table.Registros;
+            _paginacion = table.Paginacion;
+        }
+        else
+        {
+            _personas = [];
+        }
+
         _isLoading = false;
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        var targetPage = page;
+        if (targetPage < 1)
+            targetPage = 1;
+
+        var totalPaginas = Math.Max(1, _paginacion.TotalPaginas);
+        if (targetPage > totalPaginas)
+            targetPage = totalPaginas;
+
+        if (targetPage == _paginacion.Pagina)
+            return;
+
+        _paginacion.Pagina = targetPage;
+        await LoadPersonasAsync();
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var size) || size <= 0)
+            return;
+
+        _paginacion.RegistrosPorPagina = size;
+        _paginacion.Pagina = 1;
+        await LoadPersonasAsync();
+    }
+
+    private async Task RefreshAfterMutationAsync()
+    {
+        await LoadPersonasAsync();
+
+        if (_paginacion.Pagina > 1 && !_personas.Any())
+        {
+            _paginacion.Pagina--;
+            await LoadPersonasAsync();
+        }
     }
 
     private void OpenCreateDialog()
@@ -259,7 +340,7 @@
         {
             _ = ShowToastAsync(_editingId.HasValue ? "Persona actualizada correctamente." : "Persona creada correctamente.", false);
             CloseDialog();
-            await LoadPersonasAsync();
+            await RefreshAfterMutationAsync();
         }
         else
         {
@@ -305,7 +386,7 @@
             _ = ShowToastAsync("Persona eliminada correctamente.", false);
             _deleteDialogVisible = false;
             _deletingPersona = null;
-            await LoadPersonasAsync();
+            await RefreshAfterMutationAsync();
         }
         else
         {
