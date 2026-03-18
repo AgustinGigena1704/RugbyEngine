@@ -1,0 +1,9 @@
+@code {
+    [CascadingParameter(Name = "TablaParent")] public ITablaRegistration? TablaParent { get; set; }
+    [Parameter, EditorRequired] public string Nombre { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        TablaParent?.RegisterHeader(Nombre);
+    }
+}

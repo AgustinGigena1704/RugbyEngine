@@ -29,96 +29,51 @@
     <div class="card-body p-3">
         <div class="mb-3">
             <input type="search" class="form-control" placeholder="Buscar por nombre o documento..."
-                   @bind="_searchText" @bind:event="oninput" />
+                   value="@_searchText" @oninput="OnSearchInput" />
         </div>
 
-        @if (_isLoading)
-        {
-            <Loading />
-        }
-        else
-        {
-            <div class="table-responsive-stack personas-table-container">
-                <table class="table table-hover table-striped align-middle mb-0 table-stack personas-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Apellidos</th>
-                            <th>Nombres</th>
-                            <th>Documento</th>
-                            <th>Fecha Nac.</th>
-                            <th>Teléfono</th>
-                            <th>Email</th>
-                            <th class="text-end">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var p in FilteredPersonas)
-                        {
-                            <tr>
-                                <td data-label="Apellidos">@p.Apellidos</td>
-                                <td data-label="Nombres">@p.Nombres</td>
-                                <td data-label="Documento">@p.Documento</td>
-                                <td data-label="Fecha Nac.">@p.FechaNacimiento.ToString("dd/MM/yyyy")</td>
-                                <td data-label="Teléfono">@(p.Telefono ?? "-")</td>
-                                <td data-label="Email">@(p.Email ?? "-")</td>
-                                <td class="td-actions">
-                                    <button class="btn btn-sm btn-outline-primary btn-action me-1"
-                                            title="Editar" @onclick="() => OpenEditDialog(p)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                                        </svg>
-                                        <span class="d-none d-lg-inline ms-1">Editar</span>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger btn-action"
-                                            title="Eliminar" @onclick="() => ConfirmDelete(p)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                        </svg>
-                                        <span class="d-none d-lg-inline ms-1">Eliminar</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                        @if (!FilteredPersonas.Any())
-                        {
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No se encontraron personas.</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="personas-table-footer">
-                        <tr>
-                            <td colspan="7">
-                                <div class="personas-pagination-row">
-                                    <small class="personas-count">@FilteredPersonas.Count() / @_paginacion.Total</small>
-                                    <div class="personas-pagination-controls">
-                                        <label class="small personas-label mb-0">Filas</label>
-                                        <select class="form-select form-select-sm personas-page-size" value="@_paginacion.RegistrosPorPagina" @onchange="OnPageSizeChanged">
-                                            @foreach (var size in _pageSizes)
-                                            {
-                                                <option value="@size">@size</option>
-                                            }
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-secondary personas-nav-btn"
-                                                @onclick="() => GoToPageAsync(_paginacion.Pagina - 1)"
-                                                disabled="@(_paginacion.Pagina <= 1)"
-                                                aria-label="Página anterior"
-                                                title="Página anterior">&lt;</button>
-                                        <span class="small personas-page-indicator">@_paginacion.Pagina de @Math.Max(1, _paginacion.TotalPaginas)</span>
-                                        <button class="btn btn-sm btn-outline-secondary personas-nav-btn"
-                                                @onclick="() => GoToPageAsync(_paginacion.Pagina + 1)"
-                                                disabled="@(_paginacion.Pagina >= Math.Max(1, _paginacion.TotalPaginas))"
-                                                aria-label="Página siguiente"
-                                                title="Página siguiente">&gt;</button>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        }
+        <Tabla T="PersonaResponse"
+               @ref="_tablaRef"
+               Paginacion="true"
+               SearchFunc="SearchPersonasAsync"
+               CountFunc="CountPersonasAsync"
+               PageSizes="_pageSizes"
+               EmptyText="No se encontraron personas.">
+            <Header>
+                <Columna Nombre="Apellidos" />
+                <Columna Nombre="Nombres" />
+                <Columna Nombre="Documento" />
+                <Columna Nombre="Fecha Nac." />
+                <Columna Nombre="Teléfono" />
+                <Columna Nombre="Email" />
+                <Columna Nombre="Acciones" />
+            </Header>
+            <Rows>
+                <Row T="PersonaResponse" Context="p">@p.Apellidos</Row>
+                <Row T="PersonaResponse" Context="p">@p.Nombres</Row>
+                <Row T="PersonaResponse" Context="p">@p.Documento</Row>
+                <Row T="PersonaResponse" Context="p">@p.FechaNacimiento.ToString("dd/MM/yyyy")</Row>
+                <Row T="PersonaResponse" Context="p">@(p.Telefono ?? "-")</Row>
+                <Row T="PersonaResponse" Context="p">@(p.Email ?? "-")</Row>
+                <Row T="PersonaResponse" Context="p">
+                    <div class="td-actions">
+                        <button class="btn btn-sm btn-outline-primary btn-action me-1" title="Editar" @onclick="() => OpenEditDialog(p)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">Editar</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action" title="Eliminar" @onclick="() => ConfirmDelete(p)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                            <span class="d-none d-lg-inline ms-1">Eliminar</span>
+                        </button>
+                    </div>
+                </Row>
+            </Rows>
+        </Tabla>
     </div>
 </div>
 
@@ -218,21 +173,12 @@
 }
 
 @code {
-    private List<PersonaResponse> _personas = [];
-    private bool _isLoading = true;
+    private Tabla<PersonaResponse>? _tablaRef;
     private string _searchText = string.Empty;
     private readonly int[] _pageSizes = [10, 20, 50];
-    private PaginacionDto _paginacion = new() { Pagina = 1, RegistrosPorPagina = 10 };
 
     private string? _toast;
     private bool _toastIsError;
-
-    private IEnumerable<PersonaResponse> FilteredPersonas => string.IsNullOrWhiteSpace(_searchText)
-        ? _personas
-        : _personas.Where(p =>
-            p.Nombres.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-            p.Apellidos.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
-            p.Documento.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
 
     private bool _dialogVisible;
     private bool _isSaving;
@@ -243,65 +189,41 @@
     private bool _isDeleting;
     private PersonaResponse? _deletingPersona;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<List<PersonaResponse>> SearchPersonasAsync(PaginacionDto paginacion)
     {
-        await LoadPersonasAsync();
+        var table = await PersonaService.GetTableAsync(paginacion);
+        var registros = table?.Registros ?? [];
+
+        if (string.IsNullOrWhiteSpace(_searchText))
+            return registros;
+
+        return registros.Where(MatchesSearch).ToList();
     }
 
-    private async Task LoadPersonasAsync()
+    private async Task<int> CountPersonasAsync()
     {
-        _isLoading = true;
-
-        var table = await PersonaService.GetTableAsync(_paginacion);
-        if (table is not null)
+        if (string.IsNullOrWhiteSpace(_searchText))
         {
-            _personas = table.Registros;
-            _paginacion = table.Paginacion;
-        }
-        else
-        {
-            _personas = [];
+            var probe = await PersonaService.GetTableAsync(new PaginacionDto { Pagina = 1, RegistrosPorPagina = 1 });
+            return probe?.Paginacion.Total ?? 0;
         }
 
-        _isLoading = false;
+        var all = await PersonaService.GetAllAsync();
+        return all.Count(MatchesSearch);
     }
 
-    private async Task GoToPageAsync(int page)
+    private bool MatchesSearch(PersonaResponse p)
     {
-        var targetPage = page;
-        if (targetPage < 1)
-            targetPage = 1;
-
-        var totalPaginas = Math.Max(1, _paginacion.TotalPaginas);
-        if (targetPage > totalPaginas)
-            targetPage = totalPaginas;
-
-        if (targetPage == _paginacion.Pagina)
-            return;
-
-        _paginacion.Pagina = targetPage;
-        await LoadPersonasAsync();
+        return p.Nombres.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+            || p.Apellidos.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
+            || p.Documento.Contains(_searchText, StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    private async Task OnSearchInput(ChangeEventArgs e)
     {
-        if (!int.TryParse(e.Value?.ToString(), out var size) || size <= 0)
-            return;
-
-        _paginacion.RegistrosPorPagina = size;
-        _paginacion.Pagina = 1;
-        await LoadPersonasAsync();
-    }
-
-    private async Task RefreshAfterMutationAsync()
-    {
-        await LoadPersonasAsync();
-
-        if (_paginacion.Pagina > 1 && !_personas.Any())
-        {
-            _paginacion.Pagina--;
-            await LoadPersonasAsync();
-        }
+        _searchText = e.Value?.ToString() ?? string.Empty;
+        if (_tablaRef is not null)
+            await _tablaRef.RefreshAsync(resetPage: true);
     }
 
     private void OpenCreateDialog()
@@ -392,6 +314,12 @@
         {
             _ = ShowToastAsync("No se pudo eliminar la persona. Intente más tarde.", true);
         }
+    }
+
+    private async Task RefreshAfterMutationAsync()
+    {
+        if (_tablaRef is not null)
+            await _tablaRef.RefreshAsync();
     }
 
     private async Task ShowToastAsync(string message, bool isError)
