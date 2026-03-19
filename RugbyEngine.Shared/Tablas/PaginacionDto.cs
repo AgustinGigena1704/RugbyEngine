@@ -6,9 +6,20 @@ namespace RugbyEngine.Shared.Tablas
 {
     public class PaginacionDto
     {
-        public int Pagina { get; set; } = 1;
+        private int _pagina = 1;
+        public int Pagina
+        {
+            get => _pagina;
+            set => _pagina = value < 1 ? 1 : value;
+        }
         public int Total { get; set; }
-        public int RegistrosPorPagina { get; set; } = 10;
+
+        private int _registrosPorPagina = 10;
+        public int RegistrosPorPagina
+        {
+            get => _registrosPorPagina;
+            set => _registrosPorPagina = value < 1 ? 10 : value;
+        }
         public int TotalPaginas => (int)Math.Ceiling((decimal)Total / RegistrosPorPagina);
     }
 }

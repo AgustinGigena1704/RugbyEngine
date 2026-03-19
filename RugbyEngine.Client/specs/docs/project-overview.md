@@ -1,56 +1,57 @@
 # RugbyEngine Client - Project Overview
 
 ## Cambios recientes
-- Loader consistente y reutilizable en Blazor e index.html, con animación y tamaño adaptativo.
-- Menús desplegables: <li> ocupa el 100% del ancho, bordes redondeados y fondo activo completo.
-- Contraste visual mejorado en el fondo de la página de login.
-- Sombra más notoria en el menú lateral (desktop y mobile).
-- Layouts principales y navegación implementados con Bootstrap 5 y CSS propio, sin MudBlazor en la shell principal.
+- Componente reusable `<Tabla>` con sintaxis declarativa (`Header/Columna`, `Rows/Row`) y paginación integrada en `tfoot`.
+- Migración de `Personas` y `Usuarios` al componente `<Tabla>`.
+- Paginación visual homogénea en tablas con contador compacto `x / x2`, selector de filas y navegación `<` `>`.
+- `Usuarios`: filtros y paginación movidos a servidor (API + repositorio) con endpoints dedicados de búsqueda y conteo.
+- Compatibilidad en cliente para escenarios de despliegue parcial (fallback controlado cuando endpoints nuevos no están disponibles).
 
 ## 1. Overview
 - **Tecnología**: Blazor WebAssembly standalone
 - **Target Framework**: .NET 10
-- **UI**: Bootstrap 5.3 (CDN) + CSS propio — sin MudBlazor en layouts principales
+- **UI**: Bootstrap 5.3 (CDN) + CSS propio
 - **Autenticación**: JWT con cookies
 
 ## 2. Project Structure
 ```
 RugbyEngine.Client/
+├── Components/
+│   └── Tabla/
+│       ├── Tabla.razor          # Grilla reusable con paginación
+│       ├── Tabla.razor.css      # Estilos scoped de tabla/paginación
+│       ├── ITablaRegistration.cs
+│       ├── Header.razor
+│       ├── Columna.razor
+│       ├── Rows.razor
+│       └── Row.razor
 ├── Layout/
-│   ├── MainLayout.razor      # Layout principal con Bootstrap y CSS propio
-│   └── NavMenu.razor         # Navegación superior con dropdowns y <li> de ancho completo
-├── Models/
-│   └── Auth/
-│       ├── LoginRequest.cs   # DTO de login
-│       └── LoginResponse.cs  # DTO de respuesta
+│   ├── MainLayout.razor
+│   └── NavMenu.razor
 ├── Pages/
+│   ├── Administracion/
+│   │   └── Gestion/
+│   │       ├── Personas.razor   # Usa <Tabla>
+│   │       └── Usuarios.razor   # Usa <Tabla>
 │   ├── Auth/
-│   │   └── Login.razor       # Página de login, fondo contrastado
-│   ├── Extra/
-│   │   ├── Counter.razor     # Demo contador
-│   │   └── Weather.razor     # Demo weather
+│   │   └── Login.razor
 │   ├── Home/
-│   │   └── Home.razor        # Página principal
-│   └── NotFound.razor        # 404
+│   │   └── Home.razor
+│   └── NotFound.razor
 ├── Services/
-│   ├── AuthService.cs        # Lógica de autenticación
-│   ├── IAuthService.cs       # Interface
-│   ├── ApiAuthenticationStateProvider.cs
-│   ├── CookieService.cs      # JS Interop para cookies
-│   └── ICookieService.cs     # Interface
-├── skills/
-│   └── spec-manager/         # Skill de gestión de specs
+│   ├── PersonaService.cs
+│   ├── UsuarioService.cs
+│   └── ...
 ├── specs/
-│   ├── feat/                 # Specs de features
-│   └── docs/                 # Specs de documentación
+│   ├── feat/
+│   └── docs/
 ├── wwwroot/
 │   ├── js/
-│   │   └── cookieInterop.js  # Funciones JS para cookies
-│   ├── appsettings.json      # Config (API_BASE_URL)
-│   └── index.html            # Host HTML, loader consistente
-├── App.razor                 # Router y auth wrapper
-├── Program.cs                # Configuración de servicios
-└── _Imports.razor            # Usings globales
+│   ├── appsettings.json
+│   └── index.html
+├── App.razor
+├── Program.cs
+└── _Imports.razor
 ```
 
 ## 3. Dependencies (NuGet)
@@ -78,5 +79,3 @@ RugbyEngine.Client/
 2. Ensure API is running on configured port
 3. `dotnet run` in RugbyEngine.Client folder
 4. Navigate to https://localhost:7255
-
-(El resto de la documentación se mantiene igual, solo se han resaltado los cambios visuales y estructurales recientes.)

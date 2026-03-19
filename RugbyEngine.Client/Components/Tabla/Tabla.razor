@@ -1,17 +1,13 @@
 @typeparam T
 @implements ITablaRegistration
+@implements IDisposable
 @using RugbyEngine.Shared.Tablas
 
 <CascadingValue Name="TablaParent" Value="(ITablaRegistration)this">
     <div class="d-none">@ChildContent</div>
 </CascadingValue>
 
-@if (_isLoading)
-{
-    <Loading />
-}
-else
-{
+<div class="tabla-wrapper">
     <div class="table-responsive-stack tabla-container">
         <table class="table table-hover table-striped align-middle mb-0 table-stack tabla-component">
             <thead class="table-light">
@@ -51,7 +47,7 @@ else
                     <tr>
                         <td colspan="@Math.Max(1, _headers.Count)">
                             <div class="tabla-pagination-row">
-                                <small class="tabla-count">@_rows.Count / @_total</small>
+                                <small class="tabla-count">@DisplayedCount / @_total</small>
                                 <div class="tabla-pagination-controls">
                                     <label class="small tabla-label mb-0">Filas</label>
                                     <select class="form-select form-select-sm tabla-page-size" value="@_paginacion.RegistrosPorPagina" @onchange="OnPageSizeChanged">
@@ -79,11 +75,20 @@ else
             }
         </table>
     </div>
-}
+
+    @if (_isLoading)
+    {
+        <div class="tabla-loading-overlay" aria-live="polite" aria-busy="true">
+            <div class="tabla-loading-content">
+                <Loading />
+            </div>
+        </div>
+    }
+</div>
 
 @code {
-    [Parameter, EditorRequired] public Func<PaginacionDto, Task<List<T>>> SearchFunc { get; set; } = default!;
-    [Parameter] public Func<Task<int>>? CountFunc { get; set; }
+    [Parameter, EditorRequired] public Func<PaginacionDto, CancellationToken, Task<List<T>>> SearchFunc { get; set; } = default!;
+    [Parameter] public Func<CancellationToken, Task<int>>? CountFunc { get; set; }
     [Parameter] public bool Paginacion { get; set; } = true;
     [Parameter] public IReadOnlyList<int>? PageSizes { get; set; }
     [Parameter] public string EmptyText { get; set; } = "No se encontraron registros.";
@@ -96,11 +101,15 @@ else
     private bool _initialized;
     private readonly PaginacionDto _paginacion = new() { Pagina = 1, RegistrosPorPagina = 10 };
     private int _total;
+    private CancellationTokenSource? _refreshCts;
 
     public Type RowType => typeof(T);
 
     private IReadOnlyList<int> EffectivePageSizes => PageSizes is { Count: > 0 } ? PageSizes : [10, 20, 50];
     private int TotalPaginas => Math.Max(1, (int)Math.Ceiling((double)_total / Math.Max(1, _paginacion.RegistrosPorPagina)));
+    private int DisplayedCount => Paginacion
+        ? Math.Min(_total, ((_paginacion.Pagina - 1) * _paginacion.RegistrosPorPagina) + _rows.Count)
+        : _rows.Count;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -119,38 +128,66 @@ else
         if (resetPage)
             _paginacion.Pagina = 1;
 
+        var previousCts = _refreshCts;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        _refreshCts = new CancellationTokenSource();
+        var currentCts = _refreshCts;
+        var token = currentCts.Token;
+
         _isLoading = true;
         StateHasChanged();
 
-        var request = new PaginacionDto
+        try
         {
-            Pagina = _paginacion.Pagina,
-            RegistrosPorPagina = _paginacion.RegistrosPorPagina
-        };
-
-        var rows = await SearchFunc(request) ?? [];
-
-        _rows.Clear();
-        _rows.AddRange(rows);
-
-        if (Paginacion)
-        {
-            if (CountFunc is not null)
+            var request = new PaginacionDto
             {
-                _total = await CountFunc();
+                Pagina = _paginacion.Pagina,
+                RegistrosPorPagina = _paginacion.RegistrosPorPagina
+            };
+
+            var rows = await SearchFunc(request, token) ?? [];
+            token.ThrowIfCancellationRequested();
+
+            int total;
+            if (Paginacion)
+            {
+                if (CountFunc is not null)
+                {
+                    total = await CountFunc(token);
+                }
+                else
+                {
+                    total = ((_paginacion.Pagina - 1) * _paginacion.RegistrosPorPagina) + rows.Count;
+                }
             }
             else
             {
-                _total = ((_paginacion.Pagina - 1) * _paginacion.RegistrosPorPagina) + _rows.Count;
+                total = rows.Count;
+            }
+
+            token.ThrowIfCancellationRequested();
+
+            _rows.Clear();
+            _rows.AddRange(rows);
+            _total = total;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(_refreshCts, currentCts))
+            {
+                _isLoading = false;
+                StateHasChanged();
             }
         }
-        else
-        {
-            _total = _rows.Count;
-        }
-
-        _isLoading = false;
-        StateHasChanged();
     }
 
     private async Task GoToPageAsync(int page)
@@ -198,5 +235,11 @@ else
     {
         _cellRenderers.Add(renderer);
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
     }
 }

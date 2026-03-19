@@ -18,6 +18,7 @@ html, body {
     background: var(--app-bg);
     height: 100%;
     overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 #app { min-height: 100%; }
@@ -80,10 +81,17 @@ html, body {
 .app-body {
     display: flex;
     margin-top: var(--app-topbar-height);
-    min-height: calc(100vh - var(--app-topbar-height));
+    height: calc(100dvh - var(--app-topbar-height));
+    min-height: calc(100dvh - var(--app-topbar-height));
+    overflow: hidden;
 }
 
-.app-main { flex: 1 1 auto; min-width: 0; overflow-x: hidden; }
+.app-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
 
 .app-content {
     padding: clamp(12px, 2vw, 28px);

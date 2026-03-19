@@ -176,6 +176,7 @@
     private Tabla<PersonaResponse>? _tablaRef;
     private string _searchText = string.Empty;
     private readonly int[] _pageSizes = [10, 20, 50];
+    private CancellationTokenSource? _searchDebounceCts;
 
     private string? _toast;
     private bool _toastIsError;
@@ -189,41 +190,40 @@
     private bool _isDeleting;
     private PersonaResponse? _deletingPersona;
 
-    private async Task<List<PersonaResponse>> SearchPersonasAsync(PaginacionDto paginacion)
+    private async Task<List<PersonaResponse>> SearchPersonasAsync(PaginacionDto paginacion, CancellationToken cancellationToken)
     {
-        var table = await PersonaService.GetTableAsync(paginacion);
-        var registros = table?.Registros ?? [];
-
-        if (string.IsNullOrWhiteSpace(_searchText))
-            return registros;
-
-        return registros.Where(MatchesSearch).ToList();
+        var table = await PersonaService.GetTableAsync(paginacion, _searchText, cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+            return [];
+        return table?.Registros ?? [];
     }
 
-    private async Task<int> CountPersonasAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_searchText))
-        {
-            var probe = await PersonaService.GetTableAsync(new PaginacionDto { Pagina = 1, RegistrosPorPagina = 1 });
-            return probe?.Paginacion.Total ?? 0;
-        }
-
-        var all = await PersonaService.GetAllAsync();
-        return all.Count(MatchesSearch);
-    }
-
-    private bool MatchesSearch(PersonaResponse p)
-    {
-        return p.Nombres.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-            || p.Apellidos.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-            || p.Documento.Contains(_searchText, StringComparison.OrdinalIgnoreCase);
-    }
+    private Task<int> CountPersonasAsync(CancellationToken cancellationToken)
+        => PersonaService.CountAsync(_searchText, cancellationToken);
 
     private async Task OnSearchInput(ChangeEventArgs e)
     {
         _searchText = e.Value?.ToString() ?? string.Empty;
-        if (_tablaRef is not null)
-            await _tablaRef.RefreshAsync(resetPage: true);
+
+        var previousCts = _searchDebounceCts;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        _searchDebounceCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(250, _searchDebounceCts.Token);
+            if (_tablaRef is not null)
+                await _tablaRef.RefreshAsync(resetPage: true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
     }
 
     private void OpenCreateDialog()

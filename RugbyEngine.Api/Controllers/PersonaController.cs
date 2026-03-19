@@ -27,21 +27,43 @@ namespace RugbyEngine.Api.Controllers
         }
 
         /// <summary>
-        /// Obtiene todas las personas activas
+        /// Obtiene todas las personas activas.
         /// </summary>
-        /// <response code="200">Lista de personas</response>
         [HttpGet]
-        [ProducesResponseType(typeof(TableResponse<PersonaResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<TableResponse<PersonaResponse>>> GetAll([FromQuery] PaginacionDto paginacion, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<PersonaResponse>>> GetAll(CancellationToken cancellationToken)
         {
-            return Ok(await GetTableResponseAsync(paginacion, cancellationToken));
+            var personas = await _entityManager.GetRepository<PersonaRepository>()
+                .GetAllAsync(cancellationToken: cancellationToken);
+
+            return Ok(personas.Select(MapToResponse).ToList());
         }
 
-        [HttpPost("table")]
-        [ProducesResponseType(typeof(TableResponse<PersonaResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<TableResponse<PersonaResponse>>> GetTable([FromBody] PaginacionDto paginacion, CancellationToken cancellationToken)
+        /// <summary>
+        /// Obtiene personas activas paginadas.
+        /// </summary>
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<PersonaResponse>>> Search([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            return Ok(await GetTableResponseAsync(paginacion, cancellationToken));
+            var repo = _entityManager.GetRepository<PersonaRepository>();
+            var paginacion = new PaginacionDto { Pagina = page, RegistrosPorPagina = pageSize };
+            var personas = await repo.SearchAsync(search, paginacion, cancellationToken);
+
+            return Ok(personas.Select(MapToResponse).ToList());
+        }
+
+        /// <summary>
+        /// Devuelve el total de personas activas para un filtro.
+        /// </summary>
+        [HttpGet("count")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        public async Task<ActionResult<int>> Count([FromQuery] string? search, CancellationToken cancellationToken)
+        {
+            var total = await _entityManager.GetRepository<PersonaRepository>()
+                .CountAsync(search, cancellationToken);
+
+            return Ok(total);
         }
 
         /// <summary>
@@ -169,25 +191,6 @@ namespace RugbyEngine.Api.Controllers
                 return NotFound();
 
             return Ok(new ApiResponse { Success = true, Message = "Persona eliminada correctamente." });
-        }
-
-        private async Task<TableResponse<PersonaResponse>> GetTableResponseAsync(PaginacionDto paginacion, CancellationToken cancellationToken)
-        {
-            paginacion.Pagina = paginacion.Pagina < 1 ? 1 : paginacion.Pagina;
-            paginacion.RegistrosPorPagina = paginacion.RegistrosPorPagina < 1 ? 10 : paginacion.RegistrosPorPagina;
-
-            var repo = _entityManager.GetRepository<PersonaRepository>();
-
-            var totalRegistros = (await repo.GetAllAsync(cancellationToken: cancellationToken)).Count();
-            var personas = await repo.GetAllAsync(paginacion: paginacion, cancellationToken: cancellationToken);
-
-            paginacion.Total = totalRegistros;
-
-            return new TableResponse<PersonaResponse>
-            {
-                Paginacion = paginacion,
-                Registros = personas.Select(MapToResponse).ToList()
-            };
         }
 
         private static PersonaResponse MapToResponse(Persona p) => new()

@@ -8,6 +8,29 @@
     border-top: 1px solid var(--bs-border-color, #dee2e6);
 }
 
+.tabla-loading-content {
+    --tabla-loader-min-size: calc(1lh + (var(--bs-table-cell-padding-y, 0.75rem) * 2));
+    width: clamp(var(--tabla-loader-min-size), 4.5vmin, 2.9rem);
+    height: clamp(var(--tabla-loader-min-size), 4.5vmin, 2.9rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabla-loading-content :deep(.loading-container),
+.tabla-loading-content ::deep(.loading-container) {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.tabla-loading-content :deep(.loading-svg),
+.tabla-loading-content ::deep(.loading-svg) {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
 .tabla-pagination-row {
     display: flex;
     align-items: center;
@@ -47,6 +70,22 @@
     line-height: 1;
 }
 
+.tabla-wrapper {
+    position: relative;
+}
+
+.tabla-loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(0.4px);
+    z-index: 1056;
+    pointer-events: none;
+}
+
 @media (max-width: 768px) {
     .tabla-pagination-row {
         gap: 0.65rem;
@@ -54,5 +93,10 @@
 
     .tabla-pagination-controls {
         justify-content: flex-start;
+    }
+
+    .tabla-loading-content {
+        width: clamp(3.25rem, 10vmin, 3.75rem);
+        height: clamp(3.25rem, 10vmin, 3.75rem);
     }
 }

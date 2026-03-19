@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using RugbyEngine.Client;
+using RugbyEngine.Client.Handlers;
 using RugbyEngine.Client.Services;
 using System;
 
@@ -11,17 +12,22 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+builder.Services.AddTransient<OperationCanceledExceptionDelegatingHandler>();
+
 builder.Services.AddScoped(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
-    // Primero intenta obtener la variable de entorno
-    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://rugbyengine.agigena.com";
+    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://localhost:7083";
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)
         : new Uri(builder.HostEnvironment.BaseAddress);
 
-    return new HttpClient { BaseAddress = baseAddress };
+    var handler = ActivatorUtilities.CreateInstance<OperationCanceledExceptionDelegatingHandler>(sp);
+    handler.InnerHandler = new HttpClientHandler();
+
+    return new HttpClient(handler) { BaseAddress = baseAddress };
 });
+
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<ICookieService, CookieService>();
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();

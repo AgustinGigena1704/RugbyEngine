@@ -6,6 +6,7 @@ using RugbyEngine.Api.Data.Repositories;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Shared;
 using RugbyEngine.Shared.Perfiles;
+using RugbyEngine.Shared.Tablas;
 using RugbyEngine.Shared.Usuarios;
 
 namespace RugbyEngine.Api.Controllers
@@ -33,6 +34,29 @@ namespace RugbyEngine.Api.Controllers
                 .GetAllAsync(cancellationToken: cancellationToken);
 
             return Ok(usuarios.Select(MapToResponse).ToList());
+        }
+
+        /// <summary>Devuelve usuarios paginados para grillas/tablas.</summary>
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(List<UsuarioResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<UsuarioResponse>>> SearchGet([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var repo = _entityManager.GetRepository<UsuarioRepository>();
+            var paginacion = new PaginacionDto { Pagina = page, RegistrosPorPagina = pageSize };
+            var usuarios = await repo.SearchAsync(search, paginacion, cancellationToken);
+
+            return Ok(usuarios.Select(MapToResponse).ToList());
+        }
+
+        /// <summary>Devuelve el total de usuarios activos.</summary>
+        [HttpGet("count")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        public async Task<ActionResult<int>> Count([FromQuery] string? search, CancellationToken cancellationToken)
+        {
+            var total = await _entityManager.GetRepository<UsuarioRepository>()
+                .CountAsync(search, cancellationToken);
+
+            return Ok(total);
         }
 
         /// <summary>Devuelve un usuario por su id con persona y perfiles.</summary>
@@ -192,5 +216,3 @@ namespace RugbyEngine.Api.Controllers
         };
     }
 }
-
-
