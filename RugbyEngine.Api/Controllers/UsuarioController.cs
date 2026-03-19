@@ -39,7 +39,7 @@ namespace RugbyEngine.Api.Controllers
         /// <summary>Devuelve usuarios paginados para grillas/tablas.</summary>
         [HttpGet("search")]
         [ProducesResponseType(typeof(List<UsuarioResponse>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<UsuarioResponse>>> SearchGet([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<List<UsuarioResponse>>> Search([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
         {
             var repo = _entityManager.GetRepository<UsuarioRepository>();
             var paginacion = new PaginacionDto { Pagina = page, RegistrosPorPagina = pageSize };

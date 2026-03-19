@@ -1,81 +1,61 @@
 # RugbyEngine Client - Project Overview
 
-## Cambios recientes
-- Componente reusable `<Tabla>` con sintaxis declarativa (`Header/Columna`, `Rows/Row`) y paginación integrada en `tfoot`.
-- Migración de `Personas` y `Usuarios` al componente `<Tabla>`.
-- Paginación visual homogénea en tablas con contador compacto `x / x2`, selector de filas y navegación `<` `>`.
-- `Usuarios`: filtros y paginación movidos a servidor (API + repositorio) con endpoints dedicados de búsqueda y conteo.
-- Compatibilidad en cliente para escenarios de despliegue parcial (fallback controlado cuando endpoints nuevos no están disponibles).
+## Estado actual
+- Componente reusable `<Tabla>` en producción para `Personas` y `Usuarios`.
+- Paginación/filtrado server-side consumidos por cliente con endpoints `search` y `count`.
+- Formato de contador compacto en tabla: `x / x2` (acumulado hasta la página actual).
+- Servicios cliente consumen API directamente con `HttpClient` (sin `CreateAuthorizedRequestAsync`).
+- Manejo de cancelación en cliente con `CancellationToken` y descarte de resultados stale.
+- UI principal con Bootstrap 5 + CSS propio.
 
 ## 1. Overview
-- **Tecnología**: Blazor WebAssembly standalone
-- **Target Framework**: .NET 10
-- **UI**: Bootstrap 5.3 (CDN) + CSS propio
-- **Autenticación**: JWT con cookies
+- Tecnología: Blazor WebAssembly standalone
+- Target Framework: .NET 10
+- UI: Bootstrap 5.3 + CSS propio
+- Autenticación: JWT en cookie
 
-## 2. Project Structure
+## 2. Estructura relevante
 ```
 RugbyEngine.Client/
-├── Components/
-│   └── Tabla/
-│       ├── Tabla.razor          # Grilla reusable con paginación
-│       ├── Tabla.razor.css      # Estilos scoped de tabla/paginación
-│       ├── ITablaRegistration.cs
-│       ├── Header.razor
-│       ├── Columna.razor
-│       ├── Rows.razor
-│       └── Row.razor
-├── Layout/
-│   ├── MainLayout.razor
-│   └── NavMenu.razor
-├── Pages/
-│   ├── Administracion/
-│   │   └── Gestion/
-│   │       ├── Personas.razor   # Usa <Tabla>
-│   │       └── Usuarios.razor   # Usa <Tabla>
-│   ├── Auth/
-│   │   └── Login.razor
-│   ├── Home/
-│   │   └── Home.razor
-│   └── NotFound.razor
+├── Components/Tabla/
+│   ├── Tabla.razor
+│   ├── Tabla.razor.css
+│   ├── Header.razor
+│   ├── Columna.razor
+│   ├── Rows.razor
+│   ├── Row.razor
+│   └── ITablaRegistration.cs
+├── Pages/Administracion/Gestion/
+│   ├── Personas.razor
+│   └── Usuarios.razor
 ├── Services/
 │   ├── PersonaService.cs
 │   ├── UsuarioService.cs
+│   ├── AuthService.cs
 │   └── ...
-├── specs/
-│   ├── feat/
-│   └── docs/
-├── wwwroot/
-│   ├── js/
-│   ├── appsettings.json
-│   └── index.html
-├── App.razor
+├── Layout/
+│   ├── MainLayout.razor
+│   └── ...
+├── wwwroot/css/app.css
 ├── Program.cs
-└── _Imports.razor
+└── App.razor
 ```
 
-## 3. Dependencies (NuGet)
-| Package | Version | Purpose |
-|---------|---------|---------|
-| Microsoft.AspNetCore.Components.WebAssembly | 10.0.x | Runtime Blazor WASM |
-| Microsoft.AspNetCore.Components.Authorization | 10.0.x | Auth components |
-| System.IdentityModel.Tokens.Jwt | 8.x | JWT parsing |
-| SonarAnalyzer.CSharp | 10.x | Análisis estático |
+## 3. Comunicación API (actual)
+- `Program.cs` registra `HttpClient` con `BaseAddress` desde `API_BASE_URL | Api:BaseUrl`.
+- Servicios usan `HttpClient` directo (`GetFromJsonAsync`, `PostAsJsonAsync`, `PutAsJsonAsync`, `DeleteAsync`).
+- Endpoints de tabla:
+  - Personas: `GET api/persona/search?search=...&page=...&pageSize=...`
+  - Usuarios: `GET api/usuario/search?search=...&page=...&pageSize=...`
+  - Count: `GET api/persona/count`, `GET api/usuario/count`
 
-## 4. Configuration
-- `wwwroot/appsettings.json` - Runtime config
-- `Properties/launchSettings.json` - Dev environment
-- Keys: `API_BASE_URL`, `Api:BaseUrl`
+## 4. Tabla reusable
+- `SearchFunc: Func<PaginacionDto, CancellationToken, Task<List<T>>>`
+- `CountFunc: Func<CancellationToken, Task<int>>?`
+- `RefreshAsync` cancela request anterior y conserva UX con overlay.
+- Contador `x / x2` calcula acumulado: `((pagina - 1) * pageSize) + registrosPagina`.
 
-## 5. Authentication Flow
-1. User submits credentials → AuthService.LoginAsync()
-2. POST to API → Receives JWT token
-3. Token stored in cookie → CookieService.SetCookieAsync()
-4. AuthState notified → ApiAuthenticationStateProvider
-5. HttpClient header set → Authorization: Bearer {token}
-
-## 6. Development Setup
-1. Clone repository
-2. Ensure API is running on configured port
-3. `dotnet run` in RugbyEngine.Client folder
-4. Navigate to https://localhost:7255
+## 5. Notas de UX actuales
+- Filtro con debounce en páginas administrativas.
+- Loading overlay centrado en pantalla en tabla.
+- Paginación visual integrada en `tfoot`.
