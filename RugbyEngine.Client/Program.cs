@@ -12,12 +12,16 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+
 builder.Services.AddTransient<OperationCanceledExceptionDelegatingHandler>();
 
 builder.Services.AddScoped(sp =>
 {
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") ?? configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"] ?? "https://localhost:7083";
+    var apiBaseUrl = "https://localhost:7083";
+    if (!builder.HostEnvironment.IsDevelopment())
+    {
+        apiBaseUrl = "https://rugbyengine.agigena.com";
+    }
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)
         : new Uri(builder.HostEnvironment.BaseAddress);
