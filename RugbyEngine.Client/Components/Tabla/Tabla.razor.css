@@ -1,0 +1,102 @@
+.tabla-component {
+    margin-bottom: 0;
+}
+
+.tabla-footer td {
+    padding: 0.75rem 0.9rem;
+    background-color: var(--bs-table-bg, #fff);
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.tabla-loading-content {
+    --tabla-loader-min-size: calc(1lh + (var(--bs-table-cell-padding-y, 0.75rem) * 2));
+    width: clamp(var(--tabla-loader-min-size), 4.5vmin, 2.9rem);
+    height: clamp(var(--tabla-loader-min-size), 4.5vmin, 2.9rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabla-loading-content :deep(.loading-container),
+.tabla-loading-content ::deep(.loading-container) {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.tabla-loading-content :deep(.loading-svg),
+.tabla-loading-content ::deep(.loading-svg) {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+.tabla-pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.tabla-count,
+.tabla-label,
+.tabla-page-indicator {
+    color: var(--bs-body-color, #212529);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.tabla-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.tabla-page-size {
+    width: auto;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.tabla-nav-btn {
+    font-weight: 700;
+    font-size: 0.95rem;
+    min-width: 2.15rem;
+    line-height: 1;
+}
+
+.tabla-wrapper {
+    position: relative;
+}
+
+.tabla-loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(0.4px);
+    z-index: 1056;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .tabla-pagination-row {
+        gap: 0.65rem;
+    }
+
+    .tabla-pagination-controls {
+        justify-content: flex-start;
+    }
+
+    .tabla-loading-content {
+        width: clamp(3.25rem, 10vmin, 3.75rem);
+        height: clamp(3.25rem, 10vmin, 3.75rem);
+    }
+}

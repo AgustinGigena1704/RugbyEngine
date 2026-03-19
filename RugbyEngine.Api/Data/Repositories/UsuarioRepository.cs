@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
+using RugbyEngine.Shared.Tablas;
 
 namespace RugbyEngine.Api.Data.Repositories
 {
@@ -35,6 +36,42 @@ namespace RugbyEngine.Api.Data.Repositories
             if (excludeUsuarioId.HasValue)
                 query = query.Where(u => u.Id != excludeUsuarioId.Value);
             return await query.AnyAsync(cancellationToken);
+        }
+
+        public async Task<List<Usuario>> SearchAsync(string? searchText, PaginacionDto paginacion, CancellationToken cancellationToken = default)
+        {
+            var query = BuildSearchQuery(searchText);
+
+            return await query
+                .Skip((paginacion.Pagina - 1) * paginacion.RegistrosPorPagina)
+                .Take(paginacion.RegistrosPorPagina)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(string? searchText, CancellationToken cancellationToken = default)
+        {
+            var query = BuildSearchQuery(searchText);
+            return query.CountAsync(cancellationToken);
+        }
+
+        private IQueryable<Usuario> BuildSearchQuery(string? searchText)
+        {
+            var query = _dbSet
+                .AsNoTracking()
+                .Include(u => u.Persona)
+                .Include(u => u.Perfiles)
+                .Where(u => !u.BorradoLogico);
+
+            if (string.IsNullOrWhiteSpace(searchText))
+                return query;
+
+            var text = searchText.Trim();
+            return query.Where(u =>
+                EF.Functions.ILike(u.Username, $"%{text}%") ||
+                EF.Functions.ILike(u.Email ?? string.Empty, $"%{text}%") ||
+                EF.Functions.ILike((u.Persona != null ? u.Persona.Nombres : string.Empty), $"%{text}%") ||
+                EF.Functions.ILike((u.Persona != null ? u.Persona.Apellidos : string.Empty), $"%{text}%") ||
+                EF.Functions.ILike((u.Persona != null ? u.Persona.Documento : string.Empty), $"%{text}%"));
         }
     }
 }

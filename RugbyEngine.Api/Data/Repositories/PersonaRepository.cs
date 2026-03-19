@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
+using RugbyEngine.Shared.Tablas;
 
 namespace RugbyEngine.Api.Data.Repositories
 {
@@ -29,14 +30,35 @@ namespace RugbyEngine.Api.Data.Repositories
             return await query.AnyAsync(cancellationToken);
         }
 
-        public async Task<List<Persona>> SearchByNombreAsync(string nombre, bool borradoLogico = false, CancellationToken cancellationToken = default)
+        public async Task<List<Persona>> SearchAsync(string? searchText, PaginacionDto paginacion, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.Where(p => p.Nombres.Contains(nombre));
-            if (!borradoLogico)
-            {
-                query = query.Where(p => !p.BorradoLogico);
-            }
-            return await query.ToListAsync(cancellationToken);
+            var query = BuildSearchQuery(searchText)
+                .OrderBy(p => p.Apellidos)
+                .ThenBy(p => p.Nombres);
+
+            return await query
+                .Skip((paginacion.Pagina - 1) * paginacion.RegistrosPorPagina)
+                .Take(paginacion.RegistrosPorPagina)
+                .ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(string? searchText, CancellationToken cancellationToken = default)
+        {
+            return BuildSearchQuery(searchText).CountAsync(cancellationToken);
+        }
+
+        private IQueryable<Persona> BuildSearchQuery(string? searchText)
+        {
+            var query = _dbSet.AsNoTracking().Where(p => !p.BorradoLogico);
+
+            if (string.IsNullOrWhiteSpace(searchText))
+                return query;
+
+            var text = searchText.Trim();
+            return query.Where(p =>
+                EF.Functions.ILike(p.Nombres, $"%{text}%") ||
+                EF.Functions.ILike(p.Apellidos, $"%{text}%") ||
+                EF.Functions.ILike(p.Documento, $"%{text}%"));
         }
     }
 }

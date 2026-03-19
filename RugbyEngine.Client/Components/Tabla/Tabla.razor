@@ -1,0 +1,245 @@
+@typeparam T
+@implements ITablaRegistration
+@implements IDisposable
+@using RugbyEngine.Shared.Tablas
+
+<CascadingValue Name="TablaParent" Value="(ITablaRegistration)this">
+    <div class="d-none">@ChildContent</div>
+</CascadingValue>
+
+<div class="tabla-wrapper">
+    <div class="table-responsive-stack tabla-container">
+        <table class="table table-hover table-striped align-middle mb-0 table-stack tabla-component">
+            <thead class="table-light">
+                <tr>
+                    @foreach (var header in _headers)
+                    {
+                        <th>@header</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (_rows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@Math.Max(1, _headers.Count)" class="text-center text-muted py-4">@EmptyText</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var row in _rows)
+                    {
+                        var rowObj = (object?)row;
+                        <tr>
+                            @for (var i = 0; i < _cellRenderers.Count; i++)
+                            {
+                                var label = i < _headers.Count ? _headers[i] : string.Empty;
+                                <td data-label="@label">@_cellRenderers[i](rowObj!)</td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+
+            @if (Paginacion)
+            {
+                <tfoot class="tabla-footer">
+                    <tr>
+                        <td colspan="@Math.Max(1, _headers.Count)">
+                            <div class="tabla-pagination-row">
+                                <small class="tabla-count">@DisplayedCount / @_total</small>
+                                <div class="tabla-pagination-controls">
+                                    <label class="small tabla-label mb-0">Filas</label>
+                                    <select class="form-select form-select-sm tabla-page-size" value="@_paginacion.RegistrosPorPagina" @onchange="OnPageSizeChanged">
+                                        @foreach (var size in EffectivePageSizes)
+                                        {
+                                            <option value="@size">@size</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-secondary tabla-nav-btn"
+                                            @onclick="() => GoToPageAsync(_paginacion.Pagina - 1)"
+                                            disabled="@(_paginacion.Pagina <= 1)"
+                                            aria-label="Página anterior"
+                                            title="Página anterior">&lt;</button>
+                                    <span class="small tabla-page-indicator">@_paginacion.Pagina de @TotalPaginas</span>
+                                    <button class="btn btn-sm btn-outline-secondary tabla-nav-btn"
+                                            @onclick="() => GoToPageAsync(_paginacion.Pagina + 1)"
+                                            disabled="@(_paginacion.Pagina >= TotalPaginas)"
+                                            aria-label="Página siguiente"
+                                            title="Página siguiente">&gt;</button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="tabla-loading-overlay" aria-live="polite" aria-busy="true">
+            <div class="tabla-loading-content">
+                <Loading />
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Func<PaginacionDto, CancellationToken, Task<List<T>>> SearchFunc { get; set; } = default!;
+    [Parameter] public Func<CancellationToken, Task<int>>? CountFunc { get; set; }
+    [Parameter] public bool Paginacion { get; set; } = true;
+    [Parameter] public IReadOnlyList<int>? PageSizes { get; set; }
+    [Parameter] public string EmptyText { get; set; } = "No se encontraron registros.";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly List<string> _headers = [];
+    private readonly List<Func<object, RenderFragment>> _cellRenderers = [];
+    private readonly List<T> _rows = [];
+    private bool _isLoading = true;
+    private bool _initialized;
+    private readonly PaginacionDto _paginacion = new() { Pagina = 1, RegistrosPorPagina = 10 };
+    private int _total;
+    private CancellationTokenSource? _refreshCts;
+
+    public Type RowType => typeof(T);
+
+    private IReadOnlyList<int> EffectivePageSizes => PageSizes is { Count: > 0 } ? PageSizes : [10, 20, 50];
+    private int TotalPaginas => Math.Max(1, (int)Math.Ceiling((double)_total / Math.Max(1, _paginacion.RegistrosPorPagina)));
+    private int DisplayedCount => Paginacion
+        ? Math.Min(_total, ((_paginacion.Pagina - 1) * _paginacion.RegistrosPorPagina) + _rows.Count)
+        : _rows.Count;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized)
+            return;
+
+        _initialized = true;
+        await RefreshAsync();
+    }
+
+    public async Task RefreshAsync(bool resetPage = false)
+    {
+        if (SearchFunc is null)
+            return;
+
+        if (resetPage)
+            _paginacion.Pagina = 1;
+
+        var previousCts = _refreshCts;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        _refreshCts = new CancellationTokenSource();
+        var currentCts = _refreshCts;
+        var token = currentCts.Token;
+
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new PaginacionDto
+            {
+                Pagina = _paginacion.Pagina,
+                RegistrosPorPagina = _paginacion.RegistrosPorPagina
+            };
+
+            var rows = await SearchFunc(request, token) ?? [];
+            token.ThrowIfCancellationRequested();
+
+            int total;
+            if (Paginacion)
+            {
+                if (CountFunc is not null)
+                {
+                    total = await CountFunc(token);
+                }
+                else
+                {
+                    total = ((_paginacion.Pagina - 1) * _paginacion.RegistrosPorPagina) + rows.Count;
+                }
+            }
+            else
+            {
+                total = rows.Count;
+            }
+
+            token.ThrowIfCancellationRequested();
+
+            _rows.Clear();
+            _rows.AddRange(rows);
+            _total = total;
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(_refreshCts, currentCts))
+            {
+                _isLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task GoToPageAsync(int page)
+    {
+        var targetPage = page;
+        if (targetPage < 1)
+            targetPage = 1;
+
+        if (targetPage > TotalPaginas)
+            targetPage = TotalPaginas;
+
+        if (targetPage == _paginacion.Pagina)
+            return;
+
+        _paginacion.Pagina = targetPage;
+        await RefreshAsync();
+    }
+
+    private async Task OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var size) || size <= 0)
+            return;
+
+        _paginacion.RegistrosPorPagina = size;
+        _paginacion.Pagina = 1;
+        await RefreshAsync();
+    }
+
+    public void ClearDefinition()
+    {
+        _headers.Clear();
+        _cellRenderers.Clear();
+    }
+
+    public void RegisterHeader(string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre) || _headers.Contains(nombre))
+            return;
+
+        _headers.Add(nombre);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void RegisterCell(Func<object, RenderFragment> renderer)
+    {
+        _cellRenderers.Add(renderer);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
+    }
+}

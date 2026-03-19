@@ -1,0 +1,32 @@
+@typeparam T
+
+@code {
+    [CascadingParameter(Name = "TablaParent")] public ITablaRegistration? TablaParent { get; set; }
+    [Parameter] public Func<T, object?>? Value { get; set; }
+    [Parameter] public RenderFragment<T>? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (TablaParent is null)
+            return;
+
+        if (TablaParent.RowType != typeof(T))
+            throw new InvalidOperationException($"El tipo de fila '{typeof(T).Name}' no coincide con la tabla '{TablaParent.RowType.Name}'.");
+
+        if (ChildContent is null && Value is null)
+            return;
+
+        TablaParent.RegisterCell(row => builder =>
+        {
+            var item = (T)row;
+            if (ChildContent is not null)
+            {
+                builder.AddContent(0, ChildContent(item));
+            }
+            else
+            {
+                builder.AddContent(1, Value!(item));
+            }
+        });
+    }
+}

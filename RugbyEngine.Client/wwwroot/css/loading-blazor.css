@@ -7,27 +7,17 @@
 
 .loading-svg {
     animation: spin 1.5s linear infinite;
-    max-width: 5%;
-    max-height: 5%;
-    width: auto;
-    height: auto;
     transform-origin: center;
 }
 
 .loading-svg-index {
-    max-width: 10% !important;
-    max-height: 10% !important;
+    width: min(10vmin, 96px) !important;
+    height: auto !important;
 }
 
 @media (max-width: 768px) {
-    .loading-svg {
-        max-width: 10%;
-        max-height: 10%;
-    }
-
     .loading-svg-index {
-        max-width: 10% !important;
-        max-height: 10% !important;
+        width: min(12vmin, 84px) !important;
     }
 }
 
@@ -35,6 +25,7 @@
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }

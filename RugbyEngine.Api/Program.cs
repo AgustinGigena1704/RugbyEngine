@@ -183,6 +183,8 @@ mimeProvider.Mappings[".wasm"] = "application/wasm";
 mimeProvider.Mappings[".blat"] = "application/octet-stream";
 mimeProvider.Mappings[".webcil"] = "application/octet-stream";
 
+app.UseMiddleware<OperationCanceledMiddleware>();
+
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = mimeProvider });
 

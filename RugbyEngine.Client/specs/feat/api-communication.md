@@ -1,70 +1,44 @@
 # API Communication Configuration
 
 <purpose>
-Configuración del HttpClient para comunicarse con la API backend, permitiendo especificar la URL base mediante configuración (appsettings.json o variables de entorno) y soportando desarrollo local con diferentes puertos para cliente y API.
+Definir cómo el cliente Blazor consume la API actual de RugbyEngine con `HttpClient` directo, configuración por `IConfiguration` y contratos vigentes de búsqueda/paginación.
 </purpose>
 
 <requirements>
-- La URL base de la API se lee de `IConfiguration` con keys `API_BASE_URL` o `Api:BaseUrl`
-- El `HttpClient` registrado en DI usa la URL configurada como `BaseAddress`
-- Fallback al host del cliente Blazor (`builder.HostEnvironment.BaseAddress`) si no hay configuración
-- `AuthService` construye URIs absolutas para llamadas de autenticación usando `BuildApiUri()`
-- Soporte para desarrollo local donde API y cliente corren en diferentes puertos
+- Consumir API con `HttpClient` directo en servicios.
+- URL base configurable por `API_BASE_URL` o `Api:BaseUrl`.
+- Endpoints de tabla por `GET` con query `search/page/pageSize`.
+- Endpoint de conteo separado (`/count`).
+- Manejo de cancelación con `CancellationToken` en capa cliente.
 </requirements>
 
 <implementation>
-Configuración del HttpClient en Program.cs:
-```csharp
-builder.Services.AddScoped(sp =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var apiBaseUrl = configuration["API_BASE_URL"] ?? configuration["Api:BaseUrl"];
-    var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
-        ? new Uri(apiBaseUrl, UriKind.Absolute)
-        : new Uri(builder.HostEnvironment.BaseAddress);
+Program.cs:
+- Registra `HttpClient` scoped.
+- Lee base URL desde configuración o fallback al host actual.
 
-    return new HttpClient { BaseAddress = baseAddress };
-});
-```
+Servicios cliente:
+- `PersonaService` y `UsuarioService` usan:
+  - `GetFromJsonAsync` para GET de búsqueda y conteo.
+  - `PostAsJsonAsync`, `PutAsJsonAsync`, `DeleteAsync` para CRUD.
+- No se usa `CreateAuthorizedRequestAsync`.
 
-Construcción de URIs en AuthService:
-- `_apiBaseUri` se inicializa desde configuración o HttpClient.BaseAddress
-- `NormalizeBaseUri()` asegura que la URL termine en `/` y sea válida
-- `BuildApiUri()` combina base URI con path relativo (ej: `api/Auth/Login`)
+Contratos vigentes de endpoints:
+- Personas
+  - `GET api/persona/search?search={text}&page={n}&pageSize={m}`
+  - `GET api/persona/count?search={text}`
+- Usuarios
+  - `GET api/usuario/search?search={text}&page={n}&pageSize={m}`
+  - `GET api/usuario/count?search={text}`
 
-Archivos de configuración:
-- `wwwroot/appsettings.json`:
-  ```json
-  {
-    "API_BASE_URL": "https://localhost:7083/"
-  }
-  ```
-- `Properties/launchSettings.json`:
-  ```json
-  "environmentVariables": {
-    "ASPNETCORE_ENVIRONMENT": "Development",
-    "API_BASE_URL": "https://localhost:7083"
-  }
-  ```
-
-Endpoints de la API:
-- Login: `POST {baseUrl}api/Auth/Login`
-- Logout: `POST {baseUrl}api/Auth/LogOut`
-
-Key files:
-- `Program.cs` - Factory de HttpClient con IConfiguration
-- `Services/AuthService.cs` - `BuildApiUri()`, `NormalizeBaseUri()`
-- `wwwroot/appsettings.json` - Configuración de desarrollo
-- `Properties/launchSettings.json` - Variables de entorno de desarrollo
+Notas:
+- El backend devuelve listas JSON para búsqueda.
+- El cliente compone `TableResponse<T>` localmente con registros + total.
 </implementation>
 
 <testing>
 Verification plan:
-- Con `API_BASE_URL` configurado: Requests van a `https://localhost:7083/api/...`
-- Sin configuración: Requests van al mismo host del cliente Blazor
-- `appsettings.json` en wwwroot es leído correctamente por Blazor WASM
-- Variable de entorno en launchSettings sobreescribe appsettings
-- Login request usa URI absoluta construida por `BuildApiUri()`
-- Logout request usa URI absoluta con Authorization header
-- CORS: API permite requests desde el origen del cliente
+- Confirmar que `search` recibe `page/pageSize` por query.
+- Confirmar que `count` se invoca una sola vez por refresh.
+- Confirmar que cancelaciones no pisan resultados de requests más nuevos.
 </testing>

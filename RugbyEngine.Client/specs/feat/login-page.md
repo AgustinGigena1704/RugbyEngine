@@ -1,76 +1,45 @@
 # Login Page
 
 <purpose>
-Página de inicio de sesión con formulario moderno usando componentes MudBlazor, validación de campos requeridos, feedback visual durante el proceso de autenticación y soporte para redirección post-login.
+Página de inicio de sesión implementada con componentes nativos de Blazor (`EditForm`) y estilos Bootstrap/CSS propio, con validación, estado de envío y redirección por `returnUrl`.
 </purpose>
 
 <requirements>
-- Ruta: `/Auth/Login` con atributo `[AllowAnonymous]`
-- Formulario centrado y responsive usando `MudGrid` con breakpoints (xs=12, sm=8, md=6, lg=4)
-- Card con `MudPaper` (Elevation=4) y padding interno
-- Campos `MudTextField` con:
-  - Variante `Outlined`
-  - Iconos de adorno (Person, Lock)
-  - Validación `Required` con mensajes en español
-  - `InputType.Password` para contraseña
-- Botón `MudButton` con:
-  - `Variant.Filled`, `Color.Primary`, `Size.Large`, `FullWidth`
-  - `MudProgressCircular` inline cuando `_isSubmitting`
-  - Texto dinámico "Ingresar" / "Ingresando..."
-- `MudAlert` con `Severity.Error` para errores de autenticación
-- Redirección automática si usuario ya autenticado
-- Soporte para `returnUrl` en query string
+- Ruta: `/Auth/Login`.
+- Página anónima con `[AllowAnonymous]`.
+- Layout: `LoginLayout`.
+- Formulario con `EditForm` + `DataAnnotationsValidator`.
+- Campos: usuario y contraseña.
+- Botón submit con spinner durante envío.
+- Mensaje de error/success con `alert` Bootstrap.
+- Redirección post-login a `returnUrl` o `/`.
 </requirements>
 
 <implementation>
-Estructura visual:
-```
-MudGrid (Justify.Center, mt-8)
-└── MudItem (responsive breakpoints)
-    └── MudPaper (Elevation=4, pa-6)
-        └── MudStack (Spacing=4)
-            ├── MudText (h4, Primary) - "RugbyEngine"
-            ├── MudText (h6) - "Inicia sesión para continuar"
-            ├── MudAlert (condicional, Severity.Error)
-            ├── MudTextField (Usuario, Person icon)
-            ├── MudTextField (Contraseña, Lock icon)
-            └── MudButton (Submit con spinner)
-```
+Componente:
+- `Pages/Auth/Login.razor`
 
-Estado del componente:
-- `_model: LoginRequest` - DTO con Username y Password
-- `_isSubmitting: bool` - Bloquea UI durante login
-- `_statusMessage: string?` - Mensaje de error a mostrar
-- `_statusSeverity: Severity` - Siempre Error para este caso
-- `_returnUrl: string?` - URL para redirección post-login
+Flujo:
+1. `OnInitializedAsync()` lee `returnUrl`.
+2. Si ya autenticado (`AuthService.IsAuthenticatedAsync`) redirige.
+3. `HandleLoginAsync()` llama `AuthService.LoginAsync`.
+4. Si éxito: `NavigateTo(returnUrl ?? "/", true)`.
+5. Si falla: muestra mensaje en `alert-danger`.
 
-Flujo de login:
-1. `OnInitializedAsync()` extrae `returnUrl` de query string
-2. Si ya autenticado (`IsAuthenticatedAsync()`), redirige inmediatamente
-3. Usuario completa formulario y hace clic en "Ingresar"
-4. `HandleLoginAsync()` activa spinner, llama a `AuthService.LoginAsync()`
-5. Si exitoso, redirige a `returnUrl` o "/" con `forceLoad: true`
-6. Si fallido, muestra `MudAlert` con mensaje de error
+UI actual:
+- `InputText` para usuario y contraseña.
+- `button` submit con spinner (`spinner-border`).
+- Mensajería con `alert` de Bootstrap.
 
-Extracción de returnUrl:
-- Parsea `NavigationManager.Uri` para obtener query string
-- Busca parámetro `returnUrl` (case-insensitive)
-- Decodifica con `Uri.UnescapeDataString()`
-
-Key files:
-- `Pages/Auth/Login.razor` - Página completa
-- `Models/Auth/LoginRequest.cs` - `{ Username, Password }`
-- `Models/Auth/LoginResponse.cs` - `{ Success, Message, Token }`
+Notas:
+- No usa MudBlazor.
+- Mantiene compatibilidad con flujo `returnUrl` codificado.
 </implementation>
 
 <testing>
 Verification plan:
-- Responsive: Card se ajusta a diferentes tamaños (xs=full, lg=4 columnas)
-- Campos vacíos: Muestra "El usuario es requerido" / "La contraseña es requerida"
-- Spinner: `MudProgressCircular` aparece mientras `_isSubmitting = true`
-- Error de auth: `MudAlert` roja con mensaje del servidor
-- Login exitoso: Redirige a `/` o `returnUrl` con page reload
-- Ya autenticado: Redirige inmediatamente sin mostrar formulario
-- returnUrl: `/Auth/Login?returnUrl=%2Fcounter` redirige a `/counter` post-login
-- Iconos: Person (usuario) y Lock (contraseña) visibles en los campos
+- Sin autenticación, `/Auth/Login` muestra formulario.
+- Login válido redirige a `returnUrl` si existe.
+- Login inválido muestra mensaje de error.
+- Botón queda deshabilitado durante `_isSubmitting`.
 </testing>

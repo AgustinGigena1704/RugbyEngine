@@ -6,6 +6,7 @@ using RugbyEngine.Api.Data.Repositories;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Shared;
 using RugbyEngine.Shared.Personas;
+using RugbyEngine.Shared.Tablas;
 
 namespace RugbyEngine.Api.Controllers
 {
@@ -26,9 +27,8 @@ namespace RugbyEngine.Api.Controllers
         }
 
         /// <summary>
-        /// Obtiene todas las personas activas
+        /// Obtiene todas las personas activas.
         /// </summary>
-        /// <response code="200">Lista de personas</response>
         [HttpGet]
         [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
         public async Task<ActionResult<List<PersonaResponse>>> GetAll(CancellationToken cancellationToken)
@@ -37,6 +37,33 @@ namespace RugbyEngine.Api.Controllers
                 .GetAllAsync(cancellationToken: cancellationToken);
 
             return Ok(personas.Select(MapToResponse).ToList());
+        }
+
+        /// <summary>
+        /// Obtiene personas activas paginadas.
+        /// </summary>
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<PersonaResponse>>> Search([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+        {
+            var repo = _entityManager.GetRepository<PersonaRepository>();
+            var paginacion = new PaginacionDto { Pagina = page, RegistrosPorPagina = pageSize };
+            var personas = await repo.SearchAsync(search, paginacion, cancellationToken);
+
+            return Ok(personas.Select(MapToResponse).ToList());
+        }
+
+        /// <summary>
+        /// Devuelve el total de personas activas para un filtro.
+        /// </summary>
+        [HttpGet("count")]
+        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+        public async Task<ActionResult<int>> Count([FromQuery] string? search, CancellationToken cancellationToken)
+        {
+            var total = await _entityManager.GetRepository<PersonaRepository>()
+                .CountAsync(search, cancellationToken);
+
+            return Ok(total);
         }
 
         /// <summary>

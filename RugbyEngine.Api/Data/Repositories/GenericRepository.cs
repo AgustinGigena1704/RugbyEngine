@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
+using RugbyEngine.Shared.Tablas;
 using System.Linq.Expressions;
 
 namespace RugbyEngine.Api.Data.Repositories
@@ -26,12 +27,17 @@ namespace RugbyEngine.Api.Data.Repositories
             return await query.FirstOrDefaultAsync(cancellationToken);
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(bool borradoLogico = false, CancellationToken cancellationToken = default)
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(PaginacionDto? paginacion = null, bool borradoLogico = false, CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
             if (!borradoLogico)
             {
                 query = query.Where(e => e.BorradoLogico == borradoLogico);
+            }
+            if (paginacion != null)
+            {
+                query = query.Skip((paginacion.Pagina - 1) * paginacion.RegistrosPorPagina)
+                             .Take(paginacion.RegistrosPorPagina);
             }
             return await query.ToListAsync(cancellationToken);
         }
