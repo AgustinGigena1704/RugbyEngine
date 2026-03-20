@@ -17,10 +17,10 @@ builder.Services.AddTransient<OperationCanceledExceptionDelegatingHandler>();
 
 builder.Services.AddScoped(sp =>
 {
-    var apiBaseUrl = "https://localhost:7083";
-    if (!builder.HostEnvironment.IsDevelopment())
+    var apiBaseUrl = "https://rugbyengine.agigena.com";
+    if (builder.HostEnvironment.IsDevelopment())
     {
-        apiBaseUrl = "https://rugbyengine.agigena.com";
+        apiBaseUrl = "https://localhost:7083";
     }
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)
