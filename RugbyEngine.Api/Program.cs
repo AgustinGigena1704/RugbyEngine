@@ -1,17 +1,18 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Extensions;
+using RugbyEngine.Api.Dev;
 using RugbyEngine.Api.Middleware;
 using RugbyEngine.Api.Services;
 using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.HttpOverrides;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -34,37 +35,17 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddDbContext<ApiDbContext>(opt =>
+if (builder.Environment.IsDevelopment())
 {
-    var dbHost = Environment.GetEnvironmentVariable("DB_HOST")
-                ?? builder.Configuration["Database:Host"]
-                ?? throw new InvalidOperationException("Database Host no configurado.");
-    var dbPort = Environment.GetEnvironmentVariable("DB_PORT")
-                ?? builder.Configuration["Database:Port"]
-                ?? throw new InvalidOperationException("Database Port no configurado.");
-    var dbName = Environment.GetEnvironmentVariable("DB_NAME")
-                ?? builder.Configuration["Database:Name"]
-                ?? throw new InvalidOperationException("Database Name no configurado.");
-    var dbUser = Environment.GetEnvironmentVariable("DB_USER")
-                ?? builder.Configuration["Database:User"]
-                ?? throw new InvalidOperationException("Database User no configurado.");
-    var dbPass = Environment.GetEnvironmentVariable("DB_PASS")
-                ?? builder.Configuration["Database:Pass"]
-                ?? throw new InvalidOperationException("Database Password no configurado.");
-    var connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPass};";
+    var devLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("Dev");
+    DevContainerStartup.EnsureRunning(devLogger);
+    DbConfigurationService.ConfigureDevelopment(builder);
+}
+else
+{
+    DbConfigurationService.ConfigureProduction(builder);
+}
 
-    var dbCertificatePath = Environment.GetEnvironmentVariable("DB_CERTIFICATE_PATH")
-                        ?? Environment.GetEnvironmentVariable("DB_CARTIFICATE_PATH")
-                        ?? builder.Configuration["Database:CertificatePath"];
-
-    if (!string.IsNullOrWhiteSpace(dbCertificatePath))
-    {
-        connectionString += $"Ssl Mode=Require;Trust Server Certificate=true;Root Certificate={dbCertificatePath};";
-    }
-    opt.UseLazyLoadingProxies()
-       .UseNpgsql(connectionString);
-
-});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
