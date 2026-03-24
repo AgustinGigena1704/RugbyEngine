@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data;
 
 namespace RugbyEngine.Api.Services
