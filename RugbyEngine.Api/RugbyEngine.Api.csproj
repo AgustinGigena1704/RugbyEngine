@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\Repositories\MovimientoRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include=".dev\DevContainerStartup.cs" />
   </ItemGroup>
 
@@ -65,6 +69,7 @@
 	  <None Include=".dev\dev.ps1" />
 	  <None Include=".dev\docker\docker-compose.yml" />
 	  <None Include=".github\workflows\deploy.yml" />
+	  <None Include="Data\Repositories\MovimientoRepository.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

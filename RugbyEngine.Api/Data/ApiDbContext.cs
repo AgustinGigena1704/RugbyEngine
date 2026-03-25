@@ -159,6 +159,10 @@ namespace RugbyEngine.Api.Data
                     .HasForeignKey(m => m.TipoMovimientoId)
                     .OnDelete(DeleteBehavior.Restrict)
                     .IsRequired();
+
+                entity.HasIndex(m => new { m.EnviaId, m.RecibeId, m.TipoMovimientoId, m.Fecha })
+                    .IsUnique()
+                    .HasDatabaseName("IX_Movimiento_Unicidad");
             });
 
             // ── MovimientoItem ────────────────────────────────────────────────────

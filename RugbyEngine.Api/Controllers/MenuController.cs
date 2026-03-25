@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Repositories;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using RugbyEngine.Shared.Menus;
 
 namespace RugbyEngine.Api.Controllers
@@ -42,7 +42,7 @@ namespace RugbyEngine.Api.Controllers
                 };
             }
 
-            // Pasada 2: construir la jerarquía (independiente del orden de la lista)
+            // Pasada 2: construir la jerarquÃ­a (independiente del orden de la lista)
             foreach (var menu in menus)
             {
                 if (menu.MenuPadreId == null)

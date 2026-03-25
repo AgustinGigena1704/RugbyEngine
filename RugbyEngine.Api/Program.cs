@@ -9,6 +9,7 @@ using RugbyEngine.Api.Data.Extensions;
 using RugbyEngine.Api.Dev;
 using RugbyEngine.Api.Middleware;
 using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using Scalar.AspNetCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -123,10 +124,7 @@ builder.Services.AddHsts(options =>
 
 builder.Services.AddRepositories();
 
-builder.Services.AddScoped<ISessionService, SessionService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddAnnotatedServices();
 
 var app = builder.Build();
 

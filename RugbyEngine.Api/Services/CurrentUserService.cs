@@ -1,11 +1,13 @@
 using RugbyEngine.Api.Data;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Repositories;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using System.Security.Claims;
 
 namespace RugbyEngine.Api.Services
 {
+    [Service]
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

@@ -1,4 +1,4 @@
-namespace RugbyEngine.Api.Services
+namespace RugbyEngine.Api.Services.Interfaces
 {
     /// <summary>
     /// Defines a contract for session management services that provide asynchronous validation of user credentials.

@@ -1,14 +1,16 @@
 using Microsoft.IdentityModel.Tokens;
 using RugbyEngine.Api.Data;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Repositories;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace RugbyEngine.Api.Services
 {
+    [Service]
     public class JwtService : IJwtService
     {
         private readonly IConfiguration _configuration;

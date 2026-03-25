@@ -1,9 +1,9 @@
-namespace RugbyEngine.Api.Services
+namespace RugbyEngine.Api.Services.Interfaces
 {
     public interface ICurrentUserService
     {
         int? GetCurrentUserId();
-        Task<RugbyEngine.Api.Data.Entities.Usuario?> GetCurrentUserAsync();
+        Task<Data.Entities.Usuario?> GetCurrentUserAsync();
         bool IsAuthenticated();
     }
 }

@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using RugbyEngine.Api.Data;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Data.Repositories;
+using RugbyEngine.Api.Services.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace RugbyEngine.Api.Services
 {
+    [Service]
     public class SessionService : ISessionService
     {
         private readonly ILogger<SessionService> _logger;

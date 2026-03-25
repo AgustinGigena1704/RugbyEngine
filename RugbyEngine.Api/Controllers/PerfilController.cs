@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Repositories;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using RugbyEngine.Shared.Perfiles;
 
 namespace RugbyEngine.Api.Controllers
