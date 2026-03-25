@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace RugbyEngine.Api.Services
+namespace RugbyEngine.Api.Services.Interfaces
 {
     public interface IJwtService
     {

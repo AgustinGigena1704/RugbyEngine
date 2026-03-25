@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Shared;
 using RugbyEngine.Shared.Auth;
-using RugbyEngine.Api.Services;
 using System.IdentityModel.Tokens.Jwt;
+using RugbyEngine.Api.Services.Interfaces;
 
 namespace RugbyEngine.Api.Controllers
 {

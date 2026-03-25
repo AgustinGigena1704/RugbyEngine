@@ -1,3 +1,5 @@
+using RugbyEngine.Api.Services.Interfaces;
+
 namespace RugbyEngine.Api.Middleware
 {
     public class JwtRefreshMiddleware
@@ -11,7 +13,7 @@ namespace RugbyEngine.Api.Middleware
             _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context, Services.IJwtService jwtService)
+        public async Task InvokeAsync(HttpContext context, IJwtService jwtService)
         {
             var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 

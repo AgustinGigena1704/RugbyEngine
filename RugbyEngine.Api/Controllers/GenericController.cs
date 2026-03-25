@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Entities;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Repositories;
-using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 using RugbyEngine.Shared;
 using RugbyEngine.Shared.Personas;
 using RugbyEngine.Shared.Tablas;

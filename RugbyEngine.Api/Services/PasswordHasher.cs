@@ -1,4 +1,6 @@
 using BCrypt.Net;
+using RugbyEngine.Api.Data.Attributes;
+using RugbyEngine.Api.Services.Interfaces;
 
 namespace RugbyEngine.Api.Services
 {
@@ -9,6 +11,7 @@ namespace RugbyEngine.Api.Services
     /// validation. It uses a configurable work factor to increase computational cost, helping to protect against
     /// brute-force attacks. The hashing and verification methods are suitable for use in authentication systems where
     /// password security is critical.</remarks>
+    [Service]
     public class PasswordHasher : IPasswordHasher
     {
         private const int WorkFactor = 11;
