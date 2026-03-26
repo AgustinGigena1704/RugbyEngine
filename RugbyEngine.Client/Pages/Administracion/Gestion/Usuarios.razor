@@ -18,10 +18,10 @@
     </div>
 }
 
-<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-    <h4 class="mb-0 fw-bold">Gestión de Usuarios</h4>
+<div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <h4 class="mb-0 font-bold">Gestión de Usuarios</h4>
     <button class="btn btn-primary btn-action" @onclick="OpenCreateDialog">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-1" viewBox="0 0 16 16">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
             <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
         </svg>
@@ -30,8 +30,8 @@
 </div>
 
 <div class="card shadow-sm">
-    <div class="card-body p-3">
-        <div class="mb-3">
+    <div class="card-body p-4">
+        <div class="mb-4">
             <input type="search" class="form-control" placeholder="Buscar por usuario, nombre o documento..."
                    value="@_searchText" @oninput="OnSearchInput" />
         </div>
@@ -54,20 +54,20 @@
                 <Columna Nombre="Acciones" />
             </Header>
             <Rows>
-                <Row T="UsuarioResponse" Context="u"><span class="fw-semibold">@u.Username</span></Row>
+                <Row T="UsuarioResponse" Context="u"><span class="font-semibold">@u.Username</span></Row>
                 <Row T="UsuarioResponse" Context="u">@u.NombreCompleto</Row>
                 <Row T="UsuarioResponse" Context="u">@u.Documento</Row>
                 <Row T="UsuarioResponse" Context="u">@(string.IsNullOrEmpty(u.Email) ? "-" : u.Email)</Row>
                 <Row T="UsuarioResponse" Context="u">
                     @if (u.Perfiles.Count == 0)
                     {
-                        <span class="text-muted small">Sin perfiles</span>
+                        <span class="text-gray-500 text-sm">Sin perfiles</span>
                     }
                     else
                     {
                         @foreach (var p in u.Perfiles.Take(2))
                         {
-                            <span class="badge bg-primary me-1">@p.Nombre</span>
+                            <span class="badge bg-primary mr-1">@p.Nombre</span>
                         }
                         @if (u.Perfiles.Count > 2)
                         {
@@ -75,7 +75,7 @@
                         }
                     }
                 </Row>
-                <Row T="UsuarioResponse" Context="u"><span class="small text-muted">@u.LastLogin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></Row>
+                <Row T="UsuarioResponse" Context="u"><span class="text-sm text-gray-500">@u.LastLogin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span></Row>
                 <Row T="UsuarioResponse" Context="u">
                     @if (u.Activo)
                     {
@@ -88,24 +88,24 @@
                 </Row>
                 <Row T="UsuarioResponse" Context="u">
                     <div class="td-actions">
-                        <button class="btn btn-sm btn-outline-primary btn-action me-1" title="Editar" @onclick="() => OpenEditDialog(u)">
+                        <button class="btn btn-sm btn-outline-primary btn-action mr-1" title="Editar" @onclick="() => OpenEditDialog(u)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                             </svg>
-                            <span class="d-none d-lg-inline ms-1">Editar</span>
+                            <span class="hidden lg:inline ml-1">Editar</span>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary btn-action me-1" title="Perfiles" @onclick="() => OpenPerfilesDialog(u)">
+                        <button class="btn btn-sm btn-outline-secondary btn-action mr-1" title="Perfiles" @onclick="() => OpenPerfilesDialog(u)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13.5c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
                             </svg>
-                            <span class="d-none d-lg-inline ms-1">Perfiles</span>
+                            <span class="hidden lg:inline ml-1">Perfiles</span>
                         </button>
                         <button class="btn btn-sm btn-outline-danger btn-action" title="Eliminar" @onclick="() => ConfirmDelete(u)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
                                 <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                             </svg>
-                            <span class="d-none d-lg-inline ms-1">Eliminar</span>
+                            <span class="hidden lg:inline ml-1">Eliminar</span>
                         </button>
                     </div>
                 </Row>
@@ -126,23 +126,23 @@
         <div class="app-modal__body">
             <EditForm Model="_createModel" OnValidSubmit="SaveCreateAsync">
                 <DataAnnotationsValidator />
-                <div class="row g-3">
-                    <div class="col-12 col-sm-6">
-                        <label class="form-label">Nombre de usuario <span class="text-danger">*</span></label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Nombre de usuario <span class="text-red-600">*</span></label>
                         <InputText class="form-control" @bind-Value="_createModel.Username" autocomplete="off" />
-                        <ValidationMessage For="@(() => _createModel.Username)" class="text-danger small" />
+                        <ValidationMessage For="@(() => _createModel.Username)" class="text-red-600 text-sm" />
                     </div>
-                    <div class="col-12 col-sm-6">
-                        <label class="form-label">Contraseña <span class="text-danger">*</span></label>
+                    <div>
+                        <label class="form-label">Contraseña <span class="text-red-600">*</span></label>
                         <InputText type="password" class="form-control" @bind-Value="_createModel.Password" autocomplete="new-password" />
-                        <ValidationMessage For="@(() => _createModel.Password)" class="text-danger small" />
+                        <ValidationMessage For="@(() => _createModel.Password)" class="text-red-600 text-sm" />
                     </div>
-                    <div class="col-12">
+                    <div class="sm:col-span-2">
                         <label class="form-label">Email</label>
                         <InputText type="email" class="form-control" @bind-Value="_createModel.Email" />
                     </div>
-                    <div class="col-12">
-                        <label class="form-label">Persona vinculada <span class="text-danger">*</span></label>
+                    <div class="sm:col-span-2">
+                        <label class="form-label">Persona vinculada <span class="text-red-600">*</span></label>
                         <input type="text" class="form-control" list="personas-list"
                                @bind="_personaSearchText" @bind:event="oninput"
                                placeholder="Buscar por apellido, nombre o documento..." />
@@ -154,7 +154,7 @@
                         </datalist>
                         @if (_selectedPersona is not null)
                         {
-                            <div class="mt-1 small text-success">
+                            <div class="mt-1 text-sm text-green-600">
                                 Seleccionado: <strong>@_selectedPersona.Apellidos, @_selectedPersona.Nombres</strong>
                             </div>
                         }
@@ -165,7 +165,7 @@
                     <button type="submit" class="btn btn-primary btn-action" disabled="@_isSaving">
                         @if (_isSaving)
                         {
-                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
                         }
                         Guardar
                     </button>
@@ -187,17 +187,17 @@
         <div class="app-modal__body">
             <EditForm Model="_editModel" OnValidSubmit="SaveEditAsync">
                 <DataAnnotationsValidator />
-                <div class="row g-3">
-                    <div class="col-12 col-sm-6">
-                        <label class="form-label">Nombre de usuario <span class="text-danger">*</span></label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Nombre de usuario <span class="text-red-600">*</span></label>
                         <InputText class="form-control" @bind-Value="_editModel.Username" />
-                        <ValidationMessage For="@(() => _editModel.Username)" class="text-danger small" />
+                        <ValidationMessage For="@(() => _editModel.Username)" class="text-red-600 text-sm" />
                     </div>
-                    <div class="col-12 col-sm-6">
+                    <div>
                         <label class="form-label">Email</label>
                         <InputText type="email" class="form-control" @bind-Value="_editModel.Email" />
                     </div>
-                    <div class="col-12">
+                    <div class="sm:col-span-2">
                         <label class="form-label">Nueva contraseña (opcional)</label>
                         <InputText type="password" class="form-control" @bind-Value="_editModel.Password" autocomplete="new-password" />
                     </div>
@@ -207,7 +207,7 @@
                     <button type="submit" class="btn btn-primary btn-action" disabled="@_isSaving">
                         @if (_isSaving)
                         {
-                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
                         }
                         Guardar
                     </button>
@@ -235,22 +235,22 @@
             }
             else
             {
-                <p class="fw-semibold small mb-1">Perfiles asignados</p>
+                <p class="font-semibold text-sm mb-1">Perfiles asignados</p>
                 @if (_perfilesAsignados.Count == 0)
                 {
-                    <p class="text-muted small mb-3">Sin perfiles asignados.</p>
+                    <p class="text-gray-500 text-sm mb-4">Sin perfiles asignados.</p>
                 }
                 else
                 {
                     <ul class="list-group list-group-flush mb-3">
                         @foreach (var p in _perfilesAsignados)
                         {
-                            <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                            <li class="list-group-item flex items-center justify-between px-0">
                                 <div>
-                                    <span class="fw-semibold">@p.Nombre</span>
+                                    <span class="font-semibold">@p.Nombre</span>
                                     @if (!string.IsNullOrEmpty(p.Descripcion))
                                     {
-                                        <br /><span class="text-muted small">@p.Descripcion</span>
+                                        <br /><span class="text-gray-500 text-sm">@p.Descripcion</span>
                                     }
                                 </div>
                                 <button class="btn btn-sm btn-outline-danger" disabled="@_perfilesBusy"
@@ -266,22 +266,22 @@
                 }
 
                 <hr />
-                <p class="fw-semibold small mb-1">Perfiles disponibles</p>
+                <p class="font-semibold text-sm mb-1">Perfiles disponibles</p>
                 @if (_perfilesDisponibles.Count == 0)
                 {
-                    <p class="text-muted small">No hay perfiles disponibles para agregar.</p>
+                    <p class="text-gray-500 text-sm">No hay perfiles disponibles para agregar.</p>
                 }
                 else
                 {
                     <ul class="list-group list-group-flush">
                         @foreach (var p in _perfilesDisponibles)
                         {
-                            <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                            <li class="list-group-item flex items-center justify-between px-0">
                                 <div>
-                                    <span class="fw-semibold">@p.Nombre</span>
+                                    <span class="font-semibold">@p.Nombre</span>
                                     @if (!string.IsNullOrEmpty(p.Descripcion))
                                     {
-                                        <br /><span class="text-muted small">@p.Descripcion</span>
+                                        <br /><span class="text-gray-500 text-sm">@p.Descripcion</span>
                                     }
                                 </div>
                                 <button class="btn btn-sm btn-outline-success" disabled="@_perfilesBusy"
@@ -314,14 +314,14 @@
         </div>
         <div class="app-modal__body">
             <p>¿Está seguro que desea eliminar al usuario <strong>@_deletingUsuario?.Username</strong>?</p>
-            <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+            <p class="text-gray-500 text-sm mb-0">Esta acción no se puede deshacer.</p>
         </div>
         <div class="app-modal__footer">
             <button class="btn btn-secondary" @onclick="() => _deleteDialogVisible = false" disabled="@_isDeleting">Cancelar</button>
             <button class="btn btn-danger btn-action" @onclick="ExecuteDeleteAsync" disabled="@_isDeleting">
                 @if (_isDeleting)
                 {
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
                 }
                 Eliminar
             </button>

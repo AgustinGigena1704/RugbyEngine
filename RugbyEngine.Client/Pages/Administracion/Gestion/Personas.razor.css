@@ -1,8 +1,8 @@
 .personas-table-block {
-    border: 1px solid var(--bs-border-color, #dee2e6);
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: 0.5rem;
     overflow: hidden;
-    background-color: var(--bs-body-bg, #fff);
+    background-color: var(--body-bg, #fff);
 }
 
 .personas-table {
@@ -11,8 +11,8 @@
 
 .personas-table-footer td {
     padding: 0.75rem 0.9rem;
-    background-color: var(--bs-table-bg, #fff);
-    border-top: 1px solid var(--bs-border-color, #dee2e6);
+    background-color: var(--table-bg, #fff);
+    border-top: 1px solid var(--border-color, #dee2e6);
 }
 
 .personas-pagination-row {
@@ -28,7 +28,7 @@
 .personas-count,
 .personas-label,
 .personas-page-indicator {
-    color: var(--bs-body-color, #212529);
+    color: var(--body-color, #212529);
     font-weight: 700;
     font-size: 0.95rem;
 }

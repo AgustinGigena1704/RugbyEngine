@@ -50,7 +50,7 @@ namespace RugbyEngine.Api.Services
                 return userId;
             }
 
-            _logger.LogWarning("Claim de userId no es un n�mero v�lido: {UserIdClaim}", userIdClaim);
+            _logger.LogWarning("Claim de userId no es un número válido: {UserIdClaim}", userIdClaim);
             return null;
         }
 

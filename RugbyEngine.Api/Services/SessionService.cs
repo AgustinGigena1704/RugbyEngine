@@ -34,14 +34,14 @@ namespace RugbyEngine.Api.Services
                 if (usuario == null)
                 {
                     _logger.LogWarning("Intento de login fallido. Usuario no encontrado: {Username}", SanitizeForLogging(username));
-                    return (null, "Usuario o contrase�a incorrectos");
+                    return (null, "Usuario o contraseña incorrectos");
                 }
 
                 bool dbPasswordIsHashed = IsPasswordHashed(usuario.PasswordHash);
 
                 if (!dbPasswordIsHashed)
                 {
-                    _logger.LogWarning("Password en DB no est� hasheado para usuario: {Username}. Hasheando autom�ticamente...", SanitizeForLogging(username));
+                    _logger.LogWarning("Password en DB no está hasheado para usuario: {Username}. Hasheando automáticamente...", SanitizeForLogging(username));
 
                     usuario.PasswordHash = _passwordHasher.HashPassword(usuario.PasswordHash);
                     await repository.UpdateAsync(usuario, usuario);
@@ -55,7 +55,7 @@ namespace RugbyEngine.Api.Services
 
                 if (frontendPasswordIsHashed)
                 {
-                    _logger.LogWarning("El frontend envi� un password hasheado para usuario: {Username}", SanitizeForLogging(username));
+                    _logger.LogWarning("El frontend envió un password hasheado para usuario: {Username}", SanitizeForLogging(username));
                     isPasswordValid = password == usuario.PasswordHash;
                 }
                 else
@@ -65,8 +65,8 @@ namespace RugbyEngine.Api.Services
 
                 if (!isPasswordValid)
                 {
-                    _logger.LogWarning("Intento de login fallido. Contrase�a incorrecta para usuario: {Username}", SanitizeForLogging(username));
-                    return (null, "Usuario o contrase�a incorrectos");
+                    _logger.LogWarning("Intento de login fallido. Contraseña incorrecta para usuario: {Username}", SanitizeForLogging(username));
+                    return (null, "Usuario o contraseña incorrectos");
                 }
 
                 usuario.LastLogin = DateTime.UtcNow;
@@ -78,8 +78,8 @@ namespace RugbyEngine.Api.Services
             }
             catch (NpgsqlException ex)
             {
-                _logger.LogError(ex, "Error de conexi�n a la base de datos al intentar login para usuario: {Username}", SanitizeForLogging(username));
-                return (null, "Error de conexi�n con la base de datos. Por favor, intente nuevamente.");
+                _logger.LogError(ex, "Error de conexión a la base de datos al intentar login para usuario: {Username}", SanitizeForLogging(username));
+                return (null, "Error de conexión con la base de datos. Por favor, intente nuevamente.");
             }
             catch (DbUpdateException ex)
             {

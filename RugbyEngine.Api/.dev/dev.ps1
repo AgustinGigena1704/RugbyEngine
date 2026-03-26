@@ -10,6 +10,10 @@ param(
 
 $ErrorActionPreference = "Continue"
 
+# Asegurar que la salida de procesos externos (docker) se interprete como UTF-8
+$prevEncoding = [Console]::OutputEncoding
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 $ScriptDir       = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ComposeFile     = Join-Path $ScriptDir "docker\docker-compose.yml"
 $ContainerName   = "rugbyengine_dev_db"
@@ -144,12 +148,13 @@ function Invoke-ProdDump([hashtable]$creds) {
     Write-Info "Ejecutando pg_dump (puede tardar según el tamaño de la BD)..."
 
     # postgres:17-alpine para coincidir con la versión del servidor de producción (PG 17)
-    docker run --rm `
+    # Escribir directamente como UTF-8 sin BOM para preservar caracteres especiales (ñ, acentos)
+    $dumpOutput = docker run --rm `
         -v "${caDir}:/certs:ro" `
         postgres:17-alpine `
         pg_dump --no-owner --no-acl --clean --if-exists `
-        $connStr `
-        | Out-File -FilePath $TempDump -Encoding UTF8 -Force
+        $connStr
+    [System.IO.File]::WriteAllLines($TempDump, $dumpOutput, [System.Text.UTF8Encoding]::new($false))
 
     if ($LASTEXITCODE -ne 0) {
         Write-Err "pg_dump falló. Verificá credenciales, conectividad y el certificado."

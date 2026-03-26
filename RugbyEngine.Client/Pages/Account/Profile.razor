@@ -12,26 +12,26 @@
     <div class="app-toast @(_toastIsError ? "app-toast--error" : "app-toast--success")" role="alert">@_toast</div>
 }
 
-<h4 class="mb-4 fw-bold">Mi Perfil</h4>
+<h4 class="mb-6 font-bold">Mi Perfil</h4>
 
 <AuthorizeView>
     <Authorized Context="authContext">
-        <div class="row g-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Avatar -->
-            <div class="col-12 col-md-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
+            <div>
+                <div class="card shadow-sm h-full">
+                    <div class="card-body flex flex-col items-center justify-center py-6">
                         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="var(--app-primary)" viewBox="0 0 16 16">
                             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
                         </svg>
-                        <h5 class="mt-3 mb-0">@GetDisplayName(authContext.User)</h5>
+                        <h5 class="mt-4 mb-0">@GetDisplayName(authContext.User)</h5>
                     </div>
                 </div>
             </div>
 
             <!-- Perfiles -->
-            <div class="col-12 col-md-8">
-                <div class="card shadow-sm h-100">
+            <div class="md:col-span-2">
+                <div class="card shadow-sm h-full">
                     <div class="card-body">
                         @if (_loading)
                         {
@@ -41,8 +41,8 @@
                         }
                         else
                         {
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <h5 class="mb-0 fw-bold">Mis perfiles</h5>
+                            <div class="flex items-center justify-between mb-4">
+                                <h5 class="mb-0 font-bold">Mis perfiles</h5>
                                 <AuthorizeView Roles="admin">
                                     <NotAuthorized>
                                         <span class="badge bg-secondary">Solo lectura</span>
@@ -52,19 +52,19 @@
 
                             @if (_mine.Count == 0)
                             {
-                                <p class="text-muted small mb-4">Sin perfiles asignados.</p>
+                                <p class="text-gray-500 text-sm mb-6">Sin perfiles asignados.</p>
                             }
                             else
                             {
                                 <ul class="list-group list-group-flush mb-3">
                                     @foreach (var p in _mine)
                                     {
-                                        <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                                        <li class="list-group-item flex items-center justify-between px-0">
                                             <div>
-                                                <span class="fw-semibold">@p.Nombre</span>
+                                                <span class="font-semibold">@p.Nombre</span>
                                                 @if (!string.IsNullOrEmpty(p.Descripcion))
                                                 {
-                                                    <br /><span class="text-muted small">@p.Descripcion</span>
+                                                    <br /><span class="text-gray-500 text-sm">@p.Descripcion</span>
                                                 }
                                             </div>
                                             <AuthorizeView Roles="admin">
@@ -86,22 +86,22 @@
                             <AuthorizeView Roles="admin">
                                 <Authorized>
                                     <hr />
-                                    <h6 class="fw-bold mb-2">Perfiles disponibles</h6>
+                                    <h6 class="font-bold mb-2">Perfiles disponibles</h6>
                                     @if (_available.Count == 0)
                                     {
-                                        <p class="text-muted small">No hay perfiles disponibles para agregar.</p>
+                                        <p class="text-gray-500 text-sm">No hay perfiles disponibles para agregar.</p>
                                     }
                                     else
                                     {
                                         <ul class="list-group list-group-flush">
                                             @foreach (var p in _available)
                                             {
-                                                <li class="list-group-item d-flex align-items-center justify-content-between px-0">
+                                                <li class="list-group-item flex items-center justify-between px-0">
                                                     <div>
-                                                        <span class="fw-semibold">@p.Nombre</span>
+                                                        <span class="font-semibold">@p.Nombre</span>
                                                         @if (!string.IsNullOrEmpty(p.Descripcion))
                                                         {
-                                                            <br /><span class="text-muted small">@p.Descripcion</span>
+                                                            <br /><span class="text-gray-500 text-sm">@p.Descripcion</span>
                                                         }
                                                     </div>
                                                     <button class="btn btn-sm btn-outline-success" disabled="@_busy"

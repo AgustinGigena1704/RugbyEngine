@@ -105,7 +105,7 @@ namespace RugbyEngine.Api.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Token JWT inv�lido");
+                _logger.LogWarning(ex, "Token JWT inválido");
                 return null;
             }
         }
@@ -140,14 +140,14 @@ namespace RugbyEngine.Api.Services
                 var principal = ValidateToken(token);
                 if (principal == null)
                 {
-                    _logger.LogWarning("No se puede refrescar un token inv�lido");
+                    _logger.LogWarning("No se puede refrescar un token inválido");
                     return null;
                 }
 
                 var userIdClaim = principal.FindFirst("id")?.Value;
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
-                    _logger.LogWarning("Token sin userId v�lido");
+                    _logger.LogWarning("Token sin userId válido");
                     return null;
                 }
 

@@ -69,7 +69,6 @@
 	  <None Include=".dev\dev.ps1" />
 	  <None Include=".dev\docker\docker-compose.yml" />
 	  <None Include=".github\workflows\deploy.yml" />
-	  <None Include="Data\Repositories\MovimientoRepository.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
