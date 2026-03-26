@@ -3,12 +3,12 @@
 @inject MainMenuService MenuService
 @implements IDisposable
 
-<span class="app-brand me-3" onclick="@(() => NavigationManager.NavigateTo("/"))">RugbyEngine</span>
+<span class="app-brand me-4" onclick="@(() => NavigationManager.NavigateTo("/"))">RugbyEngine</span>
 
 <AuthorizeView>
     <Authorized>
         <!-- Desktop nav (md+) -->
-        <div class="d-none d-md-flex align-items-center gap-1 flex-grow-1">
+        <div class="hidden md:flex items-center gap-1 grow">
             @if (_menus != null && _menus.Any())
             {
                 @foreach (var menu in _menus)
@@ -20,13 +20,13 @@
             {
                 @for (int i = 0; i < 4; i++)
                 {
-                    <span class="nav-skeleton me-2"></span>
+                    <span class="nav-skeleton mr-2"></span>
                 }
             }
         </div>
     </Authorized>
     <NotAuthorized>
-        <div class="flex-grow-1"></div>
+        <div class="grow"></div>
     </NotAuthorized>
 </AuthorizeView>
 
@@ -101,9 +101,9 @@
     {
         if (menu.Items != null && menu.Items.Any())
         {
-            <div class="dropdown">
+            <div class="dropdown" tabindex="0">
                 <button class="btn btn-link text-white nav-menu-btn dropdown-toggle @(MenuService.ActiveLevel0 == menu ? "active" : "")"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                        aria-expanded="false">
                     @(menu.Title)
                 </button>
                 <ul class="dropdown-menu">

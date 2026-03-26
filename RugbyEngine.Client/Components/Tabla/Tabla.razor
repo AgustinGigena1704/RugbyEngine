@@ -4,7 +4,7 @@
 @using RugbyEngine.Shared.Tablas
 
 <CascadingValue Name="TablaParent" Value="(ITablaRegistration)this">
-    <div class="d-none">@ChildContent</div>
+    <div class="hidden">@ChildContent</div>
 </CascadingValue>
 
 <div class="tabla-wrapper">
@@ -22,7 +22,7 @@
                 @if (_rows.Count == 0)
                 {
                     <tr>
-                        <td colspan="@Math.Max(1, _headers.Count)" class="text-center text-muted py-4">@EmptyText</td>
+                        <td colspan="@Math.Max(1, _headers.Count)" class="text-center text-gray-500 py-6">@EmptyText</td>
                     </tr>
                 }
                 else
