@@ -13,9 +13,7 @@
 
     @if (_isLoading)
     {
-        <div class="loading-ball loading-ball--sm">
-            <img src="images/loadingPelota.svg" alt="Cargando..." />
-        </div>
+        <Loading Contained="true"/>
     }
     else if (FilteredItems.Any())
     {

@@ -17,6 +17,13 @@
     justify-content: center;
 }
 
+.tabla-loading-content :deep(.loading-contained),
+.tabla-loading-content ::deep(.loading-contained) {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+}
+
 .tabla-loading-content :deep(.loading-container),
 .tabla-loading-content ::deep(.loading-container) {
     width: 100% !important;
@@ -84,6 +91,13 @@
     backdrop-filter: blur(0.4px);
     z-index: 1056;
     pointer-events: none;
+}
+
+@media (min-width: 769px) {
+    .tabla-loading-overlay {
+        position: absolute;
+        z-index: 10;
+    }
 }
 
 @media (max-width: 768px) {

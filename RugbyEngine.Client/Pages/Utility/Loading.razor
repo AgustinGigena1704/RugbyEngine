@@ -1,3 +1,20 @@
-<div class="loading-container">
-    <img src="/images/loadingPelota.svg" alt="Cargando..." class="loading-svg" />
-</div>
+@if (Contained)
+{
+    <div class="loading-contained">
+        <div class="loading-container">
+            <img src="/images/loadingPelota.svg" alt="Cargando..." class="loading-svg" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="loading-fullscreen" aria-live="polite" aria-busy="true">
+        <div class="loading-container">
+            <img src="/images/loadingPelota.svg" alt="Cargando..." class="loading-svg" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Contained { get; set; }
+}
