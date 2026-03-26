@@ -9,19 +9,19 @@ namespace RugbyEngine.Api.Controllers
     public class HealthController : ControllerBase
     {
         /// <summary>
-            /// Health check endpoint para verificar que la API está funcionando
-            /// </summary>
-            /// <remarks>
-            /// Este endpoint retorna el estado de salud de la aplicación.
-            /// 
-            /// **Uso:**
-            /// - Monitoreo en Render (health check automático)
-            /// - Verificación manual de disponibilidad
-            /// - Testing de conectividad
-            /// 
-            /// **No requiere autenticación.**
-            /// </remarks>
-            /// <response code="200">La API está saludable y funcionando correctamente</response>
+        /// Health check endpoint para verificar que la API está funcionando
+        /// </summary>
+        /// <remarks>
+        /// Este endpoint retorna el estado de salud de la aplicación.
+        /// 
+        /// **Uso:**
+        /// - Monitoreo en Render (health check automático)
+        /// - Verificación manual de disponibilidad
+        /// - Testing de conectividad
+        /// 
+        /// **No requiere autenticación.**
+        /// </remarks>
+        /// <response code="200">La API está saludable y funcionando correctamente</response>
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(typeof(HealthResponse), StatusCodes.Status200OK)]
