@@ -65,7 +65,10 @@
     "DB_PORT": "5432",
     "DB_NAME": "rugbyengine",
     "DB_USER": "postgres",
-    "DB_PASS": "rugbyengine"
+    "DB_PASS": "rugbyengine",
+    "JWT_ISSUER": "rugbyengine",
+    "JWT_AUDIENCE": "rugbyengine",
+    "JWT_SECRET_KEY": "supersecretkeythatshouldbereplacedwithasafesecret"
   },
   "remoteUser": "vscode"
 }
