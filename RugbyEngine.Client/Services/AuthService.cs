@@ -39,7 +39,7 @@ namespace RugbyEngine.Client.Services
             _jwtExpiryMinutes = int.TryParse(expiryConfig, out var minutes) ? minutes : 60;
         }
 
-        public async Task<LoginResponse> LoginAsync(LoginDTO request, CancellationToken cancellationToken = default)
+        public async Task<LoginResponse> LoginAsync(LoginDto request, CancellationToken cancellationToken = default)
         {
             HttpResponseMessage response;
 

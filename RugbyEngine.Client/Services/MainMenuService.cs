@@ -96,7 +96,7 @@ namespace RugbyEngine.Client.Services
 
                 if (rolesTask.Result.IsSuccessStatusCode)
                 {
-                    var list = await rolesTask.Result.Content.ReadFromJsonAsync<List<RouteRoleDTO>>() ?? new();
+                    var list = await rolesTask.Result.Content.ReadFromJsonAsync<List<RouteRoleDto>>() ?? new();
                     _routeRoles = BuildRouteRoles(list);
                 }
 
@@ -116,7 +116,7 @@ namespace RugbyEngine.Client.Services
             ActiveMenuChanged?.Invoke();
         }
 
-        private static Dictionary<string, string> BuildRouteRoles(List<RouteRoleDTO> list)
+        private static Dictionary<string, string> BuildRouteRoles(List<RouteRoleDto> list)
             => list.Where(r => !string.IsNullOrWhiteSpace(r.Route))
                    .GroupBy(r => r.Route.Trim('/').ToLowerInvariant())
                    .Where(g => !string.IsNullOrEmpty(g.Key))

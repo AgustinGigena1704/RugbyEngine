@@ -26,11 +26,11 @@ namespace RugbyEngine.Api.Data.Repositories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<List<RouteRoleDTO>> GetAllRouteRolesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<RouteRoleDto>> GetAllRouteRolesAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet
                 .Where(m => m.DeletedAt == null && !string.IsNullOrEmpty(m.Ruta) && m.PermisoId != null)
-                .Select(m => new RouteRoleDTO
+                .Select(m => new RouteRoleDto
                 {
                     Route = m.Ruta!,
                     Role = m.Permiso!.Codigo

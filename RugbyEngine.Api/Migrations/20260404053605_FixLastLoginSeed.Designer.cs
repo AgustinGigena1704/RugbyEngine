@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RugbyEngine.Api.Data;
@@ -11,9 +12,11 @@ using RugbyEngine.Api.Data;
 namespace RugbyEngine.Api.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    partial class ApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260404053605_FixLastLoginSeed")]
+    partial class FixLastLoginSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1042,13 +1045,6 @@ namespace RugbyEngine.Api.Migrations
                     b.HasIndex("PerfilId");
 
                     b.ToTable("UsuarioPerfil", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UsuarioId = 1,
-                            PerfilId = 1
-                        });
                 });
 
             modelBuilder.Entity("UsuarioPermiso", b =>

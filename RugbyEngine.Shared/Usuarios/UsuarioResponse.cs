@@ -9,7 +9,7 @@ namespace RugbyEngine.Shared.Usuarios
         public string Email { get; set; } = string.Empty;
         public DateTime LastLogin { get; set; }
         public bool Activo { get; set; }
-        public int PersonaId { get; set; }
+        public int? PersonaId { get; set; }
         public string NombreCompleto { get; set; } = string.Empty;
         public string Documento { get; set; } = string.Empty;
         public List<PerfilDto> Perfiles { get; set; } = [];

@@ -45,7 +45,7 @@ namespace RugbyEngine.Api.Controllers
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status503ServiceUnavailable)]
-        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginDTO request)
+        public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
             {

@@ -18,13 +18,18 @@ namespace RugbyEngine.Api.Data.Seeds
                     Username = "agigena",
                     PasswordHash = agigena,
                     Email = "agustingigena1704@gmail.com",
-                    PersonaId = 1,
-                    Persona = null!,
+                    LastLogin = seedDate,
                     CreatedAt = seedDate,
                     CreatedById = 1,
                     CreatedBy = null!,
                 }
             );
+
+            builder.HasMany(u => u.Perfiles)
+                .WithMany(p => p.Usuarios)
+                .UsingEntity(j => j.HasData(
+                    new { UsuarioId = 1, PerfilId = 1 }
+                ));
         }
     }
 }

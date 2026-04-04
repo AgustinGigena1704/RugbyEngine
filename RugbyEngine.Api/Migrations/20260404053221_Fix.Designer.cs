@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RugbyEngine.Api.Data;
@@ -11,9 +12,11 @@ using RugbyEngine.Api.Data;
 namespace RugbyEngine.Api.Migrations
 {
     [DbContext(typeof(ApiDbContext))]
-    partial class ApiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260404053221_Fix")]
+    partial class Fix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1023,7 +1026,7 @@ namespace RugbyEngine.Api.Migrations
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedById = 1,
                             Email = "agustingigena1704@gmail.com",
-                            LastLogin = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            LastLogin = new DateTime(2026, 4, 4, 5, 32, 17, 792, DateTimeKind.Utc).AddTicks(4763),
                             PasswordHash = "$2a$11$knIWvYSD.JF1fM.2GKgZ4eMdCFDV26H/hEVyj5A9upJwIPIVFXZI.",
                             Username = "agigena"
                         });
@@ -1042,13 +1045,6 @@ namespace RugbyEngine.Api.Migrations
                     b.HasIndex("PerfilId");
 
                     b.ToTable("UsuarioPerfil", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UsuarioId = 1,
-                            PerfilId = 1
-                        });
                 });
 
             modelBuilder.Entity("UsuarioPermiso", b =>

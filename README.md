@@ -348,13 +348,13 @@ El cliente es una SPA en `Blazor WebAssembly` con componentes `MudBlazor`, auten
 | Archivo | Propósito |
 |---|---|
 | `ApiResponse` | respuesta simple de éxito/error |
-| `Auth/LoginDTO` | credenciales de login |
+| `Auth/LoginDto` | credenciales de login |
 | `Auth/LoginResponse` | resultado del login o refresh |
 | `Personas/PersonaRequest` | alta/edición de persona |
 | `Personas/PersonaResponse` | salida de persona |
 | `Perfiles/PerfilDto` | perfil resumido |
 | `Menus/MenuDTO` | nodo de menú jerárquico |
-| `Menus/RouteRoleDTO` | relación ruta/rol |
+| `Menus/RouteRoleDto` | relación ruta/rol |
 | `Usuarios/UsuarioCreateDto` | alta de usuario |
 | `Usuarios/UsuarioUpdateDto` | edición de usuario |
 | `Usuarios/UsuarioResponse` | salida de usuario con perfiles |

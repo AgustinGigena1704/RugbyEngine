@@ -8,7 +8,7 @@ namespace RugbyEngine.Client.Services
     {
         event Action? AuthenticationStateChanged;
 
-        Task<LoginResponse> LoginAsync(LoginDTO request, CancellationToken cancellationToken = default);
+        Task<LoginResponse> LoginAsync(LoginDto request, CancellationToken cancellationToken = default);
 
         Task LogoutAsync(bool notifyServer = true, CancellationToken cancellationToken = default);
 
