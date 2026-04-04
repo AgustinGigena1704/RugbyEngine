@@ -88,7 +88,7 @@
              @ontouchstart="OnTouchStart"
              @ontouchend="OnTouchEndClose">
             <div class="app-drawer__header">
-                <span class="app-drawer__title">Menú</span>
+                <span class="app-drawer__title">@(MenuService.ActiveLevel1?.Title ?? "Menú")</span>
                 <button class="btn-close" @onclick="() => _mobileSideOpen = false" aria-label="Cerrar"></button>
             </div>
             <MenuLateral />
@@ -96,6 +96,9 @@
 
         <!-- Aside persistente: solo desktop -->
         <aside class="app-sidemenu app-sidemenu--desktop hidden md:flex flex-col">
+            <div class="app-drawer__header">
+                <span class="app-drawer__title">@(MenuService.ActiveLevel1?.Title ?? "Menú")</span>
+            </div>
             <MenuLateral />
         </aside>
     }
