@@ -156,6 +156,13 @@ html, body {
 
 .app-side-tab:hover { background: var(--app-primary-dark); }
 
+/* Enforce mobile-only side elements are hidden on desktop regardless of CSS load order */
+@media (min-width: 768px) {
+    .app-sidemenu--mobile,
+    .app-side-tab,
+    .app-swipe-zone { display: none !important; }
+}
+
 /* Zona de swipe: franja transparente en el borde derecho para abrir el menú deslizando */
 .app-swipe-zone {
     position: fixed;
