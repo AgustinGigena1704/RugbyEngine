@@ -8,7 +8,6 @@
 **/appsettings.Development.json
 **/Secrets/
 !.devcontainer/bin/
-!.devcontainer/bin/dev
 !.devcontainer/bin/gcr
 
 # ── Visual Studio ─────────────────────────────────────────────────
