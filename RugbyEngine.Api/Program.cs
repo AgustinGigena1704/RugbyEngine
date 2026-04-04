@@ -6,7 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using RugbyEngine.Api.Data;
 using RugbyEngine.Api.Data.Extensions;
-using RugbyEngine.Api.Dev;
 using RugbyEngine.Api.Middleware;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Api.Services.Interfaces;
@@ -38,8 +37,6 @@ builder.Services.AddCors(options =>
 
 if (builder.Environment.IsDevelopment())
 {
-    var devLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("Dev");
-    DevContainerStartup.EnsureRunning(devLogger);
     DbConfigurationService.ConfigureDevelopment(builder);
 }
 else
@@ -136,8 +133,7 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        logger.LogInformation("Testing database connection...");
-        if (await dbContext.Database.CanConnectAsync())
+        if (dbContext != null && await dbContext.Database.CanConnectAsync())
         {
             logger.LogInformation("Database connection successful!");
             await dbContext.Database.MigrateAsync();
@@ -187,12 +183,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.UseCors();
 
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
-}
-else
-{
     app.UseHsts();
 }
 

@@ -43,8 +43,28 @@ namespace RugbyEngine.Api.Services
         {
             builder.Services.AddDbContext<ApiDbContext>(opt =>
             {
-                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                                    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' no encontrada.");
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    var dbHost = Environment.GetEnvironmentVariable("DB_HOST")
+                        ?? builder.Configuration["Database:Host"]
+                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' no encontrada.");
+                    var dbPort = Environment.GetEnvironmentVariable("DB_PORT")
+                        ?? builder.Configuration["Database:Port"] ?? "5432";
+                    var dbName = Environment.GetEnvironmentVariable("DB_NAME")
+                        ?? builder.Configuration["Database:Name"]
+                        ?? throw new InvalidOperationException("Database Name no configurado.");
+                    var dbUser = Environment.GetEnvironmentVariable("DB_USER")
+                        ?? builder.Configuration["Database:User"]
+                        ?? throw new InvalidOperationException("Database User no configurado.");
+                    var dbPass = Environment.GetEnvironmentVariable("DB_PASS")
+                        ?? builder.Configuration["Database:Pass"]
+                        ?? throw new InvalidOperationException("Database Password no configurado.");
+                    connectionString = $"Server={dbHost};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPass};";
+                }
+
                 opt.UseLazyLoadingProxies()
                    .UseNpgsql(connectionString);
             });

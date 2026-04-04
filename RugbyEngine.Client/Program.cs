@@ -20,7 +20,7 @@ builder.Services.AddScoped(sp =>
     var apiBaseUrl = "https://rugbyengine.agigena.com";
     if (builder.HostEnvironment.IsDevelopment())
     {
-        apiBaseUrl = "https://localhost:7083";
+        apiBaseUrl = "http://localhost:5000";
     }
     var baseAddress = !string.IsNullOrWhiteSpace(apiBaseUrl)
         ? new Uri(apiBaseUrl, UriKind.Absolute)

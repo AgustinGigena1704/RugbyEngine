@@ -1,6 +1,9 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
-using System.Reflection;
+using RugbyEngine.Api.Data.Seeds;
+using RugbyEngine.Api.Services;
+using RugbyEngine.Api.Services.Interfaces;
 
 namespace RugbyEngine.Api.Data
 {
@@ -8,7 +11,6 @@ namespace RugbyEngine.Api.Data
     {
         public ApiDbContext(DbContextOptions<ApiDbContext> options) : base(options)
         {
-
         }
 
         public DbSet<Persona> Personas { get; set; }
@@ -238,6 +240,11 @@ namespace RugbyEngine.Api.Data
                 entity.HasIndex(ec => new { ec.EventoId, ec.CuentaId }).IsUnique();
             });
 
+
+
+
+            SeedAsync(modelBuilder).Wait();
+
         }
 
         /// <summary>
@@ -301,6 +308,15 @@ namespace RugbyEngine.Api.Data
                         .IsRequired(false);
                 }
             }
+        }
+
+        public static async Task SeedAsync(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfiguration(new PersonasSeed());
+            modelBuilder.ApplyConfiguration(new UsuariosSeed());
+            modelBuilder.ApplyConfiguration(new PermisosSeed());
+            modelBuilder.ApplyConfiguration(new PerfilesSeed());
+            modelBuilder.ApplyConfiguration(new MenusSeed());
         }
     }
 }

@@ -28,10 +28,6 @@
     <Compile Remove="Data\Repositories\MovimientoRepository.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include=".dev\DevContainerStartup.cs" />
-  </ItemGroup>
-
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />

@@ -9,7 +9,7 @@
       "applicationUrl": "http://localhost:5268",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "API_BASE_URL": "https://localhost:7083"
+        "API_BASE_URL": "http://localhost:5000"
       }
     },
     "https": {
@@ -20,7 +20,7 @@
       "applicationUrl": "https://localhost:7255;http://localhost:5268",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "API_BASE_URL": "https://localhost:7083"
+        "API_BASE_URL": "http://localhost:5000"
       }
     },
     "https (Edge aislado)": {
@@ -33,7 +33,7 @@
       "browser": "edge",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "API_BASE_URL": "https://localhost:7083"
+        "API_BASE_URL": "http://localhost:5000"
       }
     }
   }

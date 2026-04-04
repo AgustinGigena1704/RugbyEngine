@@ -1,0 +1,71 @@
+{
+  "name": "RugbyEngine",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/RugbyEngine",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "dotnet.defaultSolution": "RugbyEngine.slnx",
+        "editor.formatOnSave": true,
+        "editor.bracketPairColorization.enabled": true,
+        "omnisharp.enableRoslynAnalyzers": true
+      },
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "github.copilot",
+        "github.copilot-chat",
+        "eamodio.gitlens",
+        "ms-azuretools.vscode-docker",
+        "humao.rest-client",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  },
+  "forwardPorts": [
+    7083,
+    7255,
+    5000,
+    5268
+  ],
+  "portsAttributes": {
+    "7083": {
+      "label": "RugbyEngine API (HTTPS)"
+    },
+    "7255": {
+      "label": "RugbyEngine Client (HTTPS)"
+    },
+    "5000": {
+      "label": "RugbyEngine API (HTTP)"
+    },
+    "5268": {
+      "label": "RugbyEngine Client (HTTP)",
+      "onAutoForward": "openBrowserOnce"
+    }
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y postgresql-client && sudo install -m 755 .devcontainer/bin/gcr /usr/local/bin/gcr && sudo install -m 755 .devcontainer/bin/dev /usr/local/bin/dev && dotnet restore RugbyEngine.slnx && dotnet tool restore",
+  "postStartCommand": "sudo chown -R vscode:vscode . 2>/dev/null || true",
+  "remoteEnv": {
+    "SSL_CERT_DIR": "/home/vscode/.aspnet/dev-certs/trust:/usr/lib/ssl/certs",
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "DB_HOST": "db",
+    "DB_PORT": "5432",
+    "DB_NAME": "rugbyengine",
+    "DB_USER": "postgres",
+    "DB_PASS": "rugbyengine"
+  },
+  "remoteUser": "vscode"
+}
