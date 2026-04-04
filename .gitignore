@@ -11,6 +11,9 @@
 .devcontainer/certs/*.pem
 .devcontainer/certs/*.crt
 .devcontainer/certs/*.key
+!.devcontainer/bin/
+!.devcontainer/bin/dev
+!.devcontainer/bin/gcr
 
 # ── Visual Studio ─────────────────────────────────────────────────
 .vs/
@@ -41,6 +44,7 @@ x86/
 [Aa][Rr][Mm]64/
 bld/
 [Bb]in/
+!.devcontainer/bin/
 [Oo]bj/
 [Oo]ut/
 [Ll]og/

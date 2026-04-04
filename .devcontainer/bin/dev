@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# dev — Development helper CLI for RugbyEngine
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$(git -C "${PWD}" rev-parse --show-toplevel 2>/dev/null || true)}"
+if [[ -z "${WORKSPACE_DIR}" ]]; then
+    WORKSPACE_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+fi
+
+DB_HOST="${DB_HOST:-db}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-rugbyengine}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:-rugbyengine}"
+CERTS_DIR="${WORKSPACE_DIR}/.devcontainer/certs"
+PROJECT_DIR="${WORKSPACE_DIR}/RugbyEngine.Api"
+
+wait_for_db() {
+    local max_retries=30
+    local interval=2
+    echo "⏳ Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
+    for i in $(seq 1 $max_retries); do
+        if pg_isready -h "$DB_HOST" -p "$DB_PORT" -q 2>/dev/null || \
+           (echo > /dev/tcp/"$DB_HOST"/"$DB_PORT") 2>/dev/null; then
+            echo "✅ PostgreSQL is ready!"
+            return 0
+        fi
+        if [ "$i" -eq "$max_retries" ]; then
+            echo "❌ PostgreSQL did not become ready after $((max_retries * interval))s"
+            return 1
+        fi
+        sleep $interval
+    done
+}
+
+ensure_db_exists() {
+    local db_exists
+    db_exists=$(PGPASSWORD="${DB_PASS}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" postgres -tAc \
+        "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null || true)
+
+    if [[ "${db_exists}" != "1" ]]; then
+        echo "🛠️  Creating local DB '${DB_NAME}'..."
+        PGPASSWORD="${DB_PASS}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" postgres \
+            -c "CREATE DATABASE \"${DB_NAME}\";"
+    fi
+}
+
+reset_local_db() {
+    PGPASSWORD="${DB_PASS}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" postgres \
+        -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();" \
+        -c "DROP DATABASE IF EXISTS \"${DB_NAME}\";" \
+        -c "CREATE DATABASE \"${DB_NAME}\";"
+}
+
+cmd_start() {
+    wait_for_db
+    ensure_db_exists
+    echo "✅ Dev environment ready!"
+}
+
+cmd_dump() {
+    local prod_env="${WORKSPACE_DIR}/.dev/prod.env"
+    if [[ -f "$prod_env" ]]; then
+        # shellcheck source=/dev/null
+        source "$prod_env"
+    fi
+
+    local ssl_ca="${SSL_CA:-${CERTS_DIR}/ca.pem}"
+
+    for required in PROD_HOST PROD_PORT PROD_DB PROD_USER PROD_PASS; do
+        if [[ -z "${!required:-}" ]]; then
+            echo "❌ Missing ${required} in .dev/prod.env"
+            return 1
+        fi
+    done
+
+    if [[ -z "$ssl_ca" ]]; then
+        echo "❌ SSL_CA not configured. Set SSL_CA in .dev/prod.env"
+        return 1
+    fi
+    if [[ ! -f "$ssl_ca" ]]; then
+        echo "❌ File not found: $ssl_ca"
+        echo "   Copy it to '${CERTS_DIR}' on your host machine first."
+        return 1
+    fi
+
+    # Copy to /tmp and fix permissions (files from Windows mount may be owned by root)
+    local tmp_ca=/tmp/ssl_ca.pem
+    cp "$ssl_ca" "$tmp_ca"
+    chmod 600 "$tmp_ca"
+
+    echo "🔌 Testing connection to ${PROD_HOST}:${PROD_PORT}..."
+    if ! PGPASSWORD="${PROD_PASS}" PGSSLMODE=verify-ca PGSSLROOTCERT="$tmp_ca" \
+        psql -h "${PROD_HOST}" -p "${PROD_PORT}" -U "${PROD_USER}" \
+             -d "${PROD_DB}" -c "SELECT 1" -q --no-psqlrc > /dev/null 2>&1; then
+        echo "❌ Cannot connect to production DB."
+        echo "   Host:   ${PROD_HOST}"
+        echo "   Port:   ${PROD_PORT}"
+        echo "   User:   ${PROD_USER}"
+        echo "   DB:     ${PROD_DB}"
+        echo "   CA:     ${tmp_ca}"
+        echo ""
+        echo "   Verify credentials and port in .dev/prod.env"
+        rm -f "$tmp_ca"
+        return 1
+    fi
+    echo "✅ Production connection OK."
+
+    wait_for_db
+
+    echo "🗑️  Fully wiping local DB '${DB_NAME}' before restore..."
+    reset_local_db
+
+    local tmp_dump=/tmp/prod_dump.dump
+
+    echo "📦 Dumping production '${PROD_DB}'..."
+    PGPASSWORD="${PROD_PASS}" \
+    PGSSLMODE=verify-ca \
+    PGSSLROOTCERT="$tmp_ca" \
+    pg_dump \
+        -h "${PROD_HOST}" -p "${PROD_PORT}" -U "${PROD_USER}" \
+        -Fc --no-owner --no-acl -f "$tmp_dump" "${PROD_DB}"
+
+    if [[ ! -s "$tmp_dump" ]]; then
+        echo "❌ pg_dump produced empty output. Dump aborted."
+        rm -f "$tmp_ca" "$tmp_dump"
+        return 1
+    fi
+
+    echo "📥 Restoring into local '${DB_NAME}'..."
+    PGPASSWORD="${DB_PASS}" PGSSLMODE=disable pg_restore \
+        -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" \
+        --clean --if-exists --no-owner --no-acl -d "${DB_NAME}" "$tmp_dump"
+
+    rm -f "$tmp_ca" "$tmp_dump"
+    echo "✅ Local DB updated from production."
+}
+
+cmd_restart() {
+    echo "ℹ️  To restart the PostgreSQL container, run from your host machine:"
+    echo "   docker restart <db-container-name>"
+    echo "   or use: docker compose -f .devcontainer/docker-compose.yml restart db"
+}
+
+usage() {
+    cat <<EOF
+dev — RugbyEngine development helper
+
+Usage: dev <command>
+
+Commands:
+    start     Reuse local DB when volume name exists, otherwise fetch from production
+    dump      Fully wipe local DB and restore from production (direct restore)
+    restart   Restart the PostgreSQL container
+EOF
+}
+
+case "${1:-}" in
+    start)   cmd_start   ;;
+    dump)    cmd_dump     ;;
+    restart) cmd_restart  ;;
+    *)       usage; exit 1 ;;
+esac
