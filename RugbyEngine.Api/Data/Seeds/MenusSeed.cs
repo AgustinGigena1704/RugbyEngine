@@ -12,17 +12,17 @@ namespace RugbyEngine.Api.Data.Seeds
         {
             builder.HasData(
                 // Nivel 0 — raíces
-                new Menu { Id = 1,  Titulo = "Entrenamientos", Lvl = 0, MenuPadreId = null, PermisoId = 8, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 4,  Titulo = "Tesoreria",      Lvl = 0, MenuPadreId = null, PermisoId = 2, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 5,  Titulo = "Administracion", Lvl = 0, MenuPadreId = null, PermisoId = 6, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 1, Titulo = "Entrenamientos", Lvl = 0, MenuPadreId = null, PermisoId = 8, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 4, Titulo = "Tesoreria", Lvl = 0, MenuPadreId = null, PermisoId = 2, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 5, Titulo = "Administracion", Lvl = 0, MenuPadreId = null, PermisoId = 6, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
                 // Nivel 1
-                new Menu { Id = 7,  Titulo = "Registro",   Lvl = 1, MenuPadreId = 5,  PermisoId = 3, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 11, Titulo = "3T",         Lvl = 1, MenuPadreId = 4,  PermisoId = 5, Permiso = null!, Ruta = "/Tesoreria/3T",             CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 7, Titulo = "Registro", Lvl = 1, MenuPadreId = 5, PermisoId = 3, Permiso = null!, CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 11, Titulo = "3T", Lvl = 1, MenuPadreId = 4, PermisoId = 5, Permiso = null!, Ruta = "/Tesoreria/3T", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
                 // Nivel 2
-                new Menu { Id = 10, Titulo = "Personas",   Lvl = 2, MenuPadreId = 7,  PermisoId = 4, Permiso = null!, Ruta = "/Admin/Registro/Personas",   CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 12, Titulo = "Pagos",      Lvl = 2, MenuPadreId = 11, PermisoId = 5, Permiso = null!, Ruta = "/Tesoreria/3T/Pagos",         CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 14, Titulo = "Usuarios",   Lvl = 2, MenuPadreId = 7,  PermisoId = 1, Permiso = null!, Ruta = "/Admin/Registro/Usuarios",    CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 15, Titulo = "Asistencia", Lvl = 2, MenuPadreId = 1,  PermisoId = 9, Permiso = null!, Ruta = "/Entrenamientos/Asistencia",  CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
+                new Menu { Id = 10, Titulo = "Personas", Lvl = 2, MenuPadreId = 7, PermisoId = 4, Permiso = null!, Ruta = "/Admin/Registro/Personas", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 12, Titulo = "Pagos", Lvl = 2, MenuPadreId = 11, PermisoId = 5, Permiso = null!, Ruta = "/Tesoreria/3T/Pagos", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 14, Titulo = "Usuarios", Lvl = 2, MenuPadreId = 7, PermisoId = 1, Permiso = null!, Ruta = "/Admin/Registro/Usuarios", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 15, Titulo = "Asistencia", Lvl = 2, MenuPadreId = 1, PermisoId = 9, Permiso = null!, Ruta = "/Entrenamientos/Asistencia", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
             );
         }
     }

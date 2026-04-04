@@ -11,9 +11,9 @@ namespace RugbyEngine.Api.Data.Seeds
         public void Configure(EntityTypeBuilder<Perfil> builder)
         {
             builder.HasData(
-                new Perfil { Id = 1, Nombre = "Administrador", Descripcion = "Acceso Total",   CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Perfil { Id = 2, Nombre = "Entrenador",    Descripcion = "Entrenador",      CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Perfil { Id = 4, Nombre = "Jugador",       Descripcion = "Usuario General", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
+                new Perfil { Id = 1, Nombre = "Administrador", Descripcion = "Acceso Total", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Perfil { Id = 2, Nombre = "Entrenador", Descripcion = "Entrenador", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Perfil { Id = 4, Nombre = "Jugador", Descripcion = "Usuario General", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
             );
 
             builder.HasMany(p => p.Permisos)
