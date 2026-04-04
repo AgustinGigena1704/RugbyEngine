@@ -7,10 +7,6 @@
 .env
 **/appsettings.Development.json
 **/Secrets/
-.dev/prod.env
-.devcontainer/certs/*.pem
-.devcontainer/certs/*.crt
-.devcontainer/certs/*.key
 !.devcontainer/bin/
 !.devcontainer/bin/dev
 !.devcontainer/bin/gcr
