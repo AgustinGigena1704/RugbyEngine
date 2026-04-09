@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
+using RugbyEngine.Api.Services;
 using RugbyEngine.Shared.Menus;
 
 namespace RugbyEngine.Api.Data.Repositories
@@ -12,14 +13,11 @@ namespace RugbyEngine.Api.Data.Repositories
 
         public async Task<List<Menu>> GetMenusByUser(Usuario usuario, CancellationToken cancellationToken = default)
         {
-            var permisosIds = await _context.Set<Usuario>()
-                .Where(u => u.Id == usuario.Id)
-                .SelectMany(u => u.Perfiles!)
-                .SelectMany(p => p.Permisos!)
-                .Select(per => per.Id)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
+            var perfiles = usuario.Perfiles;
+            var permisosIds = perfiles?
+                .SelectMany(p => p.Permisos ?? new List<Permiso>())
+                .Select(pp => pp.Id)
+                .ToList() ?? new List<int>();
             return await _dbSet
                 .Where(m => m.DeletedAt == null &&
                            (m.PermisoId == null || permisosIds.Contains(m.PermisoId.Value)))
@@ -28,14 +26,38 @@ namespace RugbyEngine.Api.Data.Repositories
 
         public async Task<List<RouteRoleDto>> GetAllRouteRolesAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbSet
-                .Where(m => m.DeletedAt == null && !string.IsNullOrEmpty(m.Ruta) && m.PermisoId != null)
-                .Select(m => new RouteRoleDto
-                {
-                    Route = m.Ruta!,
-                    Role = m.Permiso!.Codigo
-                })
+            var menus = await _dbSet
+                .Where(m => m.DeletedAt == null && m.PermisoId != null)
                 .ToListAsync(cancellationToken);
+
+            var dict = menus.ToDictionary(m => m.Id);
+            var result = new List<RouteRoleDto>();
+
+            foreach (var menu in menus)
+            {
+                if (menu.Permiso == null) continue;
+
+                var parts = new List<string>();
+                var current = menu;
+                while (current != null)
+                {
+                    if (!string.IsNullOrEmpty(current.Ruta))
+                        parts.Insert(0, current.Ruta);
+                    current = current.MenuPadreId.HasValue && dict.ContainsKey(current.MenuPadreId.Value)
+                        ? dict[current.MenuPadreId.Value]
+                        : null;
+                }
+
+                if (parts.Count == 0) continue;
+
+                result.Add(new RouteRoleDto
+                {
+                    Route = "/" + string.Join("/", parts),
+                    Role = menu.Permiso.Codigo
+                });
+            }
+
+            return result;
         }
     }
 }

@@ -40,6 +40,7 @@ Specs detalladas del cliente en `RugbyEngine.Client/specs/` y `RugbyEngine.Clien
 ### Repositorios y EntityManager
 - Base genérica `GenericRepository<TEntity>`: soft-delete (`BorradoLogico`), audit (`IAudithory`), paginación `Skip/Take`.
 - Búsqueda case-insensitive con `EF.Functions.ILike()` (PostgreSQL).
+- **No usar `.Include()`** — el proyecto usa LazyLoading; las navegaciones se cargan automáticamente.
 - Repos especializados registrados con `[Repository(typeof(Entidad))]` en la entidad; resueltos vía `EntityManager.GetRepository<TRepo>()`.
 - Servicios registrados automáticamente con `[Service]` (scoped por defecto, interfaz inferida por convención `I + NombreClase`).
 
