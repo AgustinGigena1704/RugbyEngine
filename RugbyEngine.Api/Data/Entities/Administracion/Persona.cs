@@ -27,5 +27,7 @@ namespace RugbyEngine.Api.Data.Entities
         public int? DeletedById { get; set; }
         public DateTime? DeletedAt { get; set; }
         public virtual List<PersonaCuenta>? PersonaCuentas { get; set; } = null;
+
+        public string NombreCompleto => $"{Nombres}, {Apellidos}";
     }
 }
