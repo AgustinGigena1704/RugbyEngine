@@ -1,6 +1,6 @@
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using RugbyEngine.Client.Handlers;
 using RugbyEngine.Shared.Menus;
 using System.Net.Http.Json;
 
@@ -10,7 +10,7 @@ namespace RugbyEngine.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly NavigationManager _navigationManager;
-        private readonly ISessionStorageService SessionStorage;
+        private readonly IStorageService _storage;
 
         private List<MenuDTO> _menuTree = new();
         private Dictionary<string, string> _routeRoles = new();
@@ -24,11 +24,11 @@ namespace RugbyEngine.Client.Services
         /// <summary>Se dispara cuando el menú activo cambia (navegación o recarga del árbol).</summary>
         public event Action? ActiveMenuChanged;
 
-        public MainMenuService(HttpClient httpClient, NavigationManager navigationManager, ISessionStorageService sessionStorage)
+        public MainMenuService(HttpClient httpClient, NavigationManager navigationManager, IStorageService storage)
         {
             _httpClient = httpClient;
             _navigationManager = navigationManager;
-            SessionStorage = sessionStorage;
+            _storage = storage;
             _navigationManager.LocationChanged += OnLocationChanged;
         }
 
@@ -47,8 +47,8 @@ namespace RugbyEngine.Client.Services
             _menuLoaded = false;
             _menuTree = new();
             _routeRoles = new();
-            await SessionStorage.RemoveItemAsync("menuTree");
-            await SessionStorage.RemoveItemAsync("routeRoles");
+            await _storage.RemoveSessionItemAsync("menuTree");
+            await _storage.RemoveSessionItemAsync("routeRoles");
             await LoadMenuTreeAsync();
         }
 
@@ -63,8 +63,8 @@ namespace RugbyEngine.Client.Services
             ActiveLevel2 = null;
             _ = Task.Run(async () =>
             {
-                await SessionStorage.RemoveItemAsync("menuTree");
-                await SessionStorage.RemoveItemAsync("routeRoles");
+                await _storage.RemoveSessionItemAsync("menuTree");
+                await _storage.RemoveSessionItemAsync("routeRoles");
             });
             ActiveMenuChanged?.Invoke();
         }
@@ -73,8 +73,8 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var cachedMenu = await SessionStorage.GetItemAsync<List<MenuDTO>>("menuTree");
-                var cachedRoles = await SessionStorage.GetItemAsync<Dictionary<string, string>>("routeRoles");
+                var cachedMenu = await _storage.GetSessionItemAsync<List<MenuDTO>>("menuTree");
+                var cachedRoles = await _storage.GetSessionItemAsync<Dictionary<string, string>>("routeRoles");
 
                 if (cachedMenu != null && cachedMenu.Count > 0 && cachedRoles != null)
                 {
@@ -87,8 +87,13 @@ namespace RugbyEngine.Client.Services
                 }
 
 
-                var menuTask = _httpClient.GetAsync("api/Menu");
-                var rolesTask = _httpClient.GetAsync("api/Menu/RouteRoles");
+                var menuRequest = new HttpRequestMessage(HttpMethod.Get, "api/Menu");
+                menuRequest.Options.Set(OperationCanceledExceptionDelegatingHandler.SuppressNotification, true);
+                var rolesRequest = new HttpRequestMessage(HttpMethod.Get, "api/Menu/RouteRoles");
+                rolesRequest.Options.Set(OperationCanceledExceptionDelegatingHandler.SuppressNotification, true);
+
+                var menuTask = _httpClient.SendAsync(menuRequest);
+                var rolesTask = _httpClient.SendAsync(rolesRequest);
                 await Task.WhenAll(menuTask, rolesTask);
 
                 if (menuTask.Result.IsSuccessStatusCode)
@@ -102,8 +107,8 @@ namespace RugbyEngine.Client.Services
 
                 if (_menuTree.Count > 0)
                 {
-                    await SessionStorage.SetItemAsync("menuTree", _menuTree);
-                    await SessionStorage.SetItemAsync("routeRoles", _routeRoles);
+                    await _storage.SetSessionItemAsync("menuTree", _menuTree);
+                    await _storage.SetSessionItemAsync("routeRoles", _routeRoles);
                 }
             }
             catch (Exception)

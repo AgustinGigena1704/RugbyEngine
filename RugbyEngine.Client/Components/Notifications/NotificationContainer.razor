@@ -1,0 +1,72 @@
+@using RugbyEngine.Client.Services.Notifications
+@inject INotificationService NotificationService
+@inject IStorageService Storage
+@implements IDisposable
+
+@if (_notifications.Count > 0)
+{
+    <!-- Mobile backdrop -->
+    <div class="notification-backdrop md-hidden" @onclick="DismissAll"></div>
+
+    <div class="notification-container">
+        @foreach (var item in _notifications)
+        {
+            <NotificationCard Item="item"
+                              ShowDetails="NotificationService.ShowDetails"
+                              OnDismiss="HandleDismiss" />
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<NotificationItem> _notifications = [];
+
+    protected override void OnInitialized()
+    {
+        NotificationService.OnChange += OnNotificationsChanged;
+        _notifications = NotificationService.ActiveNotifications;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var value = await Storage.GetLocalItemAsync<string>("development-environment");
+                if (string.Equals(value, "true", StringComparison.OrdinalIgnoreCase))
+                {
+                    NotificationService.SetShowDetails(true);
+                }
+            }
+            catch
+            {
+                // storage not available
+            }
+        }
+    }
+
+    private void OnNotificationsChanged()
+    {
+        _notifications = NotificationService.ActiveNotifications;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleDismiss(Guid id)
+    {
+        NotificationService.Dismiss(id);
+    }
+
+    private void DismissAll()
+    {
+        foreach (var n in _notifications)
+        {
+            NotificationService.Dismiss(n.Id);
+        }
+    }
+
+    public void Dispose()
+    {
+        NotificationService.OnChange -= OnNotificationsChanged;
+    }
+}

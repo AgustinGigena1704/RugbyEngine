@@ -8,15 +8,9 @@
 @inject IUsuarioService UsuarioService
 @inject IPerfilService PerfilService
 @inject IPersonaService PersonaService
+@inject INotificationService Notifier
 
 <PageTitle>Usuarios</PageTitle>
-
-@if (_toast is not null)
-{
-    <div class="app-toast @(_toastIsError ? "app-toast--error" : "app-toast--success")" role="alert">
-        @_toast
-    </div>
-}
 
 <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
     <h4 class="mb-0 font-bold">Gestión de Usuarios</h4>
@@ -335,8 +329,6 @@
     private List<PersonaResponse> _todasPersonas = [];
     private List<PerfilDto> _todosPerfiles = [];
     private string _searchText = string.Empty;
-    private string? _toast;
-    private bool _toastIsError;
 
     private bool _createDialogVisible;
     private bool _isSaving;
@@ -435,7 +427,7 @@
             $"{p.Apellidos}, {p.Nombres} — {p.Documento}".Equals(_personaSearchText, StringComparison.OrdinalIgnoreCase));
         if (persona is not null) { _selectedPersona = persona; _createModel.PersonaId = persona.Id; }
 
-        if (_createModel.PersonaId == 0) { _ = ShowToastAsync("Debe seleccionar una persona vinculada.", true); return; }
+        if (_createModel.PersonaId == 0) { Notifier.Notify(NotificationType.Warning, "Debe seleccionar una persona vinculada."); return; }
 
         _isSaving = true;
         var result = await UsuarioService.CreateAsync(_createModel);
@@ -443,13 +435,13 @@
 
         if (result is not null)
         {
-            _ = ShowToastAsync("Usuario creado correctamente.", false);
+            Notifier.Notify(NotificationType.Ok, "Usuario creado correctamente.");
             CloseCreateDialog();
             await RefreshUsuariosTablaAsync(resetPage: true);
         }
         else
         {
-            _ = ShowToastAsync("No se pudo crear el usuario. Verifique los datos.", true);
+            Notifier.Notify(NotificationType.Error, "No se pudo crear el usuario. Verifique los datos.");
         }
     }
 
@@ -480,13 +472,13 @@
 
         if (result is not null)
         {
-            _ = ShowToastAsync("Usuario actualizado correctamente.", false);
+            Notifier.Notify(NotificationType.Ok, "Usuario actualizado correctamente.");
             CloseEditDialog();
             await RefreshUsuariosTablaAsync();
         }
         else
         {
-            _ = ShowToastAsync("No se pudo actualizar el usuario.", true);
+            Notifier.Notify(NotificationType.Error, "No se pudo actualizar el usuario.");
         }
     }
 
@@ -512,10 +504,10 @@
         {
             _perfilesAsignados.Add(perfil);
             _perfilesDisponibles.Remove(perfil);
-            _ = ShowToastAsync($"Perfil \"{perfil.Nombre}\" asignado.", false);
+            Notifier.Notify(NotificationType.Ok, $"Perfil \"{perfil.Nombre}\" asignado.");
             await RefreshUsuariosTablaAsync();
         }
-        else _ = ShowToastAsync($"No se pudo asignar el perfil \"{perfil.Nombre}\".", true);
+        else Notifier.Notify(NotificationType.Error, $"No se pudo asignar el perfil \"{perfil.Nombre}\".");
         _perfilesBusy = false;
     }
 
@@ -528,10 +520,10 @@
         {
             _perfilesAsignados.Remove(perfil);
             _perfilesDisponibles.Add(perfil);
-            _ = ShowToastAsync($"Perfil \"{perfil.Nombre}\" retirado.", false);
+            Notifier.Notify(NotificationType.Ok, $"Perfil \"{perfil.Nombre}\" retirado.");
             await RefreshUsuariosTablaAsync();
         }
-        else _ = ShowToastAsync($"No se pudo retirar el perfil \"{perfil.Nombre}\".", true);
+        else Notifier.Notify(NotificationType.Error, $"No se pudo retirar el perfil \"{perfil.Nombre}\".");
         _perfilesBusy = false;
     }
 
@@ -546,22 +538,12 @@
 
         if (ok)
         {
-            _ = ShowToastAsync("Usuario eliminado correctamente.", false);
+            Notifier.Notify(NotificationType.Ok, "Usuario eliminado correctamente.");
             _deleteDialogVisible = false;
             _deletingUsuario = null;
             await RefreshUsuariosTablaAsync();
         }
-        else _ = ShowToastAsync("No se pudo eliminar el usuario.", true);
-    }
-
-    private async Task ShowToastAsync(string message, bool isError)
-    {
-        _toast = message;
-        _toastIsError = isError;
-        StateHasChanged();
-        await Task.Delay(3500);
-        _toast = null;
-        StateHasChanged();
+        else Notifier.Notify(NotificationType.Error, "No se pudo eliminar el usuario.");
     }
 }
 

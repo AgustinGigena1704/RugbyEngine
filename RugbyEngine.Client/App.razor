@@ -1,6 +1,7 @@
 ﻿@using RugbyEngine.Client.Pages.Auth
 @inject NavigationManager NavManager
 <CascadingAuthenticationState>
+    <NotificationContainer />
     <SessionMonitor />
     <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">

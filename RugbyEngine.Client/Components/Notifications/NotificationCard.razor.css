@@ -1,0 +1,145 @@
+/* ── Card base ──────────────────────────────────────────── */
+.notification-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    animation: notifSlideDown 0.3s ease;
+    color: #fff;
+}
+
+.notification-card--ok {
+    background: #16a34a;
+}
+
+.notification-card--warning {
+    background: #f59e0b;
+}
+
+.notification-card--error {
+    background: #dc2626;
+}
+
+.notification-card--info {
+    background: #374151;
+}
+
+/* ── Body layout ───────────────────────────────────────── */
+.notification-card__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px 10px;
+}
+
+.notification-card__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    opacity: 0.92;
+    padding-top: 1px;
+}
+
+.notification-card__text {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.notification-card__message {
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* ── Action buttons ────────────────────────────────────── */
+.notification-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.notification-card__btn {
+    background: none;
+    border: none;
+    color: #fff;
+    opacity: 0.78;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.notification-card__btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.notification-card__chevron--open {
+    transform: rotate(180deg);
+}
+
+/* ── Expanded details ──────────────────────────────────── */
+.notification-card__details {
+    padding: 0 14px 12px;
+    font-size: 0.78rem;
+    opacity: 0.92;
+    line-height: 1.45;
+}
+
+.notification-card__detail-text {
+    margin: 0 0 6px;
+}
+
+.notification-card__exception {
+    margin: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 6px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* ── Progress bar ──────────────────────────────────────── */
+.notification-card__progress {
+    height: 4px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.notification-card__progress-bar {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.55);
+    animation: notifShrink var(--notif-duration, 5s) linear forwards;
+    transform-origin: right;
+}
+
+/* ── Animations ────────────────────────────────────────── */
+@keyframes notifSlideDown {
+    from {
+        transform: translateY(-16px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes notifShrink {
+    from {
+        width: 100%;
+    }
+
+    to {
+        width: 0;
+    }
+}

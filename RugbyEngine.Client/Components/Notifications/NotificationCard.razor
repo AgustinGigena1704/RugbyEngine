@@ -1,0 +1,141 @@
+@using RugbyEngine.Client.Services.Notifications
+@implements IDisposable
+
+<div class="notification-card notification-card--@Item.Tipo.ToString().ToLowerInvariant()"
+     style="--notif-duration: @(Item.Duracion)s">
+
+    <div class="notification-card__body">
+        <!-- Icon -->
+        <div class="notification-card__icon">
+            @switch (Item.Tipo)
+            {
+                case NotificationType.Ok:
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    break;
+                case NotificationType.Warning:
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>
+                    break;
+                case NotificationType.Error:
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                    </svg>
+                    break;
+                case NotificationType.Info:
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.399l-.451.025.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+                    </svg>
+                    break;
+            }
+        </div>
+
+        <!-- Message -->
+        <div class="notification-card__text">
+            <span class="notification-card__message">@Item.Mensaje</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="notification-card__actions">
+            @if (ShowDetails)
+            {
+                <button class="notification-card__btn" @onclick="ToggleExpand" aria-label="Detalles" title="Detalles">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                         viewBox="0 0 16 16" class="@(_expanded ? "notification-card__chevron--open" : "")">
+                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                </button>
+            }
+            <button class="notification-card__btn" @onclick="DismissCard" aria-label="Cerrar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Expanded details -->
+    @if (_expanded && (Item.Detalle != null || Item.Exception != null))
+    {
+        <div class="notification-card__details">
+            @if (Item.Detalle != null)
+            {
+                <p class="notification-card__detail-text">@Item.Detalle</p>
+            }
+            @if (Item.Exception != null)
+            {
+                <pre class="notification-card__exception">@Item.Exception.ToString()</pre>
+            }
+        </div>
+    }
+
+    <!-- Progress bar -->
+    @if (Item.Duracion > 0)
+    {
+        <div class="notification-card__progress">
+            <div class="notification-card__progress-bar"></div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public NotificationItem Item { get; set; } = default!;
+    [Parameter] public bool ShowDetails { get; set; }
+    [Parameter] public EventCallback<Guid> OnDismiss { get; set; }
+
+    private bool _expanded;
+    private CancellationTokenSource? _autoDismissCts;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Item.Duracion > 0)
+        {
+            _autoDismissCts = new CancellationTokenSource();
+            _ = AutoDismissAsync(_autoDismissCts.Token);
+        }
+    }
+
+    private async Task AutoDismissAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(Item.Duracion * 1000, ct);
+            if (!ct.IsCancellationRequested)
+            {
+                await OnDismiss.InvokeAsync(Item.Id);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Dismissed manually before timeout
+        }
+    }
+
+    private async Task DismissCard()
+    {
+        CancelTimer();
+        await OnDismiss.InvokeAsync(Item.Id);
+    }
+
+    private void ToggleExpand()
+    {
+        _expanded = !_expanded;
+    }
+
+    private void CancelTimer()
+    {
+        if (_autoDismissCts is not null)
+        {
+            _autoDismissCts.Cancel();
+            _autoDismissCts.Dispose();
+            _autoDismissCts = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        CancelTimer();
+    }
+}

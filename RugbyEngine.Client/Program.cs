@@ -1,4 +1,3 @@
-using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -6,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using RugbyEngine.Client;
 using RugbyEngine.Client.Handlers;
 using RugbyEngine.Client.Services;
+using RugbyEngine.Client.Services.Notifications;
 using System;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -37,9 +37,10 @@ builder.Services.AddScoped<ICookieService, CookieService>();
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<MainMenuService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<IPerfilService, PerfilService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
-builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddScoped<IStorageService, StorageService>();
 
 await builder.Build().RunAsync();

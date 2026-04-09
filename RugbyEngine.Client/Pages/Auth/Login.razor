@@ -4,19 +4,13 @@
 
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
+@inject INotificationService Notifier
 
 <PageTitle>Iniciar sesión</PageTitle>
 
 <div class="login-card">
     <h1 class="login-card__brand">RugbyEngine</h1>
     <p class="login-card__subtitle">Inicia sesión para continuar</p>
-
-    @if (!string.IsNullOrWhiteSpace(_statusMessage))
-    {
-        <div class="alert @(_statusIsError ? "alert-danger" : "alert-success") py-2" role="alert">
-            @_statusMessage
-        </div>
-    }
 
     <EditForm Model="_model" OnValidSubmit="HandleLoginAsync">
         <DataAnnotationsValidator />
@@ -81,8 +75,6 @@
     private readonly LoginDto _model = new();
     private bool _isSubmitting;
     private bool _showPassword;
-    private string? _statusMessage;
-    private bool _statusIsError = true;
     private string? _returnUrl;
 
     protected override async Task OnInitializedAsync()
@@ -96,7 +88,6 @@
     {
         if (_isSubmitting) return;
         _isSubmitting = true;
-        _statusMessage = null;
         StateHasChanged();
 
         var response = await AuthService.LoginAsync(_model);
@@ -108,10 +99,10 @@
             return;
         }
 
-        _statusIsError = true;
-        _statusMessage = string.IsNullOrWhiteSpace(response.Message)
+        var msg = string.IsNullOrWhiteSpace(response.Message)
             ? "No se pudo iniciar sesión."
             : response.Message;
+        Notifier.Notify(NotificationType.Error, msg);
         _isSubmitting = false;
     }
 

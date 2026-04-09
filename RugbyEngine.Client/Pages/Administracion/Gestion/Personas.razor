@@ -3,16 +3,9 @@
 @using RugbyEngine.Shared.Tablas
 
 @inject IPersonaService PersonaService
+@inject INotificationService Notifier
 
 <PageTitle>Personas</PageTitle>
-
-<!-- Toast -->
-@if (_toast is not null)
-{
-    <div class="app-toast @(_toastIsError ? "app-toast--error" : "app-toast--success")" role="alert">
-        @_toast
-    </div>
-}
 
 <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
     <h4 class="mb-0 font-bold">Gestión de Personas</h4>
@@ -178,9 +171,6 @@
     private readonly int[] _pageSizes = [10, 20, 50];
     private CancellationTokenSource? _searchDebounceCts;
 
-    private string? _toast;
-    private bool _toastIsError;
-
     private bool _dialogVisible;
     private bool _isSaving;
     private int? _editingId;
@@ -260,13 +250,13 @@
 
         if (result is not null)
         {
-            _ = ShowToastAsync(_editingId.HasValue ? "Persona actualizada correctamente." : "Persona creada correctamente.", false);
+            Notifier.Notify(NotificationType.Ok, _editingId.HasValue ? "Persona actualizada correctamente." : "Persona creada correctamente.");
             CloseDialog();
             await RefreshAfterMutationAsync();
         }
         else
         {
-            _ = ShowToastAsync("No se pudo guardar. Verifique los datos o intente más tarde.", true);
+            Notifier.Notify(NotificationType.Error, "No se pudo guardar. Verifique los datos o intente más tarde.");
         }
     }
 
@@ -305,14 +295,14 @@
 
         if (success)
         {
-            _ = ShowToastAsync("Persona eliminada correctamente.", false);
+            Notifier.Notify(NotificationType.Ok, "Persona eliminada correctamente.");
             _deleteDialogVisible = false;
             _deletingPersona = null;
             await RefreshAfterMutationAsync();
         }
         else
         {
-            _ = ShowToastAsync("No se pudo eliminar la persona. Intente más tarde.", true);
+            Notifier.Notify(NotificationType.Error, "No se pudo eliminar la persona. Intente más tarde.");
         }
     }
 
@@ -322,15 +312,6 @@
             await _tablaRef.RefreshAsync();
     }
 
-    private async Task ShowToastAsync(string message, bool isError)
-    {
-        _toast = message;
-        _toastIsError = isError;
-        StateHasChanged();
-        await Task.Delay(3500);
-        _toast = null;
-        StateHasChanged();
-    }
 }
 
 
