@@ -31,6 +31,10 @@ namespace RugbyEngine.Client.Services
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<List<PerfilDto>>(cancellationToken) ?? [];
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener perfiles");
@@ -47,6 +51,10 @@ namespace RugbyEngine.Client.Services
                 response.EnsureSuccessStatusCode();
                 return await response.Content.ReadFromJsonAsync<List<PerfilDto>>(cancellationToken) ?? [];
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al obtener mis perfiles");
@@ -62,6 +70,10 @@ namespace RugbyEngine.Client.Services
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 return response.IsSuccessStatusCode;
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al asignar perfil {PerfilId}", perfilId);
@@ -76,6 +88,10 @@ namespace RugbyEngine.Client.Services
                 var request = await CreateAuthorizedRequestAsync(HttpMethod.Delete, $"api/Perfil/{perfilId}/unassign");
                 var response = await _httpClient.SendAsync(request, cancellationToken);
                 return response.IsSuccessStatusCode;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

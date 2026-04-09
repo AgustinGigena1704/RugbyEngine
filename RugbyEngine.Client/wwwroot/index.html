@@ -14,7 +14,8 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="images/loadingPelota.ico" />
     <link rel="preload" id="webassembly" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
     <link href="css/loading-blazor.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style type="text/tailwindcss">
@@ -83,6 +84,10 @@
 
             /* ── Badges ───────────────────────── */
             .badge { @apply inline-flex items-center px-2 py-0.5 text-xs font-bold leading-none rounded whitespace-nowrap; }
+            .badge.bg-primary { @apply bg-primary text-white; }
+            .badge.bg-secondary { @apply bg-secondary text-white; }
+            .badge.bg-success { @apply bg-success text-white; }
+            .badge.bg-danger { @apply bg-danger text-white; }
 
             /* ── List group ────────────────────── */
             .list-group { @apply flex flex-col p-0 m-0 list-none; }
@@ -141,6 +146,7 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="js/cookieInterop.js"></script>
+    <script src="js/storageInterop.js"></script>
     <script src="js/sessionMonitor.js"></script>
 
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
