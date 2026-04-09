@@ -28,7 +28,7 @@ namespace RugbyEngine.Api.Controllers
             Dictionary<int, MenuDTO> menuDictionary = new Dictionary<int, MenuDTO>();
             List<MenuDTO> rootMenus = new List<MenuDTO>();
 
-            // Pasada 1: crear todos los DTOs y registrarlos en el diccionario
+            // Pasada 1: crear todos los DTOs y registrarlos en el diccionario (Route = segmento propio)
             foreach (var menu in menus)
             {
                 menuDictionary[menu.Id] = new MenuDTO
@@ -54,6 +54,21 @@ namespace RugbyEngine.Api.Controllers
                     menuDictionary[menu.MenuPadreId.Value].Items.Add(menuDictionary[menu.Id]);
                 }
             }
+
+            // Pasada 3: calcular rutas completas concatenando segmentos (Ruta lvl0/lvl1/lvl2/...)
+            static void ComputeRoutes(List<MenuDTO> items, string parentRoute)
+            {
+                foreach (var item in items)
+                {
+                    var segment = (item.Route ?? string.Empty).Trim('/');
+                    item.Route = !string.IsNullOrEmpty(segment)
+                        ? $"{parentRoute}/{segment}"
+                        : parentRoute;
+                    if (item.Items.Count > 0)
+                        ComputeRoutes(item.Items, item.Route);
+                }
+            }
+            ComputeRoutes(rootMenus, string.Empty);
 
             return Ok(rootMenus);
         }

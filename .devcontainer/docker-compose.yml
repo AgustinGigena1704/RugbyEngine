@@ -3,6 +3,7 @@ services:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     volumes:
       - ..:/workspaces/RugbyEngine:cached
+      - gitobjects:/git-store
     command: sleep infinity
     depends_on:
       db:
@@ -22,7 +23,7 @@ services:
       POSTGRES_PASSWORD: rugbyengine
       POSTGRES_DB: rugbyengine
     ports:
-      - "5540:5432"
+      - "5545:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -34,3 +35,5 @@ services:
 volumes:
   pgdata:
     name: rugbyengine_dev_pgdata
+  gitobjects:
+    name: rugbyengine_git_objects
