@@ -29,7 +29,7 @@
 </nav>
 
 @code {
-    private List<MenuDTO>? _menus;
+    private List<MenuDto>? _menus;
     private readonly HashSet<string> _openGroups = [];
 
     protected override async Task OnInitializedAsync()
@@ -58,19 +58,20 @@
         MenuService.ActiveMenuChanged -= OnMenuChanged;
     }
 
-    private RenderFragment RenderMobileMenu(MenuDTO menu) => __builder =>
+    private RenderFragment RenderMobileMenu(MenuDto menu) => __builder =>
     {
         if (menu.Items != null && menu.Items.Any())
         {
             var groupId = menu.Title.Replace(" ", "");
             var isOpen = _openGroups.Contains(groupId);
             <li class="mobile-nav__group">
-                <button class="mobile-nav__group-btn @(isOpen ? "" : "collapsed")"
-                        @onclick="() => ToggleGroup(groupId)"
+                <button class="mobile-nav__group-btn @(isOpen ? "" : "collapsed")" @onclick="() => ToggleGroup(groupId)"
                         aria-expanded="@(isOpen ? "true" : "false")">
                     @(menu.Title)
-                    <svg class="mobile-nav__chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                    <svg class="mobile-nav__chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                         viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
                     </svg>
                 </button>
                 @if (isOpen)

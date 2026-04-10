@@ -353,7 +353,7 @@ El cliente es una SPA en `Blazor WebAssembly` con componentes `MudBlazor`, auten
 | `Personas/PersonaRequest` | alta/edición de persona |
 | `Personas/PersonaResponse` | salida de persona |
 | `Perfiles/PerfilDto` | perfil resumido |
-| `Menus/MenuDTO` | nodo de menú jerárquico |
+| `Menus/MenuDto` | nodo de menú jerárquico |
 | `Menus/RouteRoleDto` | relación ruta/rol |
 | `Usuarios/UsuarioCreateDto` | alta de usuario |
 | `Usuarios/UsuarioUpdateDto` | edición de usuario |
