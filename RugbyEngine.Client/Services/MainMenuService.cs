@@ -12,14 +12,14 @@ namespace RugbyEngine.Client.Services
         private readonly NavigationManager _navigationManager;
         private readonly IStorageService _storage;
 
-        private List<MenuDTO> _menuTree = new();
+        private List<MenuDto> _menuTree = new();
         private Dictionary<string, string> _routeRoles = new();
         private bool _menuLoaded = false;
 
         // Menú activo en cada capa (0 = top, 1 = desplegable, 2 = lateral)
-        public MenuDTO? ActiveLevel0 { get; private set; }
-        public MenuDTO? ActiveLevel1 { get; private set; }
-        public MenuDTO? ActiveLevel2 { get; private set; }
+        public MenuDto? ActiveLevel0 { get; private set; }
+        public MenuDto? ActiveLevel1 { get; private set; }
+        public MenuDto? ActiveLevel2 { get; private set; }
 
         /// <summary>Se dispara cuando el menú activo cambia (navegación o recarga del árbol).</summary>
         public event Action? ActiveMenuChanged;
@@ -33,7 +33,7 @@ namespace RugbyEngine.Client.Services
         }
 
         /// <summary>Devuelve el árbol de menús, cargándolo desde la API la primera vez.</summary>
-        public async Task<List<MenuDTO>> GetMenuTreeAsync()
+        public async Task<List<MenuDto>> GetMenuTreeAsync()
         {
             if (!_menuLoaded)
                 await LoadMenuTreeAsync();
@@ -73,7 +73,7 @@ namespace RugbyEngine.Client.Services
         {
             try
             {
-                var cachedMenu = await _storage.GetSessionItemAsync<List<MenuDTO>>("menuTree");
+                var cachedMenu = await _storage.GetSessionItemAsync<List<MenuDto>>("menuTree");
                 var cachedRoles = await _storage.GetSessionItemAsync<Dictionary<string, string>>("routeRoles");
 
                 if (cachedMenu != null && cachedMenu.Count > 0 && cachedRoles != null)
@@ -97,7 +97,7 @@ namespace RugbyEngine.Client.Services
                 await Task.WhenAll(menuTask, rolesTask);
 
                 if (menuTask.Result.IsSuccessStatusCode)
-                    _menuTree = await menuTask.Result.Content.ReadFromJsonAsync<List<MenuDTO>>() ?? new();
+                    _menuTree = await menuTask.Result.Content.ReadFromJsonAsync<List<MenuDto>>() ?? new();
 
                 if (rolesTask.Result.IsSuccessStatusCode)
                 {

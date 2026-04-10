@@ -35,15 +35,15 @@
 
 @code {
     [Parameter]
-    public MenuDTO? ParentMenu { get; set; }
+    public MenuDto? ParentMenu { get; set; }
 
     private bool _isLoading;
-    private List<MenuDTO> _allLevel2Items = new();
-    private MenuDTO? _previousParentMenu;
+    private List<MenuDto> _allLevel2Items = new();
+    private MenuDto? _previousParentMenu;
     private bool _firstLoad = true;
     private string _searchText = string.Empty;
 
-    private IEnumerable<MenuDTO> FilteredItems => string.IsNullOrWhiteSpace(_searchText)
+    private IEnumerable<MenuDto> FilteredItems => string.IsNullOrWhiteSpace(_searchText)
         ? _allLevel2Items
         : _allLevel2Items.Where(m =>
             m.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
