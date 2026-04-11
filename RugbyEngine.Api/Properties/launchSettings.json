@@ -2,12 +2,12 @@
   "profiles": {
     "https": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7083;http://localhost:5000"
+      "applicationUrl": "http://localhost:5000"
     },
     "development": {
       "commandName": "Project",
@@ -24,11 +24,23 @@
         "DEV__ComposeFile": ".dev/docker/docker-compose.yml"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7083;http://localhost:5000"
+      "applicationUrl": "http://localhost:5000"
+    },
+    "devcontainer": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5000",
+        "SSL_CERT_DIR": "/home/vscode/.aspnet/dev-certs/trust:/usr/lib/ssl/certs",
+        "ConnectionStrings__DefaultConnection": "Server=db;Port=5432;Database=rugbyengine;User Id=postgres;Password=rugbyengine;"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5000"
     },
     "http": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

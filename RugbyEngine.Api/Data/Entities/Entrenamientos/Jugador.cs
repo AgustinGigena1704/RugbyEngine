@@ -1,5 +1,11 @@
+using RugbyEngine.Api.Data.Attributes;
+using RugbyEngine.Api.Data.Repositories;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RugbyEngine.Api.Data.Entities
 {
+    [Repository(typeof(JugadorRepository))]
+    [Table("Jugador")]
     public class Jugador : GenericEntity, IAudithory
     {
         public required virtual Persona Persona { get; set; }

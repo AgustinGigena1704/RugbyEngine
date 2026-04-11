@@ -206,5 +206,14 @@ namespace RugbyEngine.Api.Controllers
             Email = p.Email,
             Domicilio = p.Domicilio
         };
+
+        [HttpGet("disponibles")]
+        [ProducesResponseType(typeof(List<PersonaResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<PersonaResponse>>> GetDisponibles([FromQuery] string? search, [FromQuery] int pageSize = 10, [FromQuery] int? incluirPersonaId = null, CancellationToken cancellationToken = default)
+        {
+            var personas = await _entityManager.GetRepository<PersonaRepository>()
+                .SearchDisponiblesAsync(search, pageSize, incluirPersonaId, cancellationToken);
+            return Ok(personas.Select(MapToResponse).ToList());
+        }
     }
 }

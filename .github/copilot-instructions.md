@@ -9,7 +9,7 @@ Solución .NET 10 full-stack para gestión de una institución de rugby. Ver [RE
 dotnet build RugbyEngine.slnx
 
 # Iniciar cliente (también hace build)
-dotnet build RugbyEngine.slnx && dotnet run --no-build --project RugbyEngine.Client/RugbyEngine.Client.csproj
+dotnet build RugbyEngine.slnx && dotnet run --project RugbyEngine.Client/RugbyEngine.Client.csproj
 
 # Migraciones EF Core (desde la raíz del repo)
 dotnet ef migrations add <Nombre> --project RugbyEngine.Api --startup-project RugbyEngine.Api

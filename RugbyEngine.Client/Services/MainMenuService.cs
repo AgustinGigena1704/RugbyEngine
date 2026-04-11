@@ -190,6 +190,11 @@ namespace RugbyEngine.Client.Services
                     {
                         ActiveLevel0 = lvl0;
                         ActiveLevel1 = lvl1;
+
+                        var firstChild = FindFirstRoutableDescendant(lvl1);
+                        if (firstChild != null)
+                            ActiveLevel2 = firstChild;
+
                         return;
                     }
                 }
@@ -197,9 +202,41 @@ namespace RugbyEngine.Client.Services
                 if (IsRouteMatch(lvl0.Route, path))
                 {
                     ActiveLevel0 = lvl0;
+
+                    var firstLevel1 = lvl0.Items.FirstOrDefault();
+                    if (firstLevel1 != null)
+                    {
+                        ActiveLevel1 = firstLevel1;
+                        ActiveLevel2 = FindFirstRoutableDescendant(firstLevel1);
+                    }
+                    else
+                    {
+                        // Si un lvl0 no tiene hijos de lvl1, no seleccionar un lvl1 automático
+                        // Dejar ActiveLevel1/2 en null para que la navegación entre en el lvl0 (ej: Entrenamientos)
+                        ActiveLevel1 = null;
+                        ActiveLevel2 = null;
+                    }
+
                     return;
                 }
             }
+        }
+
+        private static MenuDto? FindFirstRoutableDescendant(MenuDto item)
+        {
+            if (item.Items is not { Count: > 0 }) return null;
+
+            foreach (var child in item.Items)
+            {
+                if (!string.IsNullOrWhiteSpace(child.Route))
+                    return child;
+
+                var nested = FindFirstRoutableDescendant(child);
+                if (nested != null)
+                    return nested;
+            }
+
+            return null;
         }
 
         private static bool IsRouteMatch(string? route, string currentPath)

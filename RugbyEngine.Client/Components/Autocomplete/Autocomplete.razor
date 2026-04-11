@@ -1,0 +1,127 @@
+@typeparam TItem
+
+<div class="autocomplete-wrapper">
+    <input type="text" class="form-control @InputCssClass" value="@Value" @oninput="OnInput" @onfocus="OnFocus"
+           @onblur="OnBlur" placeholder="@Placeholder" autocomplete="off" disabled="@Disabled" />
+    @if (_dropdownVisible)
+    {
+        <div class="autocomplete-dropdown shadow">
+            @if (_isSearching)
+            {
+                <div class="autocomplete-loading-bar"></div>
+            }
+            @if (!_isSearching && _items.Count == 0)
+            {
+                <div class="autocomplete-item autocomplete-item--empty">Sin resultados</div>
+            }
+            else
+            {
+                @foreach (var item in _items)
+                {
+                    var captured = item;
+                    <div class="autocomplete-item" @onmousedown="() => SelectItem(captured)">
+                        @ItemTemplate(captured)
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public Func<string, CancellationToken, Task<List<TItem>>> SearchFunc { get; set; } =
+default!;
+    [Parameter, EditorRequired] public EventCallback<TItem> OnItemSelected { get; set; }
+    [Parameter, EditorRequired] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+
+    [Parameter] public string Placeholder { get; set; } = "Buscar...";
+    [Parameter] public string InputCssClass { get; set; } = string.Empty;
+    [Parameter] public bool Disabled { get; set; }
+
+    private List<TItem> _items = [];
+    private bool _dropdownVisible;
+    private bool _isSearching;
+    private CancellationTokenSource? _searchCts;
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        var text = e.Value?.ToString() ?? string.Empty;
+        await ValueChanged.InvokeAsync(text);
+
+        var previousCts = _searchCts;
+        _searchCts = null;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _items = [];
+            _dropdownVisible = false;
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _searchCts = cts;
+        _isSearching = true;
+        _dropdownVisible = true;
+
+        try
+        {
+            await Task.Delay(250, cts.Token);
+            _items = await SearchFunc(text, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (_searchCts == cts)
+                _isSearching = false;
+        }
+    }
+
+    private void OnFocus()
+    {
+        if (_items.Count > 0 || _isSearching)
+            _dropdownVisible = true;
+    }
+
+    private void OnBlur()
+    {
+        _ = Task.Delay(150).ContinueWith(_ =>
+        {
+            _dropdownVisible = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private async Task SelectItem(TItem item)
+    {
+        _dropdownVisible = false;
+        _items = [];
+        await OnItemSelected.InvokeAsync(item);
+    }
+
+    public async Task ClearAsync()
+    {
+        _items = [];
+        _dropdownVisible = false;
+        _isSearching = false;
+        var cts = _searchCts;
+        _searchCts = null;
+        if (cts is not null)
+        {
+            await cts.CancelAsync();
+            cts.Dispose();
+        }
+        await ValueChanged.InvokeAsync(string.Empty);
+    }
+}

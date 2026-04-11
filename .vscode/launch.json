@@ -2,34 +2,33 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "RugbyEngine (Client + Api)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "run-client",
-      "program": "${workspaceFolder}/RugbyEngine.Api/bin/Debug/net10.0/RugbyEngine.Api.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}/RugbyEngine.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5000",
-        "SSL_CERT_DIR": "/home/vscode/.aspnet/dev-certs/trust:/usr/lib/ssl/certs",
-        "ConnectionStrings__DefaultConnection": "Server=db;Port=5432;Database=rugbyengine;User Id=postgres;Password=rugbyengine;"
-      }
-    },
-    {
       "name": "RugbyEngine.Api",
-      "type": "coreclr",
+      "type": "dotnet",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/RugbyEngine.Api/bin/Debug/net10.0/RugbyEngine.Api.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}/RugbyEngine.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5000",
-        "SSL_CERT_DIR": "/home/vscode/.aspnet/dev-certs/trust:/usr/lib/ssl/certs",
-        "ConnectionStrings__DefaultConnection": "Server=db;Port=5432;Database=rugbyengine;User Id=postgres;Password=rugbyengine;"
-      }
+      "projectPath": "${workspaceFolder}/RugbyEngine.Api/RugbyEngine.Api.csproj",
+    },
+    {
+      "name": "RugbyEngine.Client (WASM)",
+      "type": "editor-browser",
+      "request": "launch",
+      "url": "http://localhost:5268",
+      "webRoot": "${workspaceFolder}/RugbyEngine.Client",
+      "presentation": {
+        "group": "new",
+        "hidden": false
+      },
+      "preLaunchTask": "run-client"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "RugbyEngine (Client + Api)",
+      "configurations": [
+        "RugbyEngine.Api",
+        "RugbyEngine.Client (WASM)"
+      ],
+      "stopAll": true
     }
   ]
 }

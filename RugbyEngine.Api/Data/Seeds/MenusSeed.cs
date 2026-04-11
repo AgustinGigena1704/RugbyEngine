@@ -22,7 +22,11 @@ namespace RugbyEngine.Api.Data.Seeds
                 new Menu { Id = 10, Titulo = "Personas", Lvl = 2, MenuPadreId = 7, PermisoId = 4, Permiso = null!, Ruta = "Personas", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
                 new Menu { Id = 12, Titulo = "Pagos", Lvl = 2, MenuPadreId = 11, PermisoId = 5, Permiso = null!, Ruta = "Pagos", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
                 new Menu { Id = 14, Titulo = "Usuarios", Lvl = 2, MenuPadreId = 7, PermisoId = 1, Permiso = null!, Ruta = "Usuarios", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
-                new Menu { Id = 15, Titulo = "Asistencia", Lvl = 2, MenuPadreId = 1, PermisoId = 9, Permiso = null!, Ruta = "Asistencia", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
+                // Nivel 1 bajo Entrenamientos
+                new Menu { Id = 16, Titulo = "Categor\u00edas", Lvl = 1, MenuPadreId = 1, PermisoId = 10, Permiso = null!, Ruta = "Categorias", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 17, Titulo = "Posiciones", Lvl = 1, MenuPadreId = 1, PermisoId = 11, Permiso = null!, Ruta = "Posiciones", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 18, Titulo = "Jugadores", Lvl = 1, MenuPadreId = 1, PermisoId = 12, Permiso = null!, Ruta = "Jugadores", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! },
+                new Menu { Id = 19, Titulo = "Entrenamientos", Lvl = 1, MenuPadreId = 1, PermisoId = 8, Permiso = null!, Ruta = "Entrenamientos", CreatedAt = seedDate, CreatedById = 1, CreatedBy = null! }
             );
         }
     }

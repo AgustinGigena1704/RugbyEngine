@@ -8,6 +8,8 @@ using RugbyEngine.Client.Services;
 using RugbyEngine.Client.Services.Notifications;
 using System;
 
+using RugbyEngine.Client.Services.Entrenamientos;
+
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -42,5 +44,10 @@ builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<IPerfilService, PerfilService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<IPosicionService, PosicionService>();
+builder.Services.AddScoped<IEntrenamientoService, EntrenamientoService>();
+builder.Services.AddScoped<IJugadorService, JugadorService>();
+builder.Services.AddScoped<IAsistenciaService, AsistenciaService>();
 
 await builder.Build().RunAsync();

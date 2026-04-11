@@ -4,7 +4,6 @@
 @implements IDisposable
 
 <nav class="mobile-nav">
-    <span class="app-brand me-4" onclick="@(() => NavigationManager.NavigateTo("/"))">RugbyEngine</span>
     <AuthorizeView>
         <Authorized>
             @if (_menus != null)
@@ -60,7 +59,10 @@
 
     private RenderFragment RenderMobileMenu(MenuDto menu) => __builder =>
     {
-        if (menu.Items != null && menu.Items.Any())
+        // Group only when there are real lvl1 children (children that themselves have children)
+        var hasLevel1Children = menu.Items?.Any(child => (child.Items?.Count ?? 0) > 0) ?? false;
+
+        if (hasLevel1Children)
         {
             var groupId = menu.Title.Replace(" ", "");
             var isOpen = _openGroups.Contains(groupId);
@@ -77,15 +79,13 @@
                 @if (isOpen)
                 {
                     <ul class="list-none mobile-nav__sublist">
-                        @foreach (var sub in menu.Items)
+                        @foreach (var sub in menu.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
                         {
-                            var route = !string.IsNullOrEmpty(sub.Route)
-                                ? sub.Route
-                                : sub.Items?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route ?? string.Empty;
+                            var route = sub.Items?.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.Route))?.Route ?? ResolveRoute(sub);
                             if (!string.IsNullOrEmpty(route))
                             {
                                 <li>
-                                    <a class="mobile-nav__link" href="@route">@(sub.Title)</a>
+                                    <a class="mobile-nav__link mobile-nav__link--sub" href="@route">@(sub.Title)</a>
                                 </li>
                             }
                         }
@@ -95,11 +95,68 @@
         }
         else if (!string.IsNullOrEmpty(menu.Route))
         {
+            // No lvl1 children — render as direct link to first lvl2 if any
             <li>
-                <a class="mobile-nav__link mobile-nav__link--top" href="@menu.Route">
+                <a class="mobile-nav__link mobile-nav__link--top" href="@GetTargetRouteForMenu(menu)">
                     @(menu.Title)
                 </a>
             </li>
         }
+        else
+        {
+            // Fallback: render group so descendants remain accessible
+            var groupId = menu.Title.Replace(" ", "");
+            var isOpen = _openGroups.Contains(groupId);
+            <li class="mobile-nav__group">
+                <button class="mobile-nav__group-btn @(isOpen ? "" : "collapsed")" @onclick="() => ToggleGroup(groupId)"
+                        aria-expanded="@(isOpen ? "true" : "false")">
+                    @(menu.Title)
+                </button>
+                @if (isOpen)
+                {
+                    <ul class="list-none mobile-nav__sublist">
+                        @foreach (var sub in menu.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
+                        {
+                            var route = sub.Items?.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.Route))?.Route ?? ResolveRoute(sub);
+                            if (!string.IsNullOrEmpty(route))
+                            {
+                                <li>
+                                    <a class="mobile-nav__link mobile-nav__link--sub" href="@route">@(sub.Title)</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                }
+            </li>
+        }
     };
+
+    private static string ResolveRoute(MenuDto item)
+    {
+        if (item.Items is { Count: > 0 })
+        {
+            var firstChildRoute = item.Items
+                .Select(ResolveRoute)
+                .FirstOrDefault(route => !string.IsNullOrWhiteSpace(route));
+
+            if (!string.IsNullOrWhiteSpace(firstChildRoute))
+                return firstChildRoute;
+        }
+
+        return item.Route ?? string.Empty;
+    }
+
+    private static string GetTargetRouteForMenu(MenuDto menu)
+    {
+        var firstLvl2 = menu.Items?
+            .Where(l1 => (l1.Items?.Count ?? 0) > 0)
+            .SelectMany(l1 => l1.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
+            .FirstOrDefault(l2 => !string.IsNullOrWhiteSpace(l2.Route));
+
+        if (firstLvl2 != null) return firstLvl2.Route!;
+
+        var rr = ResolveRoute(menu);
+        if (!string.IsNullOrWhiteSpace(rr)) return rr;
+        return menu.Route ?? string.Empty;
+    }
 }

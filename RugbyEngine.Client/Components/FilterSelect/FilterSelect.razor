@@ -1,0 +1,111 @@
+@typeparam TItem
+@typeparam TValue
+
+<div class="filterselect-wrapper">
+    <input type="text" class="form-control @InputCssClass" value="@_inputText" @oninput="OnInput" @onfocus="OnFocus"
+           @onblur="OnBlur" placeholder="@Placeholder" autocomplete="off" disabled="@Disabled" />
+    @if (_dropdownVisible)
+    {
+        <div class="autocomplete-dropdown shadow">
+            @if (_filteredItems.Count == 0)
+            {
+                <div class="autocomplete-item autocomplete-item--empty">Sin resultados</div>
+            }
+            else
+            {
+                @foreach (var item in _filteredItems)
+                {
+                    var captured = item;
+                    <div class="autocomplete-item" @onmousedown="() => SelectItem(captured)">
+                        @if (ItemTemplate is not null)
+                        {
+                            @ItemTemplate(captured)
+                        }
+                        else
+                        {
+                            @GetDisplayText(captured)
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<TItem> Items { get; set; } = [];
+    [Parameter, EditorRequired] public Func<TItem, string, bool> FilterFunc { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, TValue> GetItemValue { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, string> GetDisplayText { get; set; } = default!;
+    [Parameter] public RenderFragment<TItem>? ItemTemplate { get; set; }
+
+    [Parameter] public TValue? Value { get; set; }
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+
+    [Parameter] public string Placeholder { get; set; } = string.Empty;
+    [Parameter] public string InputCssClass { get; set; } = string.Empty;
+    [Parameter] public bool Disabled { get; set; }
+
+    private string _inputText = string.Empty;
+    private List<TItem> _filteredItems = [];
+    private bool _dropdownVisible;
+    private TValue? _lastSyncedValue;
+
+    protected override void OnParametersSet()
+    {
+        if (!EqualityComparer<TValue>.Default.Equals(_lastSyncedValue, Value) && !_dropdownVisible)
+        {
+            _lastSyncedValue = Value;
+            var item = FindItemByValue(Value);
+            _inputText = item is not null ? GetDisplayText(item) : string.Empty;
+        }
+    }
+
+    private TItem? FindItemByValue(TValue? value)
+    {
+        if (value is null || EqualityComparer<TValue>.Default.Equals(value, default))
+            return default;
+        return Items.FirstOrDefault(item =>
+            EqualityComparer<TValue>.Default.Equals(GetItemValue(item), value));
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        _inputText = e.Value?.ToString() ?? string.Empty;
+        ApplyFilter(_inputText);
+        _dropdownVisible = true;
+    }
+
+    private void OnFocus()
+    {
+        ApplyFilter(_inputText);
+        _dropdownVisible = true;
+    }
+
+    private void OnBlur()
+    {
+        _ = Task.Delay(150).ContinueWith(_ =>
+        {
+            _dropdownVisible = false;
+            var item = FindItemByValue(Value);
+            _inputText = item is not null ? GetDisplayText(item) : string.Empty;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private void ApplyFilter(string text)
+    {
+        _filteredItems = string.IsNullOrWhiteSpace(text)
+            ? [.. Items]
+            : Items.Where(item => FilterFunc(item, text)).ToList();
+    }
+
+    private async Task SelectItem(TItem item)
+    {
+        var value = GetItemValue(item);
+        _inputText = GetDisplayText(item);
+        _lastSyncedValue = value;
+        _dropdownVisible = false;
+        await ValueChanged.InvokeAsync(value);
+    }
+}

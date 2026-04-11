@@ -1,0 +1,268 @@
+@page "/Entrenamientos/Posiciones"
+@attribute [Authorize]
+@using RugbyEngine.Shared.Entrenamientos
+@using RugbyEngine.Shared.Tablas
+@using RugbyEngine.Client.Services.Entrenamientos
+
+@inject IPosicionService PosicionService
+@inject INotificationService Notifier
+
+<PageTitle>Posiciones</PageTitle>
+
+<div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <h4 class="mb-0 font-bold">Posiciones</h4>
+    <button class="btn btn-primary btn-action" @onclick="OpenCreateDialog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-1"
+             viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path
+            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+        </svg>
+        Nueva Posición
+    </button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <div class="mb-4">
+            <input type="search" class="form-control" placeholder="Buscar por nombre o número..." value="@_searchText"
+                   @oninput="OnSearchInput" />
+        </div>
+
+        <Tabla T="PosicionResponse" @ref="_tablaRef" Paginacion="true" SearchFunc="SearchAsync" CountFunc="CountAsync"
+               PageSizes="_pageSizes" EmptyText="No se encontraron posiciones.">
+            <Header>
+                <Columna Nombre="Número" />
+                <Columna Nombre="Nombre" />
+                <Columna Nombre="Acciones" />
+            </Header>
+            <Rows>
+                <Row T="PosicionResponse" Context="p">@p.Numero</Row>
+                <Row T="PosicionResponse" Context="p">@p.Nombre</Row>
+                <Row T="PosicionResponse" Context="p">
+                    <div class="td-actions">
+                        <button class="btn btn-sm btn-outline-primary btn-action mr-1" title="Editar"
+                                @onclick="() => OpenEditDialog(p)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                 viewBox="0 0 16 16">
+                                <path
+                                d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                            <span class="hidden lg:inline ml-1">Editar</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action" title="Eliminar"
+                                @onclick="() => ConfirmDelete(p)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                 viewBox="0 0 16 16">
+                                <path
+                                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path
+                                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                            <span class="hidden lg:inline ml-1">Eliminar</span>
+                        </button>
+                    </div>
+                </Row>
+            </Rows>
+        </Tabla>
+    </div>
+</div>
+
+@if (_dialogVisible)
+{
+    <div class="app-modal-backdrop" @onclick="CloseDialog"></div>
+    <div class="app-modal" role="dialog" aria-modal="true">
+        <div class="app-modal__header">
+            <h5 class="app-modal__title">@(_editingId.HasValue ? "Editar Posición" : "Nueva Posición")</h5>
+            <button class="btn-close" @onclick="CloseDialog" aria-label="Cerrar"></button>
+        </div>
+        <div class="app-modal__body">
+            <EditForm Model="_formModel" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Número <span class="text-red-600">*</span></label>
+                        <InputNumber class="form-control" @bind-Value="_formModel.Numero" />
+                        <ValidationMessage For="@(() => _formModel.Numero)" class="text-red-600 text-sm" />
+                    </div>
+                    <div>
+                        <label class="form-label">Nombre <span class="text-red-600">*</span></label>
+                        <InputText class="form-control" @bind-Value="_formModel.Nombre" />
+                        <ValidationMessage For="@(() => _formModel.Nombre)" class="text-red-600 text-sm" />
+                    </div>
+                </div>
+                <div class="app-modal__footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog"
+                            disabled="@_isSaving">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-action" disabled="@_isSaving">
+                        @if (_isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                        }
+                        Guardar
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@if (_deleteDialogVisible)
+{
+    <div class="app-modal-backdrop" @onclick="() => _deleteDialogVisible = false"></div>
+    <div class="app-modal app-modal--sm" role="dialog" aria-modal="true">
+        <div class="app-modal__header">
+            <h5 class="app-modal__title">Confirmar eliminación</h5>
+            <button class="btn-close" @onclick="() => _deleteDialogVisible = false" aria-label="Cerrar"></button>
+        </div>
+        <div class="app-modal__body">
+            <p>¿Está seguro que desea eliminar <strong>@_deletingItem?.Numero — @_deletingItem?.Nombre</strong>?</p>
+            <p class="text-gray-500 text-sm mb-0">Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="app-modal__footer">
+            <button class="btn btn-secondary" @onclick="() => _deleteDialogVisible = false"
+                    disabled="@_isDeleting">Cancelar</button>
+            <button class="btn btn-danger btn-action" @onclick="ExecuteDeleteAsync" disabled="@_isDeleting">
+                @if (_isDeleting)
+                {
+                    <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                }
+                Eliminar
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    private Tabla<PosicionResponse>? _tablaRef;
+    private string _searchText = string.Empty;
+    private readonly int[] _pageSizes = [10, 20, 50];
+    private CancellationTokenSource? _searchDebounceCts;
+
+    private bool _dialogVisible;
+    private bool _isSaving;
+    private int? _editingId;
+    private readonly PosicionRequest _formModel = new();
+
+    private bool _deleteDialogVisible;
+    private bool _isDeleting;
+    private PosicionResponse? _deletingItem;
+
+    private async Task<List<PosicionResponse>> SearchAsync(PaginacionDto paginacion, CancellationToken cancellationToken)
+    {
+        var table = await PosicionService.GetTableAsync(paginacion, _searchText, cancellationToken);
+        if (cancellationToken.IsCancellationRequested) return [];
+        return table?.Registros ?? [];
+    }
+
+    private Task<int> CountAsync(CancellationToken cancellationToken)
+        => PosicionService.CountAsync(_searchText, cancellationToken);
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+
+        var previousCts = _searchDebounceCts;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        _searchDebounceCts = new CancellationTokenSource();
+        var token = _searchDebounceCts.Token;
+
+        try
+        {
+            await Task.Delay(250, token);
+            if (_tablaRef is not null)
+                await _tablaRef.RefreshAsync(resetPage: true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+    }
+
+    private void OpenCreateDialog()
+    {
+        _editingId = null;
+        ResetForm();
+        _dialogVisible = true;
+    }
+
+    private void OpenEditDialog(PosicionResponse item)
+    {
+        _editingId = item.Id;
+        _formModel.Numero = item.Numero;
+        _formModel.Nombre = item.Nombre;
+        _dialogVisible = true;
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+
+        PosicionResponse? result = _editingId.HasValue
+            ? await PosicionService.UpdateAsync(_editingId.Value, _formModel)
+            : await PosicionService.CreateAsync(_formModel);
+
+        _isSaving = false;
+
+        if (result is not null)
+        {
+            Notifier.Notify(NotificationType.Ok, _editingId.HasValue ? "Posición actualizada correctamente." : "Posición creada correctamente.");
+            CloseDialog();
+            await RefreshAfterMutationAsync();
+        }
+        else
+        {
+            Notifier.Notify(NotificationType.Error, "No se pudo guardar. Verifique los datos o intente más tarde.");
+        }
+    }
+
+    private void CloseDialog()
+    {
+        _dialogVisible = false;
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _formModel.Numero = 0;
+        _formModel.Nombre = string.Empty;
+    }
+
+    private void ConfirmDelete(PosicionResponse item)
+    {
+        _deletingItem = item;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task ExecuteDeleteAsync()
+    {
+        if (_deletingItem is null) return;
+
+        _isDeleting = true;
+        var success = await PosicionService.DeleteAsync(_deletingItem.Id);
+        _isDeleting = false;
+
+        if (success)
+        {
+            Notifier.Notify(NotificationType.Ok, "Posición eliminada correctamente.");
+            _deleteDialogVisible = false;
+            _deletingItem = null;
+            await RefreshAfterMutationAsync();
+        }
+        else
+        {
+            Notifier.Notify(NotificationType.Error, "No se pudo eliminar la posición. Intente más tarde.");
+        }
+    }
+
+    private async Task RefreshAfterMutationAsync()
+    {
+        if (_tablaRef is not null)
+            await _tablaRef.RefreshAsync();
+    }
+}

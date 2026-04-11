@@ -29,12 +29,18 @@ namespace RugbyEngine.Api.Data.Seeds
                     new { PerfilId = 1, PermisoId = 7 },
                     new { PerfilId = 1, PermisoId = 8 },
                     new { PerfilId = 1, PermisoId = 9 },
-                    // Entrenador: Registros, Personas, Administracion, Entrenamientos, Asistencia
+                    new { PerfilId = 1, PermisoId = 10 },
+                    new { PerfilId = 1, PermisoId = 11 },
+                    new { PerfilId = 1, PermisoId = 12 },
+                    // Entrenador: Registros, Personas, Administracion, Entrenamientos, Asistencia, Categorias, Posiciones, Jugadores
                     new { PerfilId = 2, PermisoId = 3 },
                     new { PerfilId = 2, PermisoId = 4 },
                     new { PerfilId = 2, PermisoId = 6 },
                     new { PerfilId = 2, PermisoId = 8 },
-                    new { PerfilId = 2, PermisoId = 9 }
+                    new { PerfilId = 2, PermisoId = 9 },
+                    new { PerfilId = 2, PermisoId = 10 },
+                    new { PerfilId = 2, PermisoId = 11 },
+                    new { PerfilId = 2, PermisoId = 12 }
                 ));
         }
     }
