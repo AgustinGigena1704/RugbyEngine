@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Data.Entities;
 
 namespace RugbyEngine.Api.Data.Seeds
 {
+    [Seed]
     public class PermisosSeed : IEntityTypeConfiguration<Permiso>
     {
         private readonly DateTime seedDate = new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc);

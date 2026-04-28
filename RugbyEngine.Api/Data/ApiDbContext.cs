@@ -1,7 +1,9 @@
 using System.Reflection;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Seeds;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Api.Services.Interfaces;
 
@@ -410,11 +412,38 @@ namespace RugbyEngine.Api.Data
 
         public static async Task SeedAsync(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new PersonasSeed());
-            modelBuilder.ApplyConfiguration(new UsuariosSeed());
-            modelBuilder.ApplyConfiguration(new PermisosSeed());
-            modelBuilder.ApplyConfiguration(new PerfilesSeed());
-            modelBuilder.ApplyConfiguration(new MenusSeed());
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var applyConfigMethod = typeof(ModelBuilder)
+                .GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "ApplyConfiguration" && m.IsGenericMethodDefinition);
+
+            if (applyConfigMethod == null)
+            {
+                await Task.CompletedTask;
+                return;
+            }
+
+            var seedTypes = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.GetCustomAttributes(typeof(SeedAttribute), inherit: false).Any())
+                .ToList();
+
+            foreach (var seedType in seedTypes)
+            {
+                var iface = seedType.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEntityTypeConfiguration<>));
+
+                if (iface == null) continue;
+
+                var entityType = iface.GetGenericArguments()[0];
+                var instance = Activator.CreateInstance(seedType);
+                if (instance == null) continue;
+
+                var generic = applyConfigMethod.MakeGenericMethod(entityType);
+                generic.Invoke(modelBuilder, new[] { instance });
+            }
+
+            await Task.CompletedTask;
         }
     }
 }

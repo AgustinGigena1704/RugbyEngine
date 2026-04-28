@@ -56,7 +56,7 @@
       "onAutoForward": "openBrowserOnce"
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y postgresql-client && sudo install -m 755 .devcontainer/bin/gcr /usr/local/bin/gcr && dotnet restore RugbyEngine.slnx && dotnet tool restore",
+  "postCreateCommand": "bash .devcontainer/bin/setup.sh",
   "postStartCommand": "sudo chown -R vscode:vscode . 2>/dev/null || true",
   "remoteEnv": {
     "ASPNETCORE_ENVIRONMENT": "Development",
