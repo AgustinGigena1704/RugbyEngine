@@ -149,7 +149,32 @@
     <script src="js/storageInterop.js"></script>
     <script src="js/sessionMonitor.js"></script>
 
-    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>
+        (function () {
+            var isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (!isLocalhost) {
+                return;
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                    registrations.forEach(function (registration) {
+                        registration.unregister();
+                    });
+                });
+            }
+
+            if ('caches' in window) {
+                caches.keys().then(function (keys) {
+                    keys.forEach(function (key) {
+                        caches.delete(key);
+                    });
+                });
+            }
+        })();
+    </script>
+
+    <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
 </html>

@@ -20,10 +20,14 @@
         <nav class="side-menu__nav">
             @foreach (var item in FilteredItems)
             {
-                <a class="side-menu__link @(NavigationManager.Uri.Contains(item.Route ?? string.Empty) && !string.IsNullOrEmpty(item.Route) ? "side-menu__link--active" : "")"
-                   href="@item.Route">
-                    @item.Title
-                </a>
+                var route = ResolveRoute(item);
+                if (!string.IsNullOrWhiteSpace(route))
+                {
+                    <a class="side-menu__link @(IsActiveRoute(route) ? "side-menu__link--active" : "")"
+                       href="@route">
+                        @item.Title
+                    </a>
+                }
             }
         </nav>
     }
@@ -48,6 +52,28 @@
         : _allLevel2Items.Where(m =>
             m.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
             (m.ToolTip != null && m.ToolTip.Contains(_searchText, StringComparison.OrdinalIgnoreCase)));
+
+    private static string ResolveRoute(MenuDto item)
+    {
+        if (item.Items is { Count: > 0 })
+        {
+            var firstChildRoute = item.Items
+                .Select(ResolveRoute)
+                .FirstOrDefault(route => !string.IsNullOrWhiteSpace(route));
+
+            if (!string.IsNullOrWhiteSpace(firstChildRoute))
+                return firstChildRoute;
+        }
+
+        return item.Route ?? string.Empty;
+    }
+
+    private bool IsActiveRoute(string route)
+    {
+        var currentPath = new Uri(NavigationManager.Uri).AbsolutePath.TrimEnd('/').ToLowerInvariant();
+        var normalizedRoute = "/" + route.Trim('/').ToLowerInvariant();
+        return currentPath == normalizedRoute || currentPath.StartsWith(normalizedRoute + "/", StringComparison.Ordinal);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,9 +122,8 @@
                 }
                 else
                 {
-                    foreach (var level0 in await MenuService.GetMenuTreeAsync())
-                        foreach (var level1 in level0.Items)
-                            _allLevel2Items.AddRange(level1.Items);
+                    // No hay ActiveLevel1 -> no mostrar elementos laterales
+                    _allLevel2Items = new();
                 }
             }
         }

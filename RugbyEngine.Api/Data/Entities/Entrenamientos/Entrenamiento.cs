@@ -1,5 +1,11 @@
+using RugbyEngine.Api.Data.Attributes;
+using RugbyEngine.Api.Data.Repositories;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RugbyEngine.Api.Data.Entities
 {
+    [Repository(typeof(EntrenamientoRepository))]
+    [Table("Entrenamiento")]
     public class Entrenamiento : GenericEntity, IAudithory
     {
 

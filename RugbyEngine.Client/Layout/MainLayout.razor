@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@using RugbyEngine.Shared.Menus
 @inject NavigationManager NavigationManager
 @inject MainMenuService MenuService
 @implements IDisposable
@@ -8,10 +9,10 @@
     <div class="w-full flex items-center px-4">
 
         <!-- Hamburger: mobile -->
-        <button class="btn btn-link text-white md:hidden mr-1 p-1"
-                @onclick="ToggleLeftDrawer" aria-label="Menú">
+        <button class="btn btn-link text-white md:hidden mr-1 p-1" @onclick="ToggleLeftDrawer" aria-label="Menú">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                <path fill-rule="evenodd"
+                      d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
             </svg>
         </button>
 
@@ -20,7 +21,8 @@
         <!-- Account button -->
         <button class="btn btn-link text-white ml-auto p-1" @onclick="ToggleRightDrawer" aria-label="Cuenta">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+                <path
+                d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
             </svg>
         </button>
     </div>
@@ -63,9 +65,7 @@
         <!-- Zona de swipe: borde derecho, solo mobile, solo cuando el panel está cerrado -->
         @if (!_mobileSideOpen)
         {
-            <div class="app-swipe-zone md:hidden"
-                 @ontouchstart="OnTouchStart"
-                 @ontouchend="OnTouchEndOpen">
+            <div class="app-swipe-zone md:hidden" @ontouchstart="OnTouchStart" @ontouchend="OnTouchEndOpen">
             </div>
         }
 
@@ -74,7 +74,8 @@
         {
             <button class="app-side-tab md:hidden" @onclick="() => _mobileSideOpen = true" title="Abrir menú lateral">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    <path fill-rule="evenodd"
+                          d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z" />
                 </svg>
             </button>
         }
@@ -85,21 +86,20 @@
 
         <!-- Panel deslizable: solo mobile, con swipe-to-close -->
         <div class="app-sidemenu app-sidemenu--mobile md:hidden @(_mobileSideOpen ? "app-sidemenu--open" : "")"
-             @ontouchstart="OnTouchStart"
-             @ontouchend="OnTouchEndClose">
+             @ontouchstart="OnTouchStart" @ontouchend="OnTouchEndClose">
             <div class="app-drawer__header">
-                <span class="app-drawer__title">@(MenuService.ActiveLevel1?.Title ?? "Menú")</span>
+                <span class="app-drawer__title">@(_sideMenuParent?.Title ?? "Menú")</span>
                 <button class="btn-close" @onclick="() => _mobileSideOpen = false" aria-label="Cerrar"></button>
             </div>
-            <MenuLateral />
+            <MenuLateral ParentMenu="@_sideMenuParent" />
         </div>
 
         <!-- Aside persistente: solo desktop -->
         <aside class="app-sidemenu app-sidemenu--desktop hidden md:flex flex-col">
             <div class="app-drawer__header">
-                <span class="app-drawer__title">@(MenuService.ActiveLevel1?.Title ?? "Menú")</span>
+                <span class="app-drawer__title">@(_sideMenuParent?.Title ?? "Menú")</span>
             </div>
-            <MenuLateral />
+            <MenuLateral ParentMenu="@_sideMenuParent" />
         </aside>
     }
 </div>
@@ -109,6 +109,7 @@
     private bool _rightDrawerOpen;
     private bool _mobileSideOpen;
     private bool _hasSideMenu;
+    private MenuDto? _sideMenuParent;
 
     private double _touchStartX;
     private double _touchStartY;
@@ -155,7 +156,20 @@
 
     private void OnActiveMenuChanged()
     {
-        _hasSideMenu = MenuService.ActiveLevel1 != null && MenuService.ActiveLevel1.Items.Any();
+        if (MenuService.ActiveLevel1 != null && (MenuService.ActiveLevel1.Items?.Any() ?? false))
+        {
+            _sideMenuParent = MenuService.ActiveLevel1;
+        }
+        else if (MenuService.ActiveLevel0 != null && (MenuService.ActiveLevel0.Items?.Any() ?? false))
+        {
+            _sideMenuParent = MenuService.ActiveLevel0;
+        }
+        else
+        {
+            _sideMenuParent = null;
+        }
+
+        _hasSideMenu = _sideMenuParent != null;
         if (!_hasSideMenu) _mobileSideOpen = false;
         InvokeAsync(StateHasChanged);
     }

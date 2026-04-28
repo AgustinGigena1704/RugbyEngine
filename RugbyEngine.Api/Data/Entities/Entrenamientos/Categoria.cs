@@ -1,5 +1,11 @@
+using RugbyEngine.Api.Data.Attributes;
+using RugbyEngine.Api.Data.Repositories;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RugbyEngine.Api.Data.Entities
 {
+    [Repository(typeof(CategoriaRepository))]
+    [Table("Categoria")]
     public class Categoria : GenericEntity, IAudithory
     {
         public required string Nombre { get; set; }

@@ -35,8 +35,13 @@ COPY ["RugbyEngine.Shared/RugbyEngine.Shared.csproj", "RugbyEngine.Shared/"]
 COPY ["RugbyEngine.Api/RugbyEngine.Api.csproj",       "RugbyEngine.Api/"]
 RUN dotnet restore "RugbyEngine.Api/RugbyEngine.Api.csproj"
 
+# Ensure dotnet-ef is available during SDK build stages (useful for running migrations inside the container in CI/dev)
+RUN dotnet tool install --global dotnet-ef --version 10.0.5 || true
+ENV PATH="$PATH:/root/.dotnet/tools"
+
 COPY RugbyEngine.Shared/ RugbyEngine.Shared/
 COPY RugbyEngine.Api/ RugbyEngine.Api/
+COPY [".devcontainer/bin/setup.sh", "/src/setup.sh"]
 RUN dotnet publish "RugbyEngine.Api/RugbyEngine.Api.csproj" \
     -c Release -o /app/api /p:UseAppHost=false
 
@@ -50,5 +55,9 @@ COPY --from=build-api /app/api .
 
 # Archivos estáticos del cliente WASM → wwwroot de la API
 COPY --from=build-client /app/client/wwwroot ./wwwroot
+
+# copiar setup.sh desde la etapa build-api para que esté disponible en la imagen final
+COPY --from=build-api /src/setup.sh /app/setup.sh
+RUN chmod +x /app/setup.sh || true
 
 ENTRYPOINT ["dotnet", "RugbyEngine.Api.dll"]

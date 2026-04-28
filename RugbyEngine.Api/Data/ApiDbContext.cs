@@ -1,7 +1,9 @@
 using System.Reflection;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using RugbyEngine.Api.Data.Entities;
 using RugbyEngine.Api.Data.Seeds;
+using RugbyEngine.Api.Data.Attributes;
 using RugbyEngine.Api.Services;
 using RugbyEngine.Api.Services.Interfaces;
 
@@ -18,6 +20,12 @@ namespace RugbyEngine.Api.Data
         public DbSet<Perfil> Perfiles { get; set; }
         public DbSet<Permiso> Permisos { get; set; }
         public DbSet<Menu> Menus { get; set; }
+        public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<Posicion> Posiciones { get; set; }
+        public DbSet<Entrenamiento> Entrenamientos { get; set; }
+        public DbSet<Jugador> Jugadores { get; set; }
+        public DbSet<Asistencia> Asistencias { get; set; }
+
         public DbSet<Cuenta> Cuentas { get; set; }
         public DbSet<PersonaCuenta> PersonaCuentas { get; set; }
         public DbSet<TipoMovimiento> TiposMovimiento { get; set; }
@@ -101,6 +109,98 @@ namespace RugbyEngine.Api.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Titulo).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── Categoria ─────────────────────────────────────────────────────────
+            modelBuilder.Entity<Categoria>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Abreviatura).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── Posicion ───────────────────────────────────────────────────────────
+            modelBuilder.Entity<Posicion>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Numero).IsRequired();
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+            });
+
+            // ── Entrenamiento ──────────────────────────────────────────────────────
+            modelBuilder.Entity<Entrenamiento>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+
+                entity.HasOne(e => e.Categoria)
+                    .WithMany()
+                    .HasForeignKey(e => e.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+            });
+
+            // ── Jugador ────────────────────────────────────────────────────────────
+            modelBuilder.Entity<Jugador>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+
+                entity.HasOne(e => e.Persona)
+                    .WithMany()
+                    .HasForeignKey(e => e.PersonaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(e => e.Categoria)
+                    .WithMany()
+                    .HasForeignKey(e => e.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(e => e.PosicionPrincipal)
+                    .WithMany()
+                    .HasForeignKey(e => e.PosicionPrincipalId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasOne(e => e.PosicionSecundaria)
+                    .WithMany()
+                    .HasForeignKey(e => e.PosicionSecundariaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
+
+                entity.HasOne(e => e.PosicionTerciaria)
+                    .WithMany()
+                    .HasForeignKey(e => e.PosicionTerciariaId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false);
+
+                entity.HasIndex(e => new { e.PersonaId, e.CategoriaId }).IsUnique();
+            });
+
+            // ── Asistencia ─────────────────────────────────────────────────────────
+            modelBuilder.Entity<Asistencia>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.BorradoLogico).HasDefaultValue(false);
+                entity.Property(e => e.Estado).HasDefaultValue(RugbyEngine.Shared.Entrenamientos.AsistenciaEstado.Ausente);
+
+                entity.HasOne(e => e.Entrenamiento)
+                    .WithMany()
+                    .HasForeignKey(e => e.EntrenamientoId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                entity.HasOne(e => e.Jugador)
+                    .WithMany()
+                    .HasForeignKey(e => e.JugadorId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                entity.HasIndex(e => new { e.EntrenamientoId, e.JugadorId }).IsUnique();
             });
 
             // ── Cuenta ────────────────────────────────────────────────────────────
@@ -312,11 +412,38 @@ namespace RugbyEngine.Api.Data
 
         public static async Task SeedAsync(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new PersonasSeed());
-            modelBuilder.ApplyConfiguration(new UsuariosSeed());
-            modelBuilder.ApplyConfiguration(new PermisosSeed());
-            modelBuilder.ApplyConfiguration(new PerfilesSeed());
-            modelBuilder.ApplyConfiguration(new MenusSeed());
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var applyConfigMethod = typeof(ModelBuilder)
+                .GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .FirstOrDefault(m => m.Name == "ApplyConfiguration" && m.IsGenericMethodDefinition);
+
+            if (applyConfigMethod == null)
+            {
+                await Task.CompletedTask;
+                return;
+            }
+
+            var seedTypes = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && t.GetCustomAttributes(typeof(SeedAttribute), inherit: false).Any())
+                .ToList();
+
+            foreach (var seedType in seedTypes)
+            {
+                var iface = seedType.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEntityTypeConfiguration<>));
+
+                if (iface == null) continue;
+
+                var entityType = iface.GetGenericArguments()[0];
+                var instance = Activator.CreateInstance(seedType);
+                if (instance == null) continue;
+
+                var generic = applyConfigMethod.MakeGenericMethod(entityType);
+                generic.Invoke(modelBuilder, new[] { instance });
+            }
+
+            await Task.CompletedTask;
         }
     }
 }

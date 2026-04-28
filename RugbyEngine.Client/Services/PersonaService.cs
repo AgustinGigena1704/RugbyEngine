@@ -163,5 +163,25 @@ namespace RugbyEngine.Client.Services
                 return false;
             }
         }
+
+        public async Task<List<PersonaResponse>> SearchDisponiblesAsync(string? search, int pageSize = 10, int? incluirPersonaId = null, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var url = $"api/persona/disponibles?search={Uri.EscapeDataString(search ?? string.Empty)}&pageSize={pageSize}";
+                if (incluirPersonaId.HasValue)
+                    url += $"&incluirPersonaId={incluirPersonaId}";
+                return await _httpClient.GetFromJsonAsync<List<PersonaResponse>>(url, cancellationToken) ?? [];
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al buscar personas disponibles");
+                return [];
+            }
+        }
     }
 }

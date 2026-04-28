@@ -18,12 +18,24 @@
     {
       "label": "run-client",
       "type": "shell",
-      "command": "{ lsof -ti :5268; lsof -ti :5000; } 2>/dev/null | xargs -r kill -9; sleep 0.3; dotnet build ${workspaceFolder}/RugbyEngine.slnx && (dotnet run --no-build --project ${workspaceFolder}/RugbyEngine.Client/RugbyEngine.Client.csproj > /tmp/rugbyengine-client.log 2>&1 &) && until lsof -ti :5268 > /dev/null 2>&1; do sleep 0.5; done && echo 'Client ready on port 5268'",
+      "isBackground": true,
+      "command": "lsof -ti :5268 2>/dev/null | xargs -r kill -9; dotnet build ${workspaceFolder}/RugbyEngine.slnx && dotnet run --project ${workspaceFolder}/RugbyEngine.Client/RugbyEngine.Client.csproj --launch-profile http --urls http://localhost:5268",
       "presentation": {
         "reveal": "always",
-        "panel": "shared"
+        "panel": "dedicated",
+        "close": false
       },
-      "problemMatcher": "$msCompile"
+      "problemMatcher": {
+        "owner": "run-client",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Build succeeded",
+          "endsPattern": "Now listening on:"
+        }
+      }
     }
   ]
 }

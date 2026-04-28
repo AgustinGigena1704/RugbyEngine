@@ -1,0 +1,539 @@
+@page "/Entrenamientos/Entrenamientos"
+@attribute [Authorize]
+@using RugbyEngine.Shared.Entrenamientos
+@using RugbyEngine.Shared.Tablas
+@using RugbyEngine.Client.Services.Entrenamientos
+
+@inject IEntrenamientoService EntrenamientoService
+@inject ICategoriaService CategoriaService
+@inject IAsistenciaService AsistenciaService
+@inject IJugadorService JugadorService
+@inject INotificationService Notifier
+
+<PageTitle>Entrenamientos</PageTitle>
+
+<div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+    <h4 class="mb-0 font-bold">Entrenamientos</h4>
+    <button class="btn btn-primary btn-action" @onclick="OpenCreateDialog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="mr-1"
+             viewBox="0 0 16 16">
+            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+            <path
+            d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+        </svg>
+        Nuevo Entrenamiento
+    </button>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <div class="mb-4">
+            <input type="search" class="form-control" placeholder="Buscar por categoría..." value="@_searchText"
+                   @oninput="OnSearchInput" />
+        </div>
+
+        <Tabla T="EntrenamientoResponse" @ref="_tablaRef" Paginacion="true" SearchFunc="SearchAsync"
+               CountFunc="CountAsync" PageSizes="_pageSizes" EmptyText="No se encontraron entrenamientos.">
+            <Header>
+                <Columna Nombre="Fecha" />
+                <Columna Nombre="Categoría" />
+                <Columna Nombre="Acciones" />
+            </Header>
+            <Rows>
+                <Row T="EntrenamientoResponse" Context="e">@e.Fecha.ToString("dd/MM/yyyy")</Row>
+                <Row T="EntrenamientoResponse" Context="e">@e.CategoriaNombre</Row>
+                <Row T="EntrenamientoResponse" Context="e">
+                    <div class="td-actions">
+                        <button class="btn btn-sm btn-outline-primary btn-action mr-1" title="Editar"
+                                @onclick="() => OpenEditDialogAsync(e)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                 viewBox="0 0 16 16">
+                                <path
+                                d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                            <span class="hidden lg:inline ml-1">Editar</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-action" title="Eliminar"
+                                @onclick="() => ConfirmDelete(e)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                 viewBox="0 0 16 16">
+                                <path
+                                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path
+                                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                            <span class="hidden lg:inline ml-1">Eliminar</span>
+                        </button>
+                    </div>
+                </Row>
+            </Rows>
+        </Tabla>
+    </div>
+</div>
+
+<!-- Modal: Alta / Modificación -->
+@if (_dialogVisible)
+{
+    <div class="app-modal-backdrop" @onclick="CloseDialog"></div>
+    <div class="app-modal app-modal--xl" role="dialog" aria-modal="true">
+        <div class="app-modal__header">
+            <h5 class="app-modal__title">@(_editingId.HasValue ? "Editar Entrenamiento" : "Nuevo Entrenamiento")</h5>
+            <button class="btn-close" @onclick="CloseDialog" aria-label="Cerrar"></button>
+        </div>
+        <div class="app-modal__body">
+            <EditForm Model="_formModel" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="form-label">Fecha <span class="text-red-600">*</span></label>
+                        <InputDate class="form-control" @bind-Value="_formModel.Fecha" />
+                        <ValidationMessage For="@(() => _formModel.Fecha)" class="text-red-600 text-sm" />
+                    </div>
+                    <div>
+                        <label class="form-label">Categoría <span class="text-red-600">*</span></label>
+                        <InputSelect class="form-control" @bind-Value:after="OnCategoriaChanged"
+                                     @bind-Value="_formModel.CategoriaId">
+                            <option value="0">-- Seleccione --</option>
+                            @foreach (var c in _categorias)
+                            {
+                                <option value="@c.Id">@c.Nombre (@c.Abreviatura)</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _formModel.CategoriaId)" class="text-red-600 text-sm" />
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+                <h6 class="font-semibold mb-3">Asistencia</h6>
+
+                <div class="mb-3 text-sm text-gray-600 flex flex-wrap gap-3">
+                    <span>Presentes: <strong class="text-green-700">@PresentesCount</strong></span>
+                    <span>Ausentes: <strong class="text-red-700">@AusentesCount</strong></span>
+                    <span>Lesionados: <strong class="text-amber-700">@LesionadosCount</strong></span>
+                    <span>Seleccionados: <strong>@SelectedCount</strong></span>
+                    <span>Total jugadores: <strong>@_jugadoresCategoria.Count</strong></span>
+                </div>
+
+                <div class="table-responsive-stack">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Jugador</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (_isAsistenciaLoading)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center text-gray-500">Cargando asistencia...</td>
+                                </tr>
+                            }
+                            else if (_formModel.CategoriaId <= 0)
+                            {
+                                <tr>
+                                    <td colspan="2" class="text-center text-gray-500">Seleccione una categoría para ver
+                                        jugadores.</td>
+                                    </tr>
+                                }
+                            else if (_jugadoresCategoria.Count == 0)
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center text-gray-500">No hay jugadores en esta categoría.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var jugador in PagedJugadores)
+                                    {
+                                        <tr>
+                                            <td>@jugador.NombreCompleto</td>
+                                            <td class="text-center">
+                                                <div class="asistencia-btn-group">
+                                                    <button type="button"
+                                                            class="asistencia-btn @(GetEstado(jugador.Id) == AsistenciaEstado.Presente ? "asistencia-btn--active" : "") asistencia-btn--presente"
+                                                            @onclick="() => ToggleEstado(jugador.Id, AsistenciaEstado.Presente)"
+                                                            title="Presente">
+                                                        <span class="btn-label">Presente</span>
+                                                        <span class="btn-initial">P</span>
+                                                    </button>
+                                                    <button type="button"
+                                                            class="asistencia-btn @(GetEstado(jugador.Id) == AsistenciaEstado.Ausente ? "asistencia-btn--active" : "") asistencia-btn--ausente"
+                                                            @onclick="() => ToggleEstado(jugador.Id, AsistenciaEstado.Ausente)"
+                                                            title="Ausente">
+                                                        <span class="btn-label">Ausente</span>
+                                                        <span class="btn-initial">A</span>
+                                                    </button>
+                                                    <button type="button"
+                                                            class="asistencia-btn @(GetEstado(jugador.Id) == AsistenciaEstado.Lesionado ? "asistencia-btn--active" : "") asistencia-btn--lesionado"
+                                                            @onclick="() => ToggleEstado(jugador.Id, AsistenciaEstado.Lesionado)"
+                                                            title="Lesionado">
+                                                        <span class="btn-label">Lesionado</span>
+                                                        <span class="btn-initial">L</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (!_isAsistenciaLoading && _jugadoresCategoria.Count > 0)
+                    {
+                        <div class="mt-3 d-flex items-center justify-between gap-3 flex-wrap text-sm">
+                            <div>
+                                Página <strong>@_asistenciaPage</strong> / <strong>@TotalPages</strong>
+                            </div>
+                            <div class="d-flex items-center gap-2">
+                                <select class="form-select form-select-sm" style="width: auto;" @bind="_asistenciaPageSize"
+                                        @bind:after="OnPageSizeChanged">
+                                    @foreach (var size in _asistenciaPageSizes)
+                                    {
+                                        <option value="@size">@size / pág.</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="PrevPage"
+                                        disabled="@(_asistenciaPage <= 1)">Anterior</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="NextPage"
+                                        disabled="@(_asistenciaPage >= TotalPages)">Siguiente</button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="app-modal__footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseDialog"
+                                disabled="@_isSaving">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-action" disabled="@_isSaving">
+                            @if (_isSaving)
+                            {
+                                <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                            }
+                            Guardar
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
+
+    <!-- Modal: Confirmación de baja -->
+    @if (_deleteDialogVisible)
+    {
+        <div class="app-modal-backdrop" @onclick="() => _deleteDialogVisible = false"></div>
+        <div class="app-modal app-modal--sm" role="dialog" aria-modal="true">
+            <div class="app-modal__header">
+                <h5 class="app-modal__title">Confirmar eliminación</h5>
+                <button class="btn-close" @onclick="() => _deleteDialogVisible = false" aria-label="Cerrar"></button>
+            </div>
+            <div class="app-modal__body">
+                <p>¿Está seguro que desea eliminar el entrenamiento del
+                    <strong>@_deletingItem?.Fecha.ToString("dd/MM/yyyy")</strong> (@_deletingItem?.CategoriaNombre)?
+                </p>
+                <p class="text-gray-500 text-sm mb-0">Esta acción eliminará también la asistencia registrada.</p>
+            </div>
+            <div class="app-modal__footer">
+                <button class="btn btn-secondary" @onclick="() => _deleteDialogVisible = false"
+                        disabled="@_isDeleting">Cancelar</button>
+                <button class="btn btn-danger btn-action" @onclick="ExecuteDeleteAsync" disabled="@_isDeleting">
+                    @if (_isDeleting)
+                    {
+                        <span class="spinner-border spinner-border-sm mr-1" role="status" aria-hidden="true"></span>
+                    }
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    }
+
+@code {
+    private Tabla<EntrenamientoResponse>? _tablaRef;
+    private string _searchText = string.Empty;
+    private readonly int[] _pageSizes = [10, 20, 50];
+    private CancellationTokenSource? _searchDebounceCts;
+
+    private List<CategoriaResponse> _categorias = [];
+
+    private List<JugadorResponse> _jugadoresCategoria = [];
+    private Dictionary<int, AsistenciaEstado?> _estadoPorJugador = [];
+
+    private bool _dialogVisible;
+    private bool _isSaving;
+    private bool _isAsistenciaLoading;
+    private int? _editingId;
+    private readonly EntrenamientoRequest _formModel = new();
+
+    private readonly int[] _asistenciaPageSizes = [10, 20, 50];
+    private int _asistenciaPage = 1;
+    private int _asistenciaPageSize = 10;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)_jugadoresCategoria.Count / _asistenciaPageSize));
+    private IEnumerable<JugadorResponse> PagedJugadores => _jugadoresCategoria
+        .Skip((_asistenciaPage - 1) * _asistenciaPageSize)
+        .Take(_asistenciaPageSize);
+    private int PresentesCount => _estadoPorJugador.Values.Count(v => v == AsistenciaEstado.Presente);
+    private int AusentesCount => _estadoPorJugador.Values.Count(v => v == AsistenciaEstado.Ausente);
+    private int LesionadosCount => _estadoPorJugador.Values.Count(v => v == AsistenciaEstado.Lesionado);
+    private int SelectedCount => _estadoPorJugador.Values.Count(v => v.HasValue);
+
+    private bool _deleteDialogVisible;
+    private bool _isDeleting;
+    private EntrenamientoResponse? _deletingItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categorias = await CategoriaService.GetAllAsync();
+    }
+
+    private async Task<List<EntrenamientoResponse>> SearchAsync(PaginacionDto paginacion, CancellationToken
+cancellationToken)
+    {
+        var table = await EntrenamientoService.GetTableAsync(paginacion, _searchText, cancellationToken);
+        if (cancellationToken.IsCancellationRequested) return [];
+        return table?.Registros ?? [];
+    }
+
+    private Task<int> CountAsync(CancellationToken cancellationToken)
+        => EntrenamientoService.CountAsync(_searchText, cancellationToken);
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+
+        var previousCts = _searchDebounceCts;
+        if (previousCts is not null)
+        {
+            await previousCts.CancelAsync();
+            previousCts.Dispose();
+        }
+
+        _searchDebounceCts = new CancellationTokenSource();
+        var token = _searchDebounceCts.Token;
+
+        try
+        {
+            await Task.Delay(250, token);
+            if (_tablaRef is not null)
+                await _tablaRef.RefreshAsync(resetPage: true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+    }
+
+    private void OpenCreateDialog()
+    {
+        _editingId = null;
+        _isAsistenciaLoading = false;
+        _formModel.CategoriaId = 0;
+        _formModel.Fecha = DateOnly.FromDateTime(DateTime.Today);
+        _jugadoresCategoria = [];
+        _estadoPorJugador = [];
+        _asistenciaPage = 1;
+        _dialogVisible = true;
+    }
+
+    private int _lastCategoriaId = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        // Detectar cambio de categoría en modo creación
+        if (!_editingId.HasValue && _formModel.CategoriaId != _lastCategoriaId && _formModel.CategoriaId > 0)
+        {
+            _lastCategoriaId = _formModel.CategoriaId;
+            await LoadAsistenciaContextAsync(_formModel.CategoriaId, null);
+        }
+    }
+
+    private async Task OnCategoriaChanged()
+    {
+        _jugadoresCategoria = [];
+        _estadoPorJugador = [];
+        _asistenciaPage = 1;
+
+        if (_formModel.CategoriaId > 0)
+        {
+            _lastCategoriaId = _formModel.CategoriaId;
+            await LoadAsistenciaContextAsync(_formModel.CategoriaId, null);
+        }
+        else
+        {
+            _lastCategoriaId = 0;
+            _jugadoresCategoria = [];
+            _estadoPorJugador = [];
+        }
+    }
+
+    private async Task LoadAsistenciaContextAsync(int categoriaId, int? entrenamientoId)
+    {
+        _isAsistenciaLoading = true;
+        List<AsistenciaItemDto> asistencia = [];
+
+        if (entrenamientoId.HasValue)
+        {
+            var jugadoresTask = JugadorService.GetAllAsync();
+            var asistenciaTask = AsistenciaService.GetByEntrenamientoAsync(entrenamientoId.Value);
+            await Task.WhenAll(jugadoresTask, asistenciaTask);
+
+            _jugadoresCategoria = jugadoresTask.Result
+                .Where(j => j.CategoriaId == categoriaId)
+                .OrderBy(j => j.NombreCompleto)
+                .ToList();
+            asistencia = asistenciaTask.Result;
+        }
+        else
+        {
+            var todosJugadores = await JugadorService.GetAllAsync();
+            _jugadoresCategoria = todosJugadores
+                .Where(j => j.CategoriaId == categoriaId)
+                .OrderBy(j => j.NombreCompleto)
+                .ToList();
+        }
+
+        _estadoPorJugador = _jugadoresCategoria.ToDictionary(j => j.Id, _ => (AsistenciaEstado?)null);
+        foreach (var item in asistencia.Where(a => _estadoPorJugador.ContainsKey(a.JugadorId)))
+            _estadoPorJugador[item.JugadorId] = item.Estado;
+
+        _asistenciaPage = 1;
+        _isAsistenciaLoading = false;
+    }
+
+    private async Task OpenEditDialogAsync(EntrenamientoResponse item)
+    {
+        _editingId = item.Id;
+        _isAsistenciaLoading = true;
+        _formModel.CategoriaId = item.CategoriaId;
+        _formModel.Fecha = item.Fecha;
+        _jugadoresCategoria = [];
+        _estadoPorJugador = [];
+        _asistenciaPage = 1;
+        _dialogVisible = true;
+        await LoadAsistenciaContextAsync(item.CategoriaId, item.Id);
+    }
+
+    private async Task SaveAsync()
+    {
+        _isSaving = true;
+        bool isCreating = !_editingId.HasValue;
+
+        EntrenamientoResponse? result = _editingId.HasValue
+            ? await EntrenamientoService.UpdateAsync(_editingId.Value, _formModel)
+            : await EntrenamientoService.CreateAsync(_formModel);
+
+        _isSaving = false;
+
+        if (result is not null)
+        {
+            if (isCreating)
+                _editingId = result.Id;
+
+            if (_editingId.HasValue)
+            {
+                var itemsToSave = _estadoPorJugador
+                    .Where(x => x.Value.HasValue)
+                    .Select(x => new AsistenciaItemDto
+                    {
+                        JugadorId = x.Key,
+                        JugadorNombre = _jugadoresCategoria.FirstOrDefault(j => j.Id == x.Key)?.NombreCompleto ?? string.Empty,
+                        Estado = x.Value!.Value
+                    })
+                    .ToList();
+
+                var asistenciaSuccess = await AsistenciaService.GuardarAsistenciaAsync(
+                    _editingId.Value,
+                    new AsistenciaBulkRequest { Items = itemsToSave });
+
+                if (!asistenciaSuccess)
+                {
+                    Notifier.Notify(NotificationType.Warning, "Entrenamiento actualizado, pero no se pudo guardar la asistencia.");
+                }
+            }
+
+            Notifier.Notify(NotificationType.Ok, isCreating
+                ? "Entrenamiento y asistencia guardados correctamente."
+                : "Entrenamiento actualizado correctamente.");
+            CloseDialog();
+            await RefreshAfterMutationAsync();
+        }
+        else
+        {
+            Notifier.Notify(NotificationType.Error, "No se pudo guardar. Verifique los datos o intente más tarde.");
+        }
+    }
+
+    private AsistenciaEstado? GetEstado(int jugadorId)
+    {
+        return _estadoPorJugador.TryGetValue(jugadorId, out var estado) ? estado : null;
+    }
+
+    private void ToggleEstado(int jugadorId, AsistenciaEstado estado)
+    {
+        if (!_estadoPorJugador.ContainsKey(jugadorId))
+            return;
+
+        _estadoPorJugador[jugadorId] = _estadoPorJugador[jugadorId] == estado ? null : estado;
+    }
+
+    private void PrevPage()
+    {
+        if (_asistenciaPage > 1)
+            _asistenciaPage--;
+    }
+
+    private void NextPage()
+    {
+        if (_asistenciaPage < TotalPages)
+            _asistenciaPage++;
+    }
+
+    private Task OnPageSizeChanged()
+    {
+        _asistenciaPage = 1;
+        return Task.CompletedTask;
+    }
+
+    private void CloseDialog()
+    {
+        _dialogVisible = false;
+        _isAsistenciaLoading = false;
+        _jugadoresCategoria = [];
+        _estadoPorJugador = [];
+        _asistenciaPage = 1;
+    }
+
+    private void ConfirmDelete(EntrenamientoResponse item)
+    {
+        _deletingItem = item;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task ExecuteDeleteAsync()
+    {
+        if (_deletingItem is null) return;
+
+        _isDeleting = true;
+        var success = await EntrenamientoService.DeleteAsync(_deletingItem.Id);
+        _isDeleting = false;
+
+        if (success)
+        {
+            Notifier.Notify(NotificationType.Ok, "Entrenamiento eliminado correctamente.");
+            _deleteDialogVisible = false;
+            _deletingItem = null;
+            await RefreshAfterMutationAsync();
+        }
+        else
+        {
+            Notifier.Notify(NotificationType.Error, "No se pudo eliminar el entrenamiento. Intente más tarde.");
+        }
+    }
+
+    private async Task RefreshAfterMutationAsync()
+    {
+        if (_tablaRef is not null)
+            await _tablaRef.RefreshAsync();
+    }
+}

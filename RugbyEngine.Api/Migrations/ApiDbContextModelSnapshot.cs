@@ -25,6 +25,256 @@ namespace RugbyEngine.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Asistencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("BorradoLogico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EntrenamientoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Estado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("JugadorId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DeletedById");
+
+                    b.HasIndex("JugadorId");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("EntrenamientoId", "JugadorId")
+                        .IsUnique();
+
+                    b.ToTable("Asistencia");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Categoria", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Abreviatura")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("BorradoLogico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EdadMaxima")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EdadMinima")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DeletedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Categoria");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Abreviatura = "SUP",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 0,
+                            EdadMinima = 20,
+                            Nombre = "Superior"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Abreviatura = "M19",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 19,
+                            EdadMinima = 18,
+                            Nombre = "M19"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Abreviatura = "M17",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 17,
+                            EdadMinima = 17,
+                            Nombre = "M17"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Abreviatura = "M16",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 16,
+                            EdadMinima = 16,
+                            Nombre = "M16"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Abreviatura = "M15",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 15,
+                            EdadMinima = 15,
+                            Nombre = "M15"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Abreviatura = "M14",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 14,
+                            EdadMinima = 14,
+                            Nombre = "M14"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Abreviatura = "M13",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 13,
+                            EdadMinima = 13,
+                            Nombre = "M13"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Abreviatura = "M10",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 10,
+                            EdadMinima = 10,
+                            Nombre = "M10"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Abreviatura = "M9",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 9,
+                            EdadMinima = 9,
+                            Nombre = "M9"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Abreviatura = "M8",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 8,
+                            EdadMinima = 8,
+                            Nombre = "M8"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Abreviatura = "M7",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 7,
+                            EdadMinima = 7,
+                            Nombre = "M7"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Abreviatura = "ESC",
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            EdadMaxima = 6,
+                            EdadMinima = 0,
+                            Nombre = "Escuelita "
+                        });
+                });
+
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Cuenta", b =>
                 {
                     b.Property<int>("Id")
@@ -48,7 +298,57 @@ namespace RugbyEngine.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Cuenta");
+                    b.ToTable("Cuentas");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Entrenamiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("BorradoLogico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("Fecha")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DeletedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Entrenamiento");
                 });
 
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Evento", b =>
@@ -217,6 +517,74 @@ namespace RugbyEngine.Api.Migrations
                     b.ToTable("EventoMovimientos");
                 });
 
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Jugador", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("BorradoLogico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PersonaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PosicionPrincipalId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PosicionSecundariaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PosicionTerciariaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DeletedById");
+
+                    b.HasIndex("PosicionPrincipalId");
+
+                    b.HasIndex("PosicionSecundariaId");
+
+                    b.HasIndex("PosicionTerciariaId");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("PersonaId", "CategoriaId")
+                        .IsUnique();
+
+                    b.ToTable("Jugador");
+                });
+
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Menu", b =>
                 {
                     b.Property<int>("Id")
@@ -294,6 +662,7 @@ namespace RugbyEngine.Api.Migrations
                             CreatedById = 1,
                             Lvl = 0,
                             PermisoId = 8,
+                            Ruta = "Entrenamientos",
                             Titulo = "Entrenamientos"
                         },
                         new
@@ -304,6 +673,7 @@ namespace RugbyEngine.Api.Migrations
                             CreatedById = 1,
                             Lvl = 0,
                             PermisoId = 2,
+                            Ruta = "Tesoreria",
                             Titulo = "Tesoreria"
                         },
                         new
@@ -314,6 +684,7 @@ namespace RugbyEngine.Api.Migrations
                             CreatedById = 1,
                             Lvl = 0,
                             PermisoId = 6,
+                            Ruta = "Admin",
                             Titulo = "Administracion"
                         },
                         new
@@ -325,6 +696,7 @@ namespace RugbyEngine.Api.Migrations
                             Lvl = 1,
                             MenuPadreId = 5,
                             PermisoId = 3,
+                            Ruta = "Registro",
                             Titulo = "Registro"
                         },
                         new
@@ -336,7 +708,7 @@ namespace RugbyEngine.Api.Migrations
                             Lvl = 1,
                             MenuPadreId = 4,
                             PermisoId = 5,
-                            Ruta = "/Tesoreria/3T",
+                            Ruta = "3T",
                             Titulo = "3T"
                         },
                         new
@@ -348,7 +720,7 @@ namespace RugbyEngine.Api.Migrations
                             Lvl = 2,
                             MenuPadreId = 7,
                             PermisoId = 4,
-                            Ruta = "/Admin/Registro/Personas",
+                            Ruta = "Personas",
                             Titulo = "Personas"
                         },
                         new
@@ -360,7 +732,7 @@ namespace RugbyEngine.Api.Migrations
                             Lvl = 2,
                             MenuPadreId = 11,
                             PermisoId = 5,
-                            Ruta = "/Tesoreria/3T/Pagos",
+                            Ruta = "Pagos",
                             Titulo = "Pagos"
                         },
                         new
@@ -372,20 +744,56 @@ namespace RugbyEngine.Api.Migrations
                             Lvl = 2,
                             MenuPadreId = 7,
                             PermisoId = 1,
-                            Ruta = "/Admin/Registro/Usuarios",
+                            Ruta = "Usuarios",
                             Titulo = "Usuarios"
                         },
                         new
                         {
-                            Id = 15,
+                            Id = 16,
                             BorradoLogico = false,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             CreatedById = 1,
-                            Lvl = 2,
+                            Lvl = 1,
                             MenuPadreId = 1,
-                            PermisoId = 9,
-                            Ruta = "/Entrenamientos/Asistencia",
-                            Titulo = "Asistencia"
+                            PermisoId = 10,
+                            Ruta = "Categorias",
+                            Titulo = "Categorías"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Lvl = 1,
+                            MenuPadreId = 1,
+                            PermisoId = 11,
+                            Ruta = "Posiciones",
+                            Titulo = "Posiciones"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Lvl = 1,
+                            MenuPadreId = 1,
+                            PermisoId = 12,
+                            Ruta = "Jugadores",
+                            Titulo = "Jugadores"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Lvl = 1,
+                            MenuPadreId = 1,
+                            PermisoId = 8,
+                            Ruta = "Entrenamientos",
+                            Titulo = "Entrenamientos"
                         });
                 });
 
@@ -739,6 +1147,36 @@ namespace RugbyEngine.Api.Migrations
                             CreatedById = 1,
                             Descripcion = "Acceso a Asistencia",
                             Nombre = "Asistencia"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            BorradoLogico = false,
+                            Codigo = "categorias",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Descripcion = "Acceso a Categorias",
+                            Nombre = "Categorias"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            BorradoLogico = false,
+                            Codigo = "posiciones",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Descripcion = "Acceso a Posiciones",
+                            Nombre = "Posiciones"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            BorradoLogico = false,
+                            Codigo = "jugadores",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Descripcion = "Acceso a Jugadores",
+                            Nombre = "Jugadores"
                         });
                 });
 
@@ -862,6 +1300,193 @@ namespace RugbyEngine.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("PersonaCuentas");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Posicion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("BorradoLogico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedById")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Numero")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("UpdatedById")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DeletedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("Posicion");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Pilar",
+                            Numero = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Hocker",
+                            Numero = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Pilar",
+                            Numero = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Segunda linea",
+                            Numero = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Segunda linea",
+                            Numero = 5
+                        },
+                        new
+                        {
+                            Id = 6,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Ala ciega",
+                            Numero = 6
+                        },
+                        new
+                        {
+                            Id = 7,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Ala abierta",
+                            Numero = 7
+                        },
+                        new
+                        {
+                            Id = 8,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Octavo",
+                            Numero = 8
+                        },
+                        new
+                        {
+                            Id = 9,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Medio scrum",
+                            Numero = 9
+                        },
+                        new
+                        {
+                            Id = 10,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Apertura",
+                            Numero = 10
+                        },
+                        new
+                        {
+                            Id = 11,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Wing izquierdo",
+                            Numero = 11
+                        },
+                        new
+                        {
+                            Id = 12,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Centro interno",
+                            Numero = 12
+                        },
+                        new
+                        {
+                            Id = 13,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Centro externo",
+                            Numero = 13
+                        },
+                        new
+                        {
+                            Id = 14,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "Wing derecho",
+                            Numero = 14
+                        },
+                        new
+                        {
+                            Id = 15,
+                            BorradoLogico = false,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedById = 1,
+                            Nombre = "FullBack",
+                            Numero = 15
+                        });
                 });
 
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.TipoEvento", b =>
@@ -1113,6 +1738,21 @@ namespace RugbyEngine.Api.Migrations
                         },
                         new
                         {
+                            PerfilId = 1,
+                            PermisoId = 10
+                        },
+                        new
+                        {
+                            PerfilId = 1,
+                            PermisoId = 11
+                        },
+                        new
+                        {
+                            PerfilId = 1,
+                            PermisoId = 12
+                        },
+                        new
+                        {
                             PerfilId = 2,
                             PermisoId = 3
                         },
@@ -1135,7 +1775,121 @@ namespace RugbyEngine.Api.Migrations
                         {
                             PerfilId = 2,
                             PermisoId = 9
+                        },
+                        new
+                        {
+                            PerfilId = 2,
+                            PermisoId = 10
+                        },
+                        new
+                        {
+                            PerfilId = 2,
+                            PermisoId = 11
+                        },
+                        new
+                        {
+                            PerfilId = 2,
+                            PermisoId = 12
                         });
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Asistencia", b =>
+                {
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Entrenamiento", "Entrenamiento")
+                        .WithMany()
+                        .HasForeignKey("EntrenamientoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Jugador", "Jugador")
+                        .WithMany()
+                        .HasForeignKey("JugadorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DeletedBy");
+
+                    b.Navigation("Entrenamiento");
+
+                    b.Navigation("Jugador");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Categoria", b =>
+                {
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DeletedBy");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Entrenamiento", b =>
+                {
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DeletedBy");
+
+                    b.Navigation("UpdatedBy");
                 });
 
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Evento", b =>
@@ -1249,6 +2003,69 @@ namespace RugbyEngine.Api.Migrations
                     b.Navigation("Evento");
 
                     b.Navigation("Movimiento");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Jugador", b =>
+                {
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Persona", "Persona")
+                        .WithMany()
+                        .HasForeignKey("PersonaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Posicion", "PosicionPrincipal")
+                        .WithMany()
+                        .HasForeignKey("PosicionPrincipalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Posicion", "PosicionSecundaria")
+                        .WithMany()
+                        .HasForeignKey("PosicionSecundariaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Posicion", "PosicionTerciaria")
+                        .WithMany()
+                        .HasForeignKey("PosicionTerciariaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DeletedBy");
+
+                    b.Navigation("Persona");
+
+                    b.Navigation("PosicionPrincipal");
+
+                    b.Navigation("PosicionSecundaria");
+
+                    b.Navigation("PosicionTerciaria");
 
                     b.Navigation("UpdatedBy");
                 });
@@ -1464,6 +2281,31 @@ namespace RugbyEngine.Api.Migrations
                     b.Navigation("Cuenta");
 
                     b.Navigation("Persona");
+                });
+
+            modelBuilder.Entity("RugbyEngine.Api.Data.Entities.Posicion", b =>
+                {
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "DeletedBy")
+                        .WithMany()
+                        .HasForeignKey("DeletedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RugbyEngine.Api.Data.Entities.Usuario", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DeletedBy");
+
+                    b.Navigation("UpdatedBy");
                 });
 
             modelBuilder.Entity("RugbyEngine.Api.Data.Entities.TipoEvento", b =>

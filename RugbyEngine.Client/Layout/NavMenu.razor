@@ -99,7 +99,10 @@
 
     private RenderFragment RenderMenu(MenuDto menu) => __builder =>
     {
-        if (menu.Items != null && menu.Items.Any())
+        // Consider as dropdown only when there are real lvl1 children (children that themselves have children).
+        var hasLevel1Children = menu.Items?.Any(child => (child.Items?.Count ?? 0) > 0) ?? false;
+
+        if (hasLevel1Children)
         {
             <div class="dropdown" tabindex="0">
                 <button
@@ -108,11 +111,9 @@
                     @(menu.Title)
                 </button>
                 <ul class="dropdown-menu">
-                    @foreach (var sub in menu.Items)
+                    @foreach (var sub in menu.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
                     {
-                        var route = !string.IsNullOrEmpty(sub.Route)
-                            ? sub.Route
-                            : sub.Items?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Route))?.Route ?? string.Empty;
+                        var route = sub.Items?.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.Route))?.Route ?? ResolveRoute(sub);
                         <li>
                             <a class="dropdown-item nav-dropdown-item" href="@route">@(sub.Title)</a>
                         </li>
@@ -120,13 +121,65 @@
                 </ul>
             </div>
         }
-        else
+        else if (!string.IsNullOrWhiteSpace(menu.Route))
         {
-            <a class="btn btn-link text-white nav-menu-btn @(MenuService.ActiveLevel0 == menu ? "active" : "")" href="@menu.Route">
+            // No lvl1 children — render as a link to the first lvl2 (if any), otherwise to the menu route
+            <a class="btn btn-link text-white nav-menu-btn @(MenuService.ActiveLevel0 == menu ? "active" : "")"
+                   href="@GetTargetRouteForMenu(menu)">
                 @(menu.Title)
             </a>
         }
+        else
+        {
+            // Fallback: if no route and no lvl1 children, still render a dropdown so users can access descendants.
+            <div class="dropdown" tabindex="0">
+                <button
+                    class="btn btn-link text-white nav-menu-btn dropdown-toggle @(MenuService.ActiveLevel0 == menu ? "active" : "")"
+                    aria-expanded="false">
+                    @(menu.Title)
+                </button>
+                <ul class="dropdown-menu">
+                    @foreach (var sub in menu.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
+                    {
+                        var route = ResolveRoute(sub);
+                        <li>
+                            <a class="dropdown-item nav-dropdown-item" href="@route">@(sub.Title)</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
     };
+
+    private static string ResolveRoute(MenuDto item)
+    {
+        if (item.Items is { Count: > 0 })
+        {
+            var firstChildRoute = item.Items
+                .Select(ResolveRoute)
+                .FirstOrDefault(route => !string.IsNullOrWhiteSpace(route));
+
+            if (!string.IsNullOrWhiteSpace(firstChildRoute))
+                return firstChildRoute;
+        }
+
+        return item.Route ?? string.Empty;
+    }
+
+    private static string GetTargetRouteForMenu(MenuDto menu)
+    {
+        // Try to find first lvl2 (grandchild) route
+        var firstLvl2 = menu.Items?
+            .Where(l1 => (l1.Items?.Count ?? 0) > 0)
+            .SelectMany(l1 => l1.Items ?? Enumerable.Empty<RugbyEngine.Shared.Menus.MenuDto>())
+            .FirstOrDefault(l2 => !string.IsNullOrWhiteSpace(l2.Route));
+
+        if (firstLvl2 != null) return firstLvl2.Route!;
+
+        var rr = ResolveRoute(menu);
+        if (!string.IsNullOrWhiteSpace(rr)) return rr;
+        return menu.Route ?? string.Empty;
+    }
 }
 
 
